@@ -730,10 +730,16 @@ function setActiveTab(cat) {
   state.activeCategory = cat;
   el.catTabs.forEach(function(t) {
     t.classList.remove('active-sport', 'active-general');
-    if (t.getAttribute('data-cat') === cat) t.classList.add('active-' + cat);
+    if (t.getAttribute('data-cat') === cat) { t.classList.add('active-' + cat); }
   });
-  el.sectionSport.classList.toggle('visible', cat === 'sport');
-  el.sectionGeneral.classList.toggle('visible', cat === 'general');
+  // Use explicit add/remove — classList.toggle(name, bool) is broken on Smart TV browsers (Tizen, WebOS)
+  if (cat === 'sport') {
+    el.sectionSport.classList.add('visible');
+    el.sectionGeneral.classList.remove('visible');
+  } else {
+    el.sectionGeneral.classList.add('visible');
+    el.sectionSport.classList.remove('visible');
+  }
   setTimeout(function() { utils.adjustPlayer(); }, 80);
 }
 
@@ -869,10 +875,16 @@ function init() {
   }
   stream.play(defCh);
 
-  // Tab clicks
+  // Tab clicks — always switch, clear search if active
   el.catTabs.forEach(function(tab) {
     tab.addEventListener('click', function() {
-      if (!el.searchBox.value.trim()) setActiveTab(tab.getAttribute('data-cat'));
+      if (el.searchBox.value.trim()) {
+        el.searchBox.value = '';
+        // restore all wrappers
+        el.sportRow.querySelectorAll('.channel-wrapper').forEach(function(w) { w.style.display = ''; });
+        el.generalRow.querySelectorAll('.channel-wrapper').forEach(function(w) { w.style.display = ''; });
+      }
+      setActiveTab(tab.getAttribute('data-cat'));
     });
   });
 
