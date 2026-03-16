@@ -29,6 +29,7 @@
       --label-3:      rgba(235, 235, 245, 0.3);
 
       --blue:         #0a84ff;
+      --green:        #30d158;
 
       --font: -apple-system, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
 
@@ -154,8 +155,40 @@
     .btn:active { opacity: 0.6; }
     #logout-btn { color: var(--label-2); }
 
-    /* ── CHANNELS ── */
-    #channels {
+    /* ── CATEGORY TABS ── */
+    .category-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .cat-tab {
+      padding: 5px 14px;
+      background: var(--bg-fill);
+      color: var(--label-2);
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font);
+      letter-spacing: 0.1px;
+      transition: background 0.15s, color 0.15s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .cat-tab:hover  { background: var(--bg-grouped); color: var(--label); }
+    .cat-tab:active { opacity: 0.7; }
+    .cat-tab.active-sport   { background: var(--blue);  color: #fff; }
+    .cat-tab.active-general { background: var(--green); color: #fff; }
+
+    /* ── CHANNEL SECTIONS ── */
+    .channel-section { display: none; }
+    .channel-section.visible { display: block; }
+
+    #channels-sport,
+    #channels-general {
       display: flex;
       gap: 6px;
       overflow-x: auto;
@@ -166,7 +199,8 @@
       touch-action: pan-x;
     }
 
-    #channels::-webkit-scrollbar { display: none; }
+    #channels-sport::-webkit-scrollbar,
+    #channels-general::-webkit-scrollbar { display: none; }
 
     .channel-wrapper {
       display: flex;
@@ -199,7 +233,8 @@
 
     .channel-btn:hover  { background: var(--bg-grouped); }
     .channel-btn:active { transform: scale(0.97); opacity: 0.8; }
-    .channel-btn.active { background: var(--blue); color: #fff; font-weight: 600; }
+    .channel-btn.active-sport   { background: var(--blue);  color: #fff; font-weight: 600; }
+    .channel-btn.active-general { background: var(--green); color: #000; font-weight: 600; }
 
     .folder-selector {
       padding: 4px 22px 4px 8px;
@@ -234,7 +269,6 @@
 
     iframe { width: 100%; height: 100%; border: none; display: block; }
 
-    /* Overlays */
     .overlay-message {
       position: absolute;
       top: 50%; left: 50%;
@@ -273,7 +307,6 @@
 
     .reconnect-info { margin-top: 8px; font-size: 12px; color: var(--label-3); }
 
-    /* Toast */
     #toast {
       position: fixed;
       bottom: 22px;
@@ -302,7 +335,6 @@
 
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* Mobile controls */
     #mobile-exit-fullscreen {
       display: none;
       position: fixed;
@@ -345,7 +377,6 @@
 
     #toggle-header-btn.show { display: block; }
 
-    /* Mobile responsive */
     @media (max-width: 768px) {
       #header { padding: 10px 12px 8px; }
       .header-top { gap: 8px; }
@@ -381,7 +412,19 @@
         <button id="logout-btn" class="btn">Sign Out</button>
       </div>
     </div>
-    <div id="channels" role="list" aria-label="Channel list"></div>
+
+    <div class="category-tabs">
+      <button class="cat-tab active-sport" data-cat="sport">⚽ Sport</button>
+      <button class="cat-tab" data-cat="general">📺 General</button>
+    </div>
+
+    <div id="section-sport" class="channel-section visible">
+      <div id="channels-sport" role="list" aria-label="Sport channels"></div>
+    </div>
+
+    <div id="section-general" class="channel-section">
+      <div id="channels-general" role="list" aria-label="General channels"></div>
+    </div>
   </header>
 
   <main id="player-container">
@@ -396,13 +439,13 @@
       <div class="reconnect-info" id="reconnect-info"></div>
     </div>
 
-<iframe id="player"
-  allowfullscreen
-  allow="autoplay; fullscreen; picture-in-picture"
-  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
-  title="Stream player">
-</iframe>
-    
+    <iframe id="player"
+      allowfullscreen
+      allow="autoplay; fullscreen; picture-in-picture"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
+      title="Stream player">
+    </iframe>
+
     <button id="mobile-exit-fullscreen">✕  Exit Full Screen</button>
     <button id="toggle-header-btn">Channels</button>
     <div id="toast" role="status" aria-live="polite"></div>
@@ -432,25 +475,41 @@ const CONFIG = {
   RECONNECT_DELAY:  5000
 };
 
-const channels = [
-  { name: "Sport TV 1", id: 49,  category: "sport" },
-  { name: "Sport TV 2", id: 74,  category: "sport" },
-  { name: "Sport TV 3", id: 454, category: "sport" },
-  { name: "Sport TV 4", id: 289, category: "sport" },
-  { name: "Sport TV 5", id: 290, category: "sport" },
-  { name: "Sport TV 6", id: 291, category: "sport" },
-  { name: "DAZN 1",     id: 455, category: "dazn"  },
-  { name: "DAZN 2",     id: 456, category: "dazn"  },
-  { name: "DAZN 3",     id: 457, category: "dazn"  },
-  { name: "DAZN 4",     id: 458, category: "dazn"  },
-  { name: "DAZN 5",     id: 459, category: "dazn"  },
-  { name: "BTV",        id: 380, category: "other" }
+const sportChannels = [
+  { name: "Sport TV 1",  id: 49,  category: "sport" },
+  { name: "Sport TV 2",  id: 74,  category: "sport" },
+  { name: "Sport TV 3",  id: 454, category: "sport" },
+  { name: "Sport TV 4",  id: 289, category: "sport" },
+  { name: "Sport TV 5",  id: 290, category: "sport" },
+  { name: "Sport TV 6",  id: 291, category: "sport" },
+  { name: "DAZN 1",      id: 455, category: "sport" },
+  { name: "DAZN 2",      id: 456, category: "sport" },
+  { name: "DAZN 3",      id: 457, category: "sport" },
+  { name: "DAZN 4",      id: 458, category: "sport" },
+  { name: "DAZN 5",      id: 459, category: "sport" },
+  { name: "BTV",         id: 380, category: "sport" },
+  { name: "Canal 11",    id: 540, category: "sport" },
+  { name: "Sporting TV", id: 716, category: "sport" }
 ];
 
+const generalChannels = [
+  { name: "RTP 1",       id: 719, category: "general" },
+  { name: "RTP 2",       id: 720, category: "general" },
+  { name: "SIC",         id: 722, category: "general" },
+  { name: "TVI",         id: 723, category: "general" },
+  { name: "RTP 3",       id: 721, category: "general" },
+  { name: "CMTV",        id: 790, category: "general" },
+  { name: "TVI Reality", id: 724, category: "general" }
+];
+
+const allChannels = [...sportChannels, ...generalChannels];
 const folders = ["player", "stream", "watch", "cast", "casting", "plus"];
 
 const el = {
-  channelsDiv:     document.getElementById("channels"),
+  sportDiv:        document.getElementById("channels-sport"),
+  generalDiv:      document.getElementById("channels-general"),
+  sectionSport:    document.getElementById("section-sport"),
+  sectionGeneral:  document.getElementById("section-general"),
   searchBox:       document.getElementById("search-box"),
   statusLabel:     document.getElementById("status-label"),
   player:          document.getElementById("player"),
@@ -464,13 +523,15 @@ const el = {
   playerContainer: document.getElementById("player-container"),
   mobileExit:      document.getElementById("mobile-exit-fullscreen"),
   toggleHeaderBtn: document.getElementById("toggle-header-btn"),
-  header:          document.getElementById("header")
+  header:          document.getElementById("header"),
+  catTabs:         document.querySelectorAll(".cat-tab")
 };
 
 const state = {
-  currentBtn: null, currentChannelId: null, currentChannelIdx: 0,
-  visibleChannels: [...channels], loadingTimer: null,
-  isMobileFullscreen: false, headerCollapsed: false, lastTap: 0
+  currentBtn: null, currentChannelId: null,
+  currentChannelIdx: 0, activeCategory: 'sport',
+  loadingTimer: null, isMobileFullscreen: false,
+  headerCollapsed: false, lastTap: 0
 };
 
 const utils = {
@@ -482,7 +543,7 @@ const utils = {
     clearTimeout(el.toast._t); el.toast._t = setTimeout(() => el.toast.classList.remove('show'), duration);
   },
   streamUrl(id, folder) { return `${CONFIG.STREAM_BASE_URL}/${folder}/stream-${id}.php`; },
-  save(k, v)      { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} },
+  save(k, v)        { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} },
   load(k, def=null) { try { const i = localStorage.getItem(k); return i ? JSON.parse(i) : def; } catch(e) { return def; } }
 };
 
@@ -501,17 +562,19 @@ const reconnect = {
 const stream = {
   showLoading() {
     el.loading.classList.add('show'); el.errorMsg.classList.remove('show');
-    clearTimeout(state.loadingTimer); state.loadingTimer = setTimeout(() => this.hideLoading(), CONFIG.LOADING_TIMEOUT);
+    clearTimeout(state.loadingTimer);
+    state.loadingTimer = setTimeout(() => this.hideLoading(), CONFIG.LOADING_TIMEOUT);
   },
   hideLoading() { el.loading.classList.remove('show'); clearTimeout(state.loadingTimer); },
   showError()   { el.loading.classList.remove('show'); el.errorMsg.classList.add('show'); },
-  play(id, wrapper, name) {
+  play(id, wrapper, name, cat) {
     this.showLoading(); reconnect.reset();
-    if (state.currentBtn) state.currentBtn.classList.remove('active');
+    if (state.currentBtn) state.currentBtn.classList.remove('active-sport', 'active-general');
     const btn = wrapper.querySelector('.channel-btn');
-    state.currentBtn = btn; btn.classList.add('active');
+    state.currentBtn = btn;
+    btn.classList.add(cat === 'general' ? 'active-general' : 'active-sport');
     state.currentChannelId  = id;
-    state.currentChannelIdx = state.visibleChannels.findIndex(c => c.id === id);
+    state.currentChannelIdx = allChannels.findIndex(c => c.id === id);
     el.statusLabel.textContent = name;
     const sel = wrapper.querySelector('select');
     el.player.src = utils.streamUrl(id, sel ? sel.value : folders[0]);
@@ -524,18 +587,18 @@ const stream = {
     setTimeout(() => el.player.src = src, 80); utils.toast('Refreshing…');
   },
   next() {
-    if (!state.visibleChannels.length) return;
-    state.currentChannelIdx = (state.currentChannelIdx + 1) % state.visibleChannels.length;
-    const ch = state.visibleChannels[state.currentChannelIdx];
+    if (!allChannels.length) return;
+    state.currentChannelIdx = (state.currentChannelIdx + 1) % allChannels.length;
+    const ch = allChannels[state.currentChannelIdx];
     const w  = document.querySelector(`[data-channel-id="${ch.id}"]`);
-    if (w) this.play(ch.id, w, ch.name);
+    if (w) { setActiveTab(ch.category); this.play(ch.id, w, ch.name, ch.category); }
   },
   prev() {
-    if (!state.visibleChannels.length) return;
-    state.currentChannelIdx = (state.currentChannelIdx - 1 + state.visibleChannels.length) % state.visibleChannels.length;
-    const ch = state.visibleChannels[state.currentChannelIdx];
+    if (!allChannels.length) return;
+    state.currentChannelIdx = (state.currentChannelIdx - 1 + allChannels.length) % allChannels.length;
+    const ch = allChannels[state.currentChannelIdx];
     const w  = document.querySelector(`[data-channel-id="${ch.id}"]`);
-    if (w) this.play(ch.id, w, ch.name);
+    if (w) { setActiveTab(ch.category); this.play(ch.id, w, ch.name, ch.category); }
   },
   toggleFullscreen() {
     if (utils.isMobile()) { this.toggleMobileFS(); return; }
@@ -571,38 +634,67 @@ const stream = {
   }
 };
 
-const channelMgr = {
-  filter(term) {
-    const t = term.toLowerCase().trim();
-    state.visibleChannels = t ? channels.filter(c => c.name.toLowerCase().includes(t) || c.category.includes(t)) : [...channels];
-    this.render();
-  },
-  createWrapper(ch) {
-    const wrap = document.createElement('div');
-    wrap.className = 'channel-wrapper'; wrap.dataset.channelId = ch.id; wrap.setAttribute('role','listitem');
-    const btn = document.createElement('button');
-    btn.className = 'channel-btn'; btn.textContent = ch.name; btn.type = 'button';
-    btn.onclick = () => stream.play(ch.id, wrap, ch.name);
-    const sel = document.createElement('select'); sel.className = 'folder-selector';
-    sel.setAttribute('aria-label', `Source for ${ch.name}`);
-    folders.forEach(f => { const o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o); });
-    sel.value = utils.load(`ch_${ch.id}_folder`) || folders[0];
-    sel.addEventListener('change', e => {
-      e.stopPropagation(); utils.save(`ch_${ch.id}_folder`, e.target.value);
-      if (state.currentChannelId === ch.id) el.player.src = utils.streamUrl(ch.id, e.target.value);
-    });
-    wrap.appendChild(btn); wrap.appendChild(sel); return wrap;
-  },
-  render() {
-    el.channelsDiv.innerHTML = '';
-    if (!state.visibleChannels.length) {
-      el.channelsDiv.innerHTML = '<p style="color:var(--label-3);font-size:13px;padding:10px 4px;">No channels found</p>';
-    } else {
-      state.visibleChannels.forEach(ch => el.channelsDiv.appendChild(this.createWrapper(ch)));
-    }
-    setTimeout(() => utils.adjustPlayer(), 80);
+function setActiveTab(cat) {
+  state.activeCategory = cat;
+  el.catTabs.forEach(t => {
+    t.classList.remove('active-sport', 'active-general');
+    if (t.dataset.cat === cat) t.classList.add(`active-${cat}`);
+  });
+  el.sectionSport.classList.toggle('visible', cat === 'sport');
+  el.sectionGeneral.classList.toggle('visible', cat === 'general');
+  setTimeout(() => utils.adjustPlayer(), 80);
+}
+
+function createWrapper(ch) {
+  const wrap = document.createElement('div');
+  wrap.className = 'channel-wrapper'; wrap.dataset.channelId = ch.id; wrap.setAttribute('role','listitem');
+  const btn = document.createElement('button');
+  btn.className = 'channel-btn'; btn.textContent = ch.name; btn.type = 'button';
+  btn.onclick = () => stream.play(ch.id, wrap, ch.name, ch.category);
+  const sel = document.createElement('select'); sel.className = 'folder-selector';
+  sel.setAttribute('aria-label', `Source for ${ch.name}`);
+  folders.forEach(f => { const o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o); });
+  sel.value = utils.load(`ch_${ch.id}_folder`) || folders[0];
+  sel.addEventListener('change', e => {
+    e.stopPropagation(); utils.save(`ch_${ch.id}_folder`, e.target.value);
+    if (state.currentChannelId === ch.id) el.player.src = utils.streamUrl(ch.id, e.target.value);
+  });
+  wrap.appendChild(btn); wrap.appendChild(sel); return wrap;
+}
+
+function renderAll() {
+  el.sportDiv.innerHTML = '';
+  el.generalDiv.innerHTML = '';
+  sportChannels.forEach(ch => el.sportDiv.appendChild(createWrapper(ch)));
+  generalChannels.forEach(ch => el.generalDiv.appendChild(createWrapper(ch)));
+  setTimeout(() => utils.adjustPlayer(), 80);
+}
+
+function filterChannels(term) {
+  const t = term.toLowerCase().trim();
+  if (!t) {
+    renderAll();
+    setActiveTab(state.activeCategory);
+    return;
   }
-};
+  // In search mode, show both sections
+  el.sectionSport.classList.add('visible');
+  el.sectionGeneral.classList.add('visible');
+
+  el.sportDiv.innerHTML = '';
+  el.generalDiv.innerHTML = '';
+
+  const ms = sportChannels.filter(c => c.name.toLowerCase().includes(t));
+  const mg = generalChannels.filter(c => c.name.toLowerCase().includes(t));
+
+  if (ms.length) ms.forEach(ch => el.sportDiv.appendChild(createWrapper(ch)));
+  else el.sportDiv.innerHTML = '<p style="color:var(--label-3);font-size:12px;padding:8px 4px;">No results</p>';
+
+  if (mg.length) mg.forEach(ch => el.generalDiv.appendChild(createWrapper(ch)));
+  else el.generalDiv.innerHTML = '<p style="color:var(--label-3);font-size:12px;padding:8px 4px;">No results</p>';
+
+  setTimeout(() => utils.adjustPlayer(), 80);
+}
 
 function initGestures() {
   let sx = 0, sy = 0;
@@ -620,32 +712,42 @@ function initGestures() {
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   const k = e.key;
-  if (k === 'f' || k === 'F') { e.preventDefault(); stream.toggleFullscreen(); }
-  else if (k === 'ArrowRight') { e.preventDefault(); stream.next(); }
-  else if (k === 'ArrowLeft')  { e.preventDefault(); stream.prev(); }
-  else if (k === 'r' || k === 'R') { e.preventDefault(); stream.refresh(); }
+  if (k === 'f' || k === 'F')       { e.preventDefault(); stream.toggleFullscreen(); }
+  else if (k === 'ArrowRight')      { e.preventDefault(); stream.next(); }
+  else if (k === 'ArrowLeft')       { e.preventDefault(); stream.prev(); }
+  else if (k === 'r' || k === 'R')  { e.preventDefault(); stream.refresh(); }
   else if (k === 'Escape') { if (state.isMobileFullscreen) stream.exitMobileFS(); else document.exitFullscreen?.() || document.webkitExitFullscreen?.(); }
 });
 
 function init() {
-  channelMgr.render(); utils.adjustPlayer();
+  renderAll();
+  setActiveTab('sport');
+  utils.adjustPlayer();
   window.addEventListener('resize', utils.debounce(utils.adjustPlayer, 120));
   initGestures();
   if (utils.isMobile()) el.toggleHeaderBtn.classList.add('show');
 
   const lastId = utils.load(CONFIG.LAST_CHANNEL_KEY);
-  const def    = lastId ? (channels.find(c => c.id == lastId) || channels[0]) : channels[0];
-  const defW   = document.querySelector(`[data-channel-id="${def.id}"]`);
-  if (defW) stream.play(def.id, defW, def.name);
+  const def    = lastId ? (allChannels.find(c => c.id == lastId) || allChannels[0]) : allChannels[0];
+  if (def.category === 'general') setActiveTab('general');
+  const defW = document.querySelector(`[data-channel-id="${def.id}"]`);
+  if (defW) stream.play(def.id, defW, def.name, def.category);
 
-  el.searchBox.addEventListener('input', utils.debounce(e => channelMgr.filter(e.target.value), CONFIG.DEBOUNCE_DELAY));
+  el.catTabs.forEach(tab => tab.addEventListener('click', () => {
+    if (el.searchBox.value.trim() === '') setActiveTab(tab.dataset.cat);
+  }));
+
+  el.searchBox.addEventListener('input', utils.debounce(e => filterChannels(e.target.value), CONFIG.DEBOUNCE_DELAY));
   el.refreshBtn.addEventListener('click', () => stream.refresh());
   el.fullscreenBtn.addEventListener('click', () => stream.toggleFullscreen());
   el.logoutBtn.addEventListener('click', () => {
     if (confirm('Sign out?')) { document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Secure; SameSite=Strict'; window.location.href = '/'; }
   });
   el.mobileExit.addEventListener('click', () => stream.exitMobileFS());
-  el.toggleHeaderBtn.addEventListener('click', () => { state.headerCollapsed = !state.headerCollapsed; el.header.classList.toggle('collapsed', state.headerCollapsed); });
+  el.toggleHeaderBtn.addEventListener('click', () => {
+    state.headerCollapsed = !state.headerCollapsed;
+    el.header.classList.toggle('collapsed', state.headerCollapsed);
+  });
 
   ['fullscreenchange','webkitfullscreenchange'].forEach(ev => {
     document.addEventListener(ev, () => {
@@ -657,7 +759,7 @@ function init() {
   el.player.addEventListener('error', () => reconnect.start());
 
   document.addEventListener('touchmove', e => {
-    if (e.target.closest('#channels') || e.target.closest('#header')) return;
+    if (e.target.closest('#channels-sport') || e.target.closest('#channels-general') || e.target.closest('#header')) return;
     if (e.target.closest('#player-container')) return;
     e.preventDefault();
   }, { passive: false });
@@ -670,4 +772,3 @@ document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded'
 </script>
 </body>
 </html>
-
