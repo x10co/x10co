@@ -23,21 +23,16 @@
       --bg-grouped:   rgba(44, 44, 46, 0.6);
       --bg-fill:      rgba(58, 58, 60, 0.36);
       --separator:    rgba(84, 84, 88, 0.34);
-
       --label:        rgba(255, 255, 255, 1);
       --label-2:      rgba(235, 235, 245, 0.6);
       --label-3:      rgba(235, 235, 245, 0.3);
-
       --blue:         #0a84ff;
       --green:        #30d158;
-
       --font: -apple-system, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
-
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
       --radius-xl: 20px;
-
       --blur: saturate(180%) blur(20px);
     }
 
@@ -53,7 +48,6 @@
       min-height: -webkit-fill-available;
     }
 
-    /* ── HEADER ── */
     #header {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -68,7 +62,6 @@
       scrollbar-width: none;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     #header::-webkit-scrollbar { display: none; }
     #header.collapsed { transform: translateY(-100%); }
 
@@ -97,9 +90,7 @@
       flex-shrink: 0;
     }
 
-    /* Search */
     .search-wrap { position: relative; display: flex; align-items: center; }
-
     .search-wrap::before {
       content: '';
       position: absolute;
@@ -125,15 +116,9 @@
       transition: width 0.2s ease, background 0.15s;
       -webkit-appearance: none;
     }
-
-    input[type="search"]:focus {
-      background: rgba(58, 58, 60, 0.6);
-      width: 200px;
-    }
-
+    input[type="search"]:focus { background: rgba(58,58,60,0.6); width: 200px; }
     input[type="search"]::placeholder { color: var(--label-3); }
 
-    /* Buttons */
     .btn {
       padding: 6px 13px;
       background: var(--bg-fill);
@@ -150,7 +135,6 @@
       -webkit-user-select: none;
       user-select: none;
     }
-
     .btn:hover  { background: var(--bg-grouped); }
     .btn:active { opacity: 0.6; }
     #logout-btn { color: var(--label-2); }
@@ -172,23 +156,21 @@
       font-size: 12px;
       font-weight: 600;
       font-family: var(--font);
-      letter-spacing: 0.1px;
       transition: background 0.15s, color 0.15s;
       -webkit-user-select: none;
       user-select: none;
     }
-
     .cat-tab:hover  { background: var(--bg-grouped); color: var(--label); }
     .cat-tab:active { opacity: 0.7; }
     .cat-tab.active-sport   { background: var(--blue);  color: #fff; }
     .cat-tab.active-general { background: var(--green); color: #fff; }
 
-    /* ── CHANNEL SECTIONS ── */
-    .channel-section { display: none; }
+    /* Both sections always in DOM so querySelector always finds wrappers.
+       Visibility is toggled via display. */
+    .channel-section         { display: none; }
     .channel-section.visible { display: block; }
 
-    #channels-sport,
-    #channels-general {
+    .channel-row {
       display: flex;
       gap: 6px;
       overflow-x: auto;
@@ -198,9 +180,7 @@
       -webkit-overflow-scrolling: touch;
       touch-action: pan-x;
     }
-
-    #channels-sport::-webkit-scrollbar,
-    #channels-general::-webkit-scrollbar { display: none; }
+    .channel-row::-webkit-scrollbar { display: none; }
 
     .channel-wrapper {
       display: flex;
@@ -230,7 +210,6 @@
       user-select: none;
       text-align: left;
     }
-
     .channel-btn:hover  { background: var(--bg-grouped); }
     .channel-btn:active { transform: scale(0.97); opacity: 0.8; }
     .channel-btn.active-sport   { background: var(--blue);  color: #fff; font-weight: 600; }
@@ -253,7 +232,6 @@
       background-repeat: no-repeat;
       background-position: right 7px center;
     }
-
     .folder-selector:hover { color: var(--label); }
 
     /* ── PLAYER ── */
@@ -264,7 +242,6 @@
       background: #000;
       z-index: 1;
     }
-
     #player-container.mobile-fullscreen { z-index: 999999 !important; }
 
     iframe { width: 100%; height: 100%; border: none; display: block; }
@@ -284,7 +261,6 @@
       border: 0.5px solid var(--separator);
       min-width: 200px;
     }
-
     #loading.show, #error-msg.show { display: block; }
 
     .spinner {
@@ -295,7 +271,6 @@
       animation: spin 0.75s linear infinite;
       margin: 0 auto 14px;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
     #loading p, #error-msg p {
@@ -304,7 +279,6 @@
       color: var(--label-2);
       letter-spacing: -0.1px;
     }
-
     .reconnect-info { margin-top: 8px; font-size: 12px; color: var(--label-3); }
 
     #toast {
@@ -332,7 +306,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     #mobile-exit-fullscreen {
@@ -353,7 +326,6 @@
       font-family: var(--font);
       cursor: pointer;
     }
-
     #mobile-exit-fullscreen.show { display: block; }
 
     #toggle-header-btn {
@@ -374,7 +346,6 @@
       font-family: var(--font);
       cursor: pointer;
     }
-
     #toggle-header-btn.show { display: block; }
 
     @media (max-width: 768px) {
@@ -385,12 +356,10 @@
       .channel-wrapper { min-width: 100px; max-width: 100px; }
       .channel-btn     { font-size: 11px; padding: 7px 8px; }
     }
-
     @media (max-width: 768px) and (orientation: landscape) {
       .channel-wrapper { min-width: 90px; max-width: 90px; }
       .channel-btn     { font-size: 10px; }
     }
-
     @media (display-mode: standalone) {
       body    { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
       #header { padding-top: max(10px, env(safe-area-inset-top)); }
@@ -414,16 +383,16 @@
     </div>
 
     <div class="category-tabs">
-      <button class="cat-tab active-sport" data-cat="sport">⚽ Sport</button>
+      <button class="cat-tab" data-cat="sport">⚽ Sport</button>
       <button class="cat-tab" data-cat="general">📺 General</button>
     </div>
 
-    <div id="section-sport" class="channel-section visible">
-      <div id="channels-sport" role="list" aria-label="Sport channels"></div>
+    <!-- Both sections always rendered in DOM. Visibility toggled via CSS only. -->
+    <div id="section-sport" class="channel-section">
+      <div id="channels-sport" class="channel-row" role="list" aria-label="Sport channels"></div>
     </div>
-
     <div id="section-general" class="channel-section">
-      <div id="channels-general" role="list" aria-label="General channels"></div>
+      <div id="channels-general" class="channel-row" role="list" aria-label="General channels"></div>
     </div>
   </header>
 
@@ -460,9 +429,16 @@
   try { Object.defineProperty(window, 'opener', { get: () => null, set: () => {}, configurable: false }); } catch(e) {}
   let lb = 0;
   window.addEventListener('blur', () => { const n = Date.now(); if (n - lb < 1000) setTimeout(() => window.focus(), 1); lb = n; });
-  document.addEventListener('click', e => { const a = e.target.closest('a'); if (a?.href?.startsWith('http') && !a.href.includes(window.location.hostname)) { e.preventDefault(); e.stopPropagation(); } }, true);
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a');
+    if (a && a.href && a.href.startsWith('http') && !a.href.includes(window.location.hostname)) {
+      e.preventDefault(); e.stopPropagation();
+    }
+  }, true);
   document.addEventListener('contextmenu', e => { if (e.target.tagName === 'IFRAME') e.preventDefault(); });
-  const obs = new MutationObserver(m => m.forEach(x => x.addedNodes.forEach(n => { if (n.tagName === 'IFRAME' && n.id !== 'player') n.remove(); })));
+  const obs = new MutationObserver(ms => ms.forEach(x => x.addedNodes.forEach(n => {
+    if (n.tagName === 'IFRAME' && n.id !== 'player') n.remove();
+  })));
   if (document.body) obs.observe(document.body, { childList: true, subtree: true });
 })();
 
@@ -475,6 +451,7 @@ const CONFIG = {
   RECONNECT_DELAY:  5000
 };
 
+// ── Channel data ──────────────────────────────────────────────
 const sportChannels = [
   { name: "Sport TV 1",  id: 49,  category: "sport" },
   { name: "Sport TV 2",  id: 74,  category: "sport" },
@@ -502,247 +479,356 @@ const generalChannels = [
   { name: "TVI Reality", id: 724, category: "general" }
 ];
 
+// All channels flat — used for next/prev navigation
 const allChannels = [...sportChannels, ...generalChannels];
+
 const folders = ["player", "stream", "watch", "cast", "casting", "plus"];
 
-const el = {};
-
-const state = {
-  currentBtn: null, currentChannelId: null,
-  currentChannelIdx: 0, activeCategory: 'sport',
-  loadingTimer: null, isMobileFullscreen: false,
-  headerCollapsed: false, lastTap: 0
+// ── DOM refs ──────────────────────────────────────────────────
+const el = {
+  sportRow:        document.getElementById("channels-sport"),
+  generalRow:      document.getElementById("channels-general"),
+  sectionSport:    document.getElementById("section-sport"),
+  sectionGeneral:  document.getElementById("section-general"),
+  searchBox:       document.getElementById("search-box"),
+  statusLabel:     document.getElementById("status-label"),
+  player:          document.getElementById("player"),
+  loading:         document.getElementById("loading"),
+  errorMsg:        document.getElementById("error-msg"),
+  reconnectInfo:   document.getElementById("reconnect-info"),
+  fullscreenBtn:   document.getElementById("fullscreen-btn"),
+  refreshBtn:      document.getElementById("refresh-btn"),
+  toast:           document.getElementById("toast"),
+  logoutBtn:       document.getElementById("logout-btn"),
+  playerContainer: document.getElementById("player-container"),
+  mobileExit:      document.getElementById("mobile-exit-fullscreen"),
+  toggleHeaderBtn: document.getElementById("toggle-header-btn"),
+  header:          document.getElementById("header"),
+  catTabs:         document.querySelectorAll(".cat-tab")
 };
 
+// ── App state ─────────────────────────────────────────────────
+const state = {
+  // Track which channel-btn DOM node is highlighted
+  currentChannelId:  null,
+  currentChannelIdx: 0,
+  activeCategory:    'sport',
+  loadingTimer:      null,
+  isMobileFullscreen: false,
+  headerCollapsed:   false,
+  lastTap:           0
+};
+
+// ── Utilities ─────────────────────────────────────────────────
 const utils = {
   debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; },
-  isMobile() { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || navigator.maxTouchPoints > 2; },
-  adjustPlayer() { if (!state.isMobileFullscreen) el.playerContainer.style.paddingTop = `${el.header.offsetHeight}px`; },
-  toast(msg, duration = 2000) {
-    el.toast.textContent = msg; el.toast.classList.add('show');
-    clearTimeout(el.toast._t); el.toast._t = setTimeout(() => el.toast.classList.remove('show'), duration);
+  isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || navigator.maxTouchPoints > 2;
   },
-  streamUrl(id, folder) { return `${CONFIG.STREAM_BASE_URL}/${folder}/stream-${id}.php`; },
+  adjustPlayer() {
+    if (!state.isMobileFullscreen) {
+      el.playerContainer.style.paddingTop = el.header.offsetHeight + 'px';
+    }
+  },
+  toast(msg, duration = 2000) {
+    el.toast.textContent = msg;
+    el.toast.classList.add('show');
+    clearTimeout(el.toast._t);
+    el.toast._t = setTimeout(() => el.toast.classList.remove('show'), duration);
+  },
+  streamUrl(id, folder) { return CONFIG.STREAM_BASE_URL + '/' + folder + '/stream-' + id + '.php'; },
   save(k, v)        { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} },
-  load(k, def=null) { try { const i = localStorage.getItem(k); return i ? JSON.parse(i) : def; } catch(e) { return def; } }
+  load(k, def)      { try { const i = localStorage.getItem(k); return i !== null ? JSON.parse(i) : (def !== undefined ? def : null); } catch(e) { return def !== undefined ? def : null; } }
 };
 
+// ── Reconnect ─────────────────────────────────────────────────
 const reconnect = {
   n: 0, t: null,
   start() {
-    if (this.n >= CONFIG.RECONNECT_MAX) { stream.showError(); el.reconnectInfo.textContent = `Failed after ${CONFIG.RECONNECT_MAX} attempts`; return; }
+    if (this.n >= CONFIG.RECONNECT_MAX) {
+      stream.showError();
+      el.reconnectInfo.textContent = 'Failed after ' + CONFIG.RECONNECT_MAX + ' attempts';
+      return;
+    }
     this.n++;
-    el.reconnectInfo.textContent = `Reconnecting… (${this.n} of ${CONFIG.RECONNECT_MAX})`;
-    utils.toast(`Reconnecting… (${this.n}/${CONFIG.RECONNECT_MAX})`);
+    el.reconnectInfo.textContent = 'Reconnecting\u2026 (' + this.n + ' of ' + CONFIG.RECONNECT_MAX + ')';
+    utils.toast('Reconnecting\u2026 (' + this.n + '/' + CONFIG.RECONNECT_MAX + ')');
     this.t = setTimeout(() => stream.refresh(), CONFIG.RECONNECT_DELAY);
   },
   reset() { this.n = 0; clearTimeout(this.t); el.reconnectInfo.textContent = ''; }
 };
 
+// ── Stream ────────────────────────────────────────────────────
 const stream = {
   showLoading() {
-    el.loading.classList.add('show'); el.errorMsg.classList.remove('show');
+    el.loading.classList.add('show');
+    el.errorMsg.classList.remove('show');
     clearTimeout(state.loadingTimer);
     state.loadingTimer = setTimeout(() => this.hideLoading(), CONFIG.LOADING_TIMEOUT);
   },
   hideLoading() { el.loading.classList.remove('show'); clearTimeout(state.loadingTimer); },
   showError()   { el.loading.classList.remove('show'); el.errorMsg.classList.add('show'); },
-  play(id, wrapper, name, cat) {
-    this.showLoading(); reconnect.reset();
-    if (state.currentBtn) state.currentBtn.classList.remove('active-sport', 'active-general');
-    const btn = wrapper.querySelector('.channel-btn');
-    state.currentBtn = btn;
-    btn.classList.add(cat === 'general' ? 'active-general' : 'active-sport');
-    state.currentChannelId  = id;
-    state.currentChannelIdx = allChannels.findIndex(c => c.id === id);
-    el.statusLabel.textContent = name;
-    const sel = wrapper.querySelector('select');
-    el.player.src = utils.streamUrl(id, sel ? sel.value : folders[0]);
-    utils.save(CONFIG.LAST_CHANNEL_KEY, id);
-    utils.toast(name);
+
+  play(ch) {
+    // ch = { id, name, category }
+    this.showLoading();
+    reconnect.reset();
+
+    // Remove highlight from old button (look it up fresh from DOM — no stale ref)
+    if (state.currentChannelId !== null) {
+      const oldW = document.querySelector('[data-channel-id="' + state.currentChannelId + '"]');
+      if (oldW) oldW.querySelector('.channel-btn').classList.remove('active-sport', 'active-general');
+    }
+
+    // Set new highlight
+    const newW = document.querySelector('[data-channel-id="' + ch.id + '"]');
+    if (newW) {
+      newW.querySelector('.channel-btn').classList.add(ch.category === 'general' ? 'active-general' : 'active-sport');
+      // Switch to the right tab so the active button is visible
+      if (!el.searchBox.value.trim()) setActiveTab(ch.category);
+    }
+
+    state.currentChannelId  = ch.id;
+    state.currentChannelIdx = allChannels.findIndex(c => c.id === ch.id);
+    el.statusLabel.textContent = ch.name;
+
+    const wrap = newW;
+    const sel  = wrap ? wrap.querySelector('select') : null;
+    el.player.src = utils.streamUrl(ch.id, sel ? sel.value : folders[0]);
+    utils.save(CONFIG.LAST_CHANNEL_KEY, ch.id);
+    utils.toast(ch.name);
   },
+
   refresh() {
     if (!el.player.src) return;
-    this.showLoading(); const src = el.player.src; el.player.src = '';
-    setTimeout(() => el.player.src = src, 80); utils.toast('Refreshing…');
+    this.showLoading();
+    const src = el.player.src;
+    el.player.src = '';
+    setTimeout(() => { el.player.src = src; }, 80);
+    utils.toast('Refreshing\u2026');
   },
+
   next() {
     if (!allChannels.length) return;
     state.currentChannelIdx = (state.currentChannelIdx + 1) % allChannels.length;
-    const ch = allChannels[state.currentChannelIdx];
-    const w  = document.querySelector(`[data-channel-id="${ch.id}"]`);
-    if (w) { setActiveTab(ch.category); this.play(ch.id, w, ch.name, ch.category); }
+    this.play(allChannels[state.currentChannelIdx]);
   },
+
   prev() {
     if (!allChannels.length) return;
     state.currentChannelIdx = (state.currentChannelIdx - 1 + allChannels.length) % allChannels.length;
-    const ch = allChannels[state.currentChannelIdx];
-    const w  = document.querySelector(`[data-channel-id="${ch.id}"]`);
-    if (w) { setActiveTab(ch.category); this.play(ch.id, w, ch.name, ch.category); }
+    this.play(allChannels[state.currentChannelIdx]);
   },
+
   toggleFullscreen() {
     if (utils.isMobile()) { this.toggleMobileFS(); return; }
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      (el.player.requestFullscreen?.() || el.player.webkitRequestFullscreen?.() || Promise.reject())
-        .then(() => el.fullscreenBtn.textContent = 'Exit Full Screen')
+      const req = el.player.requestFullscreen || el.player.webkitRequestFullscreen;
+      const reqC = el.playerContainer.requestFullscreen || el.playerContainer.webkitRequestFullscreen;
+      (req ? req.call(el.player) : Promise.reject())
+        .then(() => { el.fullscreenBtn.textContent = 'Exit Full Screen'; })
         .catch(() => {
-          (el.playerContainer.requestFullscreen?.() || el.playerContainer.webkitRequestFullscreen?.())
-            ?.then(() => el.fullscreenBtn.textContent = 'Exit Full Screen')
+          if (reqC) reqC.call(el.playerContainer)
+            .then(() => { el.fullscreenBtn.textContent = 'Exit Full Screen'; })
             .catch(() => utils.toast('Full Screen not available'));
+          else utils.toast('Full Screen not available');
         });
     } else {
-      document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
       el.fullscreenBtn.textContent = 'Full Screen';
     }
   },
+
   toggleMobileFS() {
     if (!state.isMobileFullscreen) {
       el.playerContainer.classList.add('mobile-fullscreen');
-      el.mobileExit.classList.add('show'); el.header.style.display = 'none';
-      el.toggleHeaderBtn.classList.remove('show'); state.isMobileFullscreen = true;
+      el.mobileExit.classList.add('show');
+      el.header.style.display = 'none';
+      el.toggleHeaderBtn.classList.remove('show');
+      state.isMobileFullscreen = true;
       el.fullscreenBtn.textContent = 'Exit Full Screen';
-      screen.orientation?.lock?.('landscape').catch(() => {});
-    } else { this.exitMobileFS(); }
+      if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
+    } else {
+      this.exitMobileFS();
+    }
   },
+
   exitMobileFS() {
     el.playerContainer.classList.remove('mobile-fullscreen');
-    el.mobileExit.classList.remove('show'); el.header.style.display = '';
-    el.toggleHeaderBtn.classList.add('show'); state.isMobileFullscreen = false;
+    el.mobileExit.classList.remove('show');
+    el.header.style.display = '';
+    el.toggleHeaderBtn.classList.add('show');
+    state.isMobileFullscreen = false;
     el.fullscreenBtn.textContent = 'Full Screen';
-    screen.orientation?.unlock?.();
+    if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
     setTimeout(() => utils.adjustPlayer(), 80);
   }
 };
 
+// ── Category tabs ─────────────────────────────────────────────
 function setActiveTab(cat) {
   state.activeCategory = cat;
   el.catTabs.forEach(t => {
     t.classList.remove('active-sport', 'active-general');
-    if (t.dataset.cat === cat) t.classList.add(`active-${cat}`);
+    if (t.dataset.cat === cat) t.classList.add('active-' + cat);
   });
   el.sectionSport.classList.toggle('visible', cat === 'sport');
   el.sectionGeneral.classList.toggle('visible', cat === 'general');
   setTimeout(() => utils.adjustPlayer(), 80);
 }
 
+// ── Channel rendering ─────────────────────────────────────────
+// Channels are rendered ONCE at init into permanent DOM nodes.
+// We never innerHTML-clear them again (except for search filtering).
+// The active highlight is managed via DOM queries on data-channel-id.
+
 function createWrapper(ch) {
   const wrap = document.createElement('div');
-  wrap.className = 'channel-wrapper'; wrap.dataset.channelId = ch.id; wrap.setAttribute('role','listitem');
+  wrap.className = 'channel-wrapper';
+  wrap.dataset.channelId = ch.id;
+  wrap.setAttribute('role', 'listitem');
+
   const btn = document.createElement('button');
-  btn.className = 'channel-btn'; btn.textContent = ch.name; btn.type = 'button';
-  btn.onclick = () => stream.play(ch.id, wrap, ch.name, ch.category);
-  const sel = document.createElement('select'); sel.className = 'folder-selector';
-  sel.setAttribute('aria-label', `Source for ${ch.name}`);
-  folders.forEach(f => { const o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o); });
-  sel.value = utils.load(`ch_${ch.id}_folder`) || folders[0];
-  sel.addEventListener('change', e => {
-    e.stopPropagation(); utils.save(`ch_${ch.id}_folder`, e.target.value);
-    if (state.currentChannelId === ch.id) el.player.src = utils.streamUrl(ch.id, e.target.value);
+  btn.className = 'channel-btn';
+  btn.textContent = ch.name;
+  btn.type = 'button';
+  btn.addEventListener('click', () => stream.play(ch));
+
+  const sel = document.createElement('select');
+  sel.className = 'folder-selector';
+  sel.setAttribute('aria-label', 'Source for ' + ch.name);
+  folders.forEach(f => {
+    const o = document.createElement('option');
+    o.value = f; o.textContent = f;
+    sel.appendChild(o);
   });
-  wrap.appendChild(btn); wrap.appendChild(sel); return wrap;
+  sel.value = utils.load('ch_' + ch.id + '_folder') || folders[0];
+  sel.addEventListener('change', e => {
+    e.stopPropagation();
+    utils.save('ch_' + ch.id + '_folder', e.target.value);
+    if (state.currentChannelId === ch.id) {
+      el.player.src = utils.streamUrl(ch.id, e.target.value);
+    }
+  });
+
+  wrap.appendChild(btn);
+  wrap.appendChild(sel);
+  return wrap;
 }
 
 function renderAll() {
-  el.sportDiv.innerHTML = '';
-  el.generalDiv.innerHTML = '';
-  sportChannels.forEach(ch => el.sportDiv.appendChild(createWrapper(ch)));
-  generalChannels.forEach(ch => el.generalDiv.appendChild(createWrapper(ch)));
-  setTimeout(() => utils.adjustPlayer(), 80);
+  // Render both rows permanently — never cleared after this
+  el.sportRow.innerHTML = '';
+  el.generalRow.innerHTML = '';
+  sportChannels.forEach(ch => el.sportRow.appendChild(createWrapper(ch)));
+  generalChannels.forEach(ch => el.generalRow.appendChild(createWrapper(ch)));
 }
 
+// ── Search ────────────────────────────────────────────────────
+// Search just shows/hides wrappers — does NOT re-render DOM.
+// This prevents stale button references.
 function filterChannels(term) {
   const t = term.toLowerCase().trim();
+
   if (!t) {
-    renderAll();
+    // Restore: show all wrappers, go back to active tab
+    el.sportRow.querySelectorAll('.channel-wrapper').forEach(w => { w.style.display = ''; });
+    el.generalRow.querySelectorAll('.channel-wrapper').forEach(w => { w.style.display = ''; });
     setActiveTab(state.activeCategory);
     return;
   }
-  // In search mode, show both sections
+
+  // In search mode show both sections
   el.sectionSport.classList.add('visible');
   el.sectionGeneral.classList.add('visible');
 
-  el.sportDiv.innerHTML = '';
-  el.generalDiv.innerHTML = '';
-
-  const ms = sportChannels.filter(c => c.name.toLowerCase().includes(t));
-  const mg = generalChannels.filter(c => c.name.toLowerCase().includes(t));
-
-  if (ms.length) ms.forEach(ch => el.sportDiv.appendChild(createWrapper(ch)));
-  else el.sportDiv.innerHTML = '<p style="color:var(--label-3);font-size:12px;padding:8px 4px;">No results</p>';
-
-  if (mg.length) mg.forEach(ch => el.generalDiv.appendChild(createWrapper(ch)));
-  else el.generalDiv.innerHTML = '<p style="color:var(--label-3);font-size:12px;padding:8px 4px;">No results</p>';
+  // Show/hide individual wrappers without re-creating them
+  el.sportRow.querySelectorAll('.channel-wrapper').forEach(w => {
+    const name = w.querySelector('.channel-btn').textContent.toLowerCase();
+    w.style.display = name.includes(t) ? '' : 'none';
+  });
+  el.generalRow.querySelectorAll('.channel-wrapper').forEach(w => {
+    const name = w.querySelector('.channel-btn').textContent.toLowerCase();
+    w.style.display = name.includes(t) ? '' : 'none';
+  });
 
   setTimeout(() => utils.adjustPlayer(), 80);
 }
 
+// ── Gestures ──────────────────────────────────────────────────
 function initGestures() {
   let sx = 0, sy = 0;
-  el.playerContainer.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; });
+  el.playerContainer.addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+  });
   el.playerContainer.addEventListener('touchend', e => {
-    const dx = sx - e.changedTouches[0].clientX, dy = sy - e.changedTouches[0].clientY;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 80) dx > 0 ? stream.next() : stream.prev();
+    const dx = sx - e.changedTouches[0].clientX;
+    const dy = sy - e.changedTouches[0].clientY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 80) {
+      dx > 0 ? stream.next() : stream.prev();
+    }
     const now = Date.now();
-    if (now - state.lastTap < 280 && now - state.lastTap > 0) { stream.toggleFullscreen(); e.preventDefault(); }
+    if (now - state.lastTap < 280 && now - state.lastTap > 0) {
+      stream.toggleFullscreen();
+      e.preventDefault();
+    }
     state.lastTap = now;
   });
   el.playerContainer.addEventListener('dblclick', () => stream.toggleFullscreen());
 }
 
+// ── Keyboard ──────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   const k = e.key;
-  if (k === 'f' || k === 'F')       { e.preventDefault(); stream.toggleFullscreen(); }
-  else if (k === 'ArrowRight')      { e.preventDefault(); stream.next(); }
-  else if (k === 'ArrowLeft')       { e.preventDefault(); stream.prev(); }
-  else if (k === 'r' || k === 'R')  { e.preventDefault(); stream.refresh(); }
-  else if (k === 'Escape') { if (state.isMobileFullscreen) stream.exitMobileFS(); else document.exitFullscreen?.() || document.webkitExitFullscreen?.(); }
+  if      (k === 'f' || k === 'F')      { e.preventDefault(); stream.toggleFullscreen(); }
+  else if (k === 'ArrowRight')          { e.preventDefault(); stream.next(); }
+  else if (k === 'ArrowLeft')           { e.preventDefault(); stream.prev(); }
+  else if (k === 'r' || k === 'R')      { e.preventDefault(); stream.refresh(); }
+  else if (k === 'Escape') {
+    if (state.isMobileFullscreen) stream.exitMobileFS();
+    else if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  }
 });
 
+// ── Init ──────────────────────────────────────────────────────
 function init() {
-  // Populate element references now that the DOM is ready
-  el.sportDiv        = document.getElementById("channels-sport");
-  el.generalDiv      = document.getElementById("channels-general");
-  el.sectionSport    = document.getElementById("section-sport");
-  el.sectionGeneral  = document.getElementById("section-general");
-  el.searchBox       = document.getElementById("search-box");
-  el.statusLabel     = document.getElementById("status-label");
-  el.player          = document.getElementById("player");
-  el.loading         = document.getElementById("loading");
-  el.errorMsg        = document.getElementById("error-msg");
-  el.reconnectInfo   = document.getElementById("reconnect-info");
-  el.fullscreenBtn   = document.getElementById("fullscreen-btn");
-  el.refreshBtn      = document.getElementById("refresh-btn");
-  el.toast           = document.getElementById("toast");
-  el.logoutBtn       = document.getElementById("logout-btn");
-  el.playerContainer = document.getElementById("player-container");
-  el.mobileExit      = document.getElementById("mobile-exit-fullscreen");
-  el.toggleHeaderBtn = document.getElementById("toggle-header-btn");
-  el.header          = document.getElementById("header");
-  el.catTabs         = document.querySelectorAll(".cat-tab");
-
+  // 1. Render all channel buttons into the DOM (permanent)
   renderAll();
+
+  // 2. Set default tab
   setActiveTab('sport');
   utils.adjustPlayer();
+
   window.addEventListener('resize', utils.debounce(utils.adjustPlayer, 120));
   initGestures();
   if (utils.isMobile()) el.toggleHeaderBtn.classList.add('show');
 
+  // 3. Restore last channel
   const lastId = utils.load(CONFIG.LAST_CHANNEL_KEY);
-  const def    = lastId ? (allChannels.find(c => c.id == lastId) || allChannels[0]) : allChannels[0];
-  if (def.category === 'general') setActiveTab('general');
-  const defW = document.querySelector(`[data-channel-id="${def.id}"]`);
-  if (defW) stream.play(def.id, defW, def.name, def.category);
+  const defCh  = (lastId && allChannels.find(c => c.id === lastId)) || allChannels[0];
+  stream.play(defCh);
 
+  // 4. Tab clicks
   el.catTabs.forEach(tab => tab.addEventListener('click', () => {
-    if (el.searchBox.value.trim() === '') setActiveTab(tab.dataset.cat);
+    // Ignore tab clicks while search is active
+    if (!el.searchBox.value.trim()) setActiveTab(tab.dataset.cat);
   }));
 
+  // 5. Search
   el.searchBox.addEventListener('input', utils.debounce(e => filterChannels(e.target.value), CONFIG.DEBOUNCE_DELAY));
+
+  // 6. Controls
   el.refreshBtn.addEventListener('click', () => stream.refresh());
   el.fullscreenBtn.addEventListener('click', () => stream.toggleFullscreen());
   el.logoutBtn.addEventListener('click', () => {
-    if (confirm('Sign out?')) { document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Secure; SameSite=Strict'; window.location.href = '/'; }
+    if (confirm('Sign out?')) {
+      document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Secure; SameSite=Strict';
+      window.location.href = '/';
+    }
   });
   el.mobileExit.addEventListener('click', () => stream.exitMobileFS());
   el.toggleHeaderBtn.addEventListener('click', () => {
@@ -750,17 +836,24 @@ function init() {
     el.header.classList.toggle('collapsed', state.headerCollapsed);
   });
 
-  ['fullscreenchange','webkitfullscreenchange'].forEach(ev => {
+  // 7. Fullscreen change events
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => {
     document.addEventListener(ev, () => {
-      el.fullscreenBtn.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? 'Exit Full Screen' : 'Full Screen';
+      el.fullscreenBtn.textContent =
+        (document.fullscreenElement || document.webkitFullscreenElement)
+          ? 'Exit Full Screen' : 'Full Screen';
     });
   });
 
+  // 8. Player load/error
   el.player.addEventListener('load',  () => { stream.hideLoading(); reconnect.reset(); });
   el.player.addEventListener('error', () => reconnect.start());
 
+  // 9. Prevent body scroll on touch
   document.addEventListener('touchmove', e => {
-    if (e.target.closest('#channels-sport') || e.target.closest('#channels-general') || e.target.closest('#header')) return;
+    if (e.target.closest('#channels-sport')) return;
+    if (e.target.closest('#channels-general')) return;
+    if (e.target.closest('#header')) return;
     if (e.target.closest('#player-container')) return;
     e.preventDefault();
   }, { passive: false });
@@ -769,7 +862,9 @@ function init() {
   window.addEventListener('offline', () => utils.toast('No Connection'));
 }
 
-document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
+document.readyState === 'loading'
+  ? document.addEventListener('DOMContentLoaded', init)
+  : init();
 </script>
 </body>
 </html>
