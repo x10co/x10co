@@ -34,7 +34,13 @@
       --blur: saturate(180%) blur(20px);
     }
 
-    html { height: -webkit-fill-available; }
+    html {
+      height: -webkit-fill-available;
+      min-height: -webkit-fill-available;
+      /* Prevent iOS Safari text size adjustment after orientation change */
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
 
     body {
       background: var(--bg);
@@ -59,6 +65,10 @@
       overflow-y: auto;
       scrollbar-width: none;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      /* Force GPU compositing — fixes Safari iOS fixed element repaint on scroll/bounce */
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      will-change: transform;
     }
     #header::-webkit-scrollbar { display: none; }
     #header.collapsed { transform: translateY(-100%); }
@@ -108,13 +118,19 @@
       border-radius: var(--radius-sm);
       color: var(--label);
       font-family: var(--font);
-      font-size: 13px;
-      width: 160px;
+      /* 16px minimum prevents Safari iOS auto-zoom on focus */
+      font-size: 16px;
+      /* Scale back visually to match the design's 13px intent */
+      transform: scale(0.8125);
+      transform-origin: left center;
+      /* Compensate for scale shrinking the layout width */
+      width: 197px;
+      margin-right: -36px;
       outline: none;
       transition: width 0.2s ease, background 0.15s;
       -webkit-appearance: none;
     }
-    input[type="search"]:focus { background: rgba(58,58,60,0.6); width: 200px; }
+    input[type="search"]:focus { background: rgba(58,58,60,0.6); width: 246px; }
     input[type="search"]::placeholder { color: var(--label-3); }
 
     .btn {
@@ -239,8 +255,12 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(235,235,245,0.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 7px center;
+      /* iOS Safari: prevent native blue tint on select */
+      -webkit-tap-highlight-color: transparent;
     }
     .folder-selector:hover { color: var(--label); }
+    /* iOS Safari renders option text in its own native picker — ensure legibility */
+    .folder-selector option { background: #1c1c1e; color: #ffffff; }
 
     #player-container {
       position: fixed;
@@ -248,6 +268,9 @@
       width: 100%; height: 100vh;
       background: #000;
       z-index: 1;
+      /* GPU compositing for Safari iOS — prevents flicker under fixed header */
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
     }
     #player-container.mobile-fullscreen { z-index: 999999 !important; }
 
@@ -358,8 +381,9 @@
     @media (max-width: 768px) {
       #header { padding: 10px 12px 8px; }
       .header-top { gap: 8px; }
-      input[type="search"]       { width: 120px; }
-      input[type="search"]:focus { width: 150px; }
+      /* Scale compensated widths: visual 120px = 120/0.8125 = ~148px, focused 150px = ~185px */
+      input[type="search"]       { width: 148px; margin-right: -28px; }
+      input[type="search"]:focus { width: 185px; }
       .channel-wrapper { min-width: 100px; max-width: 100px; }
       .channel-btn     { font-size: 11px; padding: 7px 8px; }
     }
@@ -418,6 +442,8 @@
       allowfullscreen
       allow="autoplay; fullscreen; picture-in-picture"
       sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
+      playsinline
+      webkit-playsinline
       title="Stream player">
     </iframe>
 
@@ -811,10 +837,11 @@ function filterChannels(term) {
 // ── Gestures ──────────────────────────────────────────────────
 function initGestures() {
   var sx = 0, sy = 0;
+  // passive: true on touchstart — we never call preventDefault here, Safari benefits from the hint
   el.playerContainer.addEventListener('touchstart', function(e) {
     sx = e.touches[0].clientX;
     sy = e.touches[0].clientY;
-  });
+  }, { passive: true });
   el.playerContainer.addEventListener('touchend', function(e) {
     var dx = sx - e.changedTouches[0].clientX;
     var dy = sy - e.changedTouches[0].clientY;
