@@ -505,27 +505,7 @@ const generalChannels = [
 const allChannels = [...sportChannels, ...generalChannels];
 const folders = ["player", "stream", "watch", "cast", "casting", "plus"];
 
-const el = {
-  sportDiv:        document.getElementById("channels-sport"),
-  generalDiv:      document.getElementById("channels-general"),
-  sectionSport:    document.getElementById("section-sport"),
-  sectionGeneral:  document.getElementById("section-general"),
-  searchBox:       document.getElementById("search-box"),
-  statusLabel:     document.getElementById("status-label"),
-  player:          document.getElementById("player"),
-  loading:         document.getElementById("loading"),
-  errorMsg:        document.getElementById("error-msg"),
-  reconnectInfo:   document.getElementById("reconnect-info"),
-  fullscreenBtn:   document.getElementById("fullscreen-btn"),
-  refreshBtn:      document.getElementById("refresh-btn"),
-  toast:           document.getElementById("toast"),
-  logoutBtn:       document.getElementById("logout-btn"),
-  playerContainer: document.getElementById("player-container"),
-  mobileExit:      document.getElementById("mobile-exit-fullscreen"),
-  toggleHeaderBtn: document.getElementById("toggle-header-btn"),
-  header:          document.getElementById("header"),
-  catTabs:         document.querySelectorAll(".cat-tab")
-};
+const el = {};
 
 const state = {
   currentBtn: null, currentChannelId: null,
@@ -720,6 +700,27 @@ document.addEventListener('keydown', e => {
 });
 
 function init() {
+  // Populate element references now that the DOM is ready
+  el.sportDiv        = document.getElementById("channels-sport");
+  el.generalDiv      = document.getElementById("channels-general");
+  el.sectionSport    = document.getElementById("section-sport");
+  el.sectionGeneral  = document.getElementById("section-general");
+  el.searchBox       = document.getElementById("search-box");
+  el.statusLabel     = document.getElementById("status-label");
+  el.player          = document.getElementById("player");
+  el.loading         = document.getElementById("loading");
+  el.errorMsg        = document.getElementById("error-msg");
+  el.reconnectInfo   = document.getElementById("reconnect-info");
+  el.fullscreenBtn   = document.getElementById("fullscreen-btn");
+  el.refreshBtn      = document.getElementById("refresh-btn");
+  el.toast           = document.getElementById("toast");
+  el.logoutBtn       = document.getElementById("logout-btn");
+  el.playerContainer = document.getElementById("player-container");
+  el.mobileExit      = document.getElementById("mobile-exit-fullscreen");
+  el.toggleHeaderBtn = document.getElementById("toggle-header-btn");
+  el.header          = document.getElementById("header");
+  el.catTabs         = document.querySelectorAll(".cat-tab");
+
   renderAll();
   setActiveTab('sport');
   utils.adjustPlayer();
