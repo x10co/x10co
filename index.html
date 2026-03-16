@@ -457,17 +457,10 @@
 // Each function uses its own scope; the security IIFE is fully wrapped in try/catch.
 
 (function() {
-  // Security hardening — all inside try/catch so Brave shields can't break the rest
-  try { window.open = function() { return null; }; } catch(e) {}
+  // Block opener access — prevents streams from hijacking the parent page
   try { Object.defineProperty(window, 'opener', { get: function() { return null; }, set: function() {}, configurable: false }); } catch(e) {}
-  try {
-    var _lb = 0;
-    window.addEventListener('blur', function() {
-      var n = Date.now();
-      if (n - _lb < 1000) { setTimeout(function() { window.focus(); }, 1); }
-      _lb = n;
-    });
-  } catch(e) {}
+
+  // Block external link navigation from within the page
   try {
     document.addEventListener('click', function(e) {
       var a = e.target.closest('a');
@@ -476,21 +469,21 @@
       }
     }, true);
   } catch(e) {}
+
+  // Block right-click on the iframe
   try {
     document.addEventListener('contextmenu', function(e) {
       if (e.target.tagName === 'IFRAME') e.preventDefault();
     });
   } catch(e) {}
-  try {
-    var obs = new MutationObserver(function(mutations) {
-      mutations.forEach(function(x) {
-        x.addedNodes.forEach(function(n) {
-          if (n.tagName === 'IFRAME' && n.id !== 'player') n.remove();
-        });
-      });
-    });
-    if (document.body) obs.observe(document.body, { childList: true, subtree: true });
-  } catch(e) {}
+
+  // NOTE: Intentionally removed:
+  // 1. window.open override — dlhd.link players use window.open internally during init;
+  //    returning null breaks them silently on macOS Safari (mobile uses a different path).
+  // 2. window blur → window.focus() — on macOS Safari this creates a focus-steal loop
+  //    when the iframe loads, preventing the stream player from initialising.
+  // 3. MutationObserver removing added iframes — stream players inject sub-iframes
+  //    (player/DRM/ad) and removing them breaks initialisation on desktop Safari.
 })();
 
 var CONFIG = {
