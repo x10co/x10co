@@ -440,7 +440,6 @@ body{
     </div>
   </div>
 
-  <!-- ↓ sandbox added: blocks popups/redirects; streams load via /proxy so they never see it -->
   <iframe id="player"
     sandbox="allow-scripts allow-same-origin allow-presentation allow-popups-to-escape-sandbox"
     allowfullscreen
@@ -578,9 +577,6 @@ function recall(k){
   try{ var v=localStorage.getItem(k); return v!==null?JSON.parse(v):null; }catch(_){ return null; }
 }
 
-// ↓ CHANGED: routes through Cloudflare Worker proxy instead of directly to dlhd.link
-function url(id, folder){ return '/proxy?id='+id+'&folder='+folder; }
-
 function syncLayout(){
   if(!S.mobileFS){
     D.stage.style.paddingTop = D.hdr.offsetHeight+'px';
@@ -623,11 +619,33 @@ function rcStart(){
   RC.n++;
   D.reconnMsg.textContent = 'Reconnecting\u2026 ('+RC.n+' / '+CFG.RECONNECT_MAX+')';
   toast('Reconnecting\u2026 '+RC.n+'/'+CFG.RECONNECT_MAX);
-  RC.t = setTimeout(streamRefresh, CFG.RECONNECT_WAIT);
+  RC.t = setTimeout(function(){
+    var card = document.querySelector('.ch-card[data-id="'+S.chId+'"]');
+    var sel  = card ? card.querySelector('select') : null;
+    loadStream(S.chId, sel ? sel.value : FOLDERS[0]);
+  }, CFG.RECONNECT_WAIT);
 }
 function rcReset(){
   RC.n = 0; clearTimeout(RC.t);
   D.reconnMsg.textContent = '';
+}
+
+// ─── Fetch stream via proxy → inject into iframe srcdoc ───────────
+// credentials:'same-origin' sends the auth cookie so the worker
+// does not return 401 Unauthorized.
+function loadStream(id, folder){
+  if(!id) return;
+  showLoad();
+  fetch('/proxy?id='+id+'&folder='+folder, { credentials:'same-origin' })
+    .then(function(res){
+      if(!res.ok){ rcStart(); return null; }
+      return res.text();
+    })
+    .then(function(html){
+      if(!html) return;
+      D.player.srcdoc = html;
+    })
+    .catch(function(){ rcStart(); });
 }
 
 // ─── Tab switching ─────────────────────────────────────────────────
@@ -675,7 +693,7 @@ function makeCard(ch){
   src.addEventListener('change', (function(c){ return function(e){
     e.stopPropagation();
     store('src_'+c.id, e.target.value);
-    if(S.chId===c.id){ D.player.src = url(c.id, e.target.value); }
+    if(S.chId===c.id){ loadStream(c.id, e.target.value); }
   }; })(ch));
 
   card.appendChild(btn);
@@ -717,7 +735,7 @@ function filterSearch(term){
 
 // ─── Playback ──────────────────────────────────────────────────────
 function play(ch){
-  showLoad(); rcReset();
+  rcReset();
 
   if(S.chId !== null){
     var old = document.querySelector('.ch-card[data-id="'+S.chId+'"] .ch-btn');
@@ -736,17 +754,18 @@ function play(ch){
 
   D.nowLabel.textContent = ch.name;
   var sel = card ? card.querySelector('select') : null;
-  D.player.src = url(ch.id, sel ? sel.value : FOLDERS[0]);
+  var folder = sel ? sel.value : FOLDERS[0];
+
+  loadStream(ch.id, folder);
   store(CFG.LAST_CH, ch.id);
   toast(ch.name);
 }
 
 function streamRefresh(){
-  if(!D.player.src) return;
-  showLoad();
-  var s = D.player.src;
-  D.player.src = '';
-  setTimeout(function(){ D.player.src = s; }, 100);
+  if(S.chId === null) return;
+  var card = document.querySelector('.ch-card[data-id="'+S.chId+'"]');
+  var sel  = card ? card.querySelector('select') : null;
+  loadStream(S.chId, sel ? sel.value : FOLDERS[0]);
   toast('Refreshing\u2026');
 }
 
@@ -918,6 +937,7 @@ function init(){
     });
   });
 
+  // srcdoc loads fire the load event just like src does
   D.player.addEventListener('load',  function(){ hideLoad(); rcReset(); });
   D.player.addEventListener('error', function(){ rcStart(); });
 
