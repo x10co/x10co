@@ -10,989 +10,682 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
 <style>
-/* ─── Reset & Tokens ────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
 :root{
-  --c-bg:          #000;
-  --c-glass:       rgba(18,18,20,.82);
-  --c-glass-hover: rgba(38,38,42,.9);
-  --c-fill:        rgba(255,255,255,.07);
-  --c-fill-hover:  rgba(255,255,255,.11);
-  --c-border:      rgba(255,255,255,.08);
-  --c-text:        #fff;
-  --c-text-2:      rgba(235,235,245,.55);
-  --c-text-3:      rgba(235,235,245,.28);
-  --c-blue:        #0a84ff;
-  --c-green:       #32d74b;
-  --c-red:         #ff453a;
-  --blur:          saturate(200%) blur(24px);
-  --r:             9px;
-  --r-pill:        100px;
-  --font:          -apple-system,"SF Pro Text","SF Pro Display","Helvetica Neue",sans-serif;
-  --ease-out:      cubic-bezier(.25,.46,.45,.94);
-  --ease-spring:   cubic-bezier(.34,1.56,.64,1);
+  --c-bg:    #000;
+  --c-glass: rgba(18,18,20,.82);
+  --c-fill:  rgba(255,255,255,.07);
+  --c-fillh: rgba(255,255,255,.11);
+  --c-bdr:   rgba(255,255,255,.08);
+  --c-txt:   #fff;
+  --c-txt2:  rgba(235,235,245,.55);
+  --c-txt3:  rgba(235,235,245,.28);
+  --c-blue:  #0a84ff;
+  --c-green: #32d74b;
+  --c-red:   #ff453a;
+  --blur:    saturate(200%) blur(24px);
+  --r:       9px;
+  --pill:    100px;
+  --font:    -apple-system,"SF Pro Text","SF Pro Display","Helvetica Neue",sans-serif;
+  --eout:    cubic-bezier(.25,.46,.45,.94);
+  --espring: cubic-bezier(.34,1.56,.64,1);
 }
 
-/* ─── Base ──────────────────────────────────────────────────────── */
-html{
-  height:-webkit-fill-available;
-  -webkit-text-size-adjust:100%;
-  text-size-adjust:100%;
-}
+html{height:-webkit-fill-available;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
-  font-family:var(--font);
-  background:var(--c-bg);
-  color:var(--c-text);
-  -webkit-font-smoothing:antialiased;
-  overflow:hidden;
-  height:100vh;
-  height:-webkit-fill-available;
-  /* block any rubber-band bounce from accidentally revealing underlying page */
-  overscroll-behavior:none;
+  font-family:var(--font);background:var(--c-bg);color:var(--c-txt);
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+  height:100vh;height:-webkit-fill-available;overscroll-behavior:none;
 }
 
-/* ─── Header ────────────────────────────────────────────────────── */
+/* ── Header ── */
 #hdr{
-  position:fixed;
-  inset:0 0 auto 0;
-  z-index:200;
-  background:var(--c-glass);
-  backdrop-filter:var(--blur);
-  -webkit-backdrop-filter:var(--blur);
-  border-bottom:.5px solid var(--c-border);
-  padding:10px 16px 0;
-  /* GPU layer — prevents Safari iOS repaint flicker */
-  transform:translateZ(0);
-  will-change:transform;
-  transition:transform .32s var(--ease-out);
+  position:fixed;inset:0 0 auto 0;z-index:200;
+  background:var(--c-glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border-bottom:.5px solid var(--c-bdr);padding:10px 16px 0;
+  transform:translateZ(0);will-change:transform;
+  transition:transform .32s var(--eout);
 }
 #hdr.off{transform:translateY(-110%)}
 
-/* top bar */
-.top-bar{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-bottom:10px;
-}
+.top-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 
 #now-label{
-  flex:1;
-  font-size:15px;
-  font-weight:600;
-  letter-spacing:-.3px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  flex:1;font-size:15px;font-weight:600;letter-spacing:-.3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 
-.controls{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  flex-shrink:0;
-}
+.controls{display:flex;align-items:center;gap:6px;flex-shrink:0}
 
-/* Search input — 16px font prevents iOS Safari auto-zoom, scaled back visually */
-.search-wrap{position:relative;display:flex;align-items:center}
-.search-wrap::before{
-  content:'';
-  position:absolute;
-  left:9px;
-  width:13px;height:13px;
-  background:var(--c-text-3);
-  pointer-events:none;
-  z-index:1;
+/* Search — 16px prevents iOS Safari auto-zoom */
+.sw{position:relative;display:flex;align-items:center}
+.sw::before{
+  content:'';position:absolute;left:9px;width:13px;height:13px;
+  background:var(--c-txt3);pointer-events:none;z-index:1;
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' fill='none' stroke='white' stroke-width='2.2'/%3E%3Cpath d='M16.5 16.5L22 22' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' fill='none' stroke='white' stroke-width='2.2'/%3E%3Cpath d='M16.5 16.5L22 22' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
 }
 #search{
-  font-size:16px; /* ← must stay ≥16px on iOS */
-  transform:scale(.8125);
-  transform-origin:left center;
-  width:197px;
-  margin-right:-36px;
-  padding:7px 10px 7px 28px;
-  background:var(--c-fill);
-  border:none;
-  border-radius:var(--r);
-  color:var(--c-text);
-  font-family:var(--font);
-  outline:none;
-  -webkit-appearance:none;
-  transition:width .2s var(--ease-out),background .15s;
+  font-size:16px;transform:scale(.8125);transform-origin:left center;
+  width:197px;margin-right:-36px;padding:7px 10px 7px 28px;
+  background:var(--c-fill);border:none;border-radius:var(--r);
+  color:var(--c-txt);font-family:var(--font);outline:none;-webkit-appearance:none;
+  transition:width .2s var(--eout),background .15s;
 }
 #search:focus{background:rgba(255,255,255,.1);width:246px}
-#search::placeholder{color:var(--c-text-3)}
+#search::placeholder{color:var(--c-txt3)}
 
-/* Buttons */
 .btn{
-  padding:6px 13px;
-  background:var(--c-fill);
-  color:var(--c-blue);
-  border:none;
-  border-radius:var(--r);
-  font-size:13px;
-  font-weight:500;
-  font-family:var(--font);
-  letter-spacing:-.1px;
-  cursor:pointer;
-  white-space:nowrap;
-  -webkit-user-select:none;user-select:none;
+  padding:6px 13px;background:var(--c-fill);color:var(--c-blue);
+  border:none;border-radius:var(--r);font-size:13px;font-weight:500;
+  font-family:var(--font);letter-spacing:-.1px;cursor:pointer;
+  white-space:nowrap;-webkit-user-select:none;user-select:none;
   transition:background .12s,opacity .12s;
 }
-.btn:hover{background:var(--c-fill-hover)}
-.btn:active{opacity:.55}
-#btn-signout{color:var(--c-text-2)}
+.btn:hover{background:var(--c-fillh)}.btn:active{opacity:.55}
+#btn-out{color:var(--c-txt2)}
 
-/* ─── Category Tabs ─────────────────────────────────────────────── */
-.tabs{
-  display:flex;
-  gap:5px;
-  margin-bottom:9px;
-}
+/* ── Tabs ── */
+.tabs{display:flex;gap:5px;margin-bottom:9px}
 .tab{
-  padding:5px 15px;
-  border:none;
-  border-radius:var(--r-pill);
-  background:var(--c-fill);
-  color:var(--c-text-2);
-  font-size:12px;
-  font-weight:600;
-  font-family:var(--font);
-  letter-spacing:-.1px;
-  cursor:pointer;
-  -webkit-user-select:none;user-select:none;
+  padding:5px 15px;border:none;border-radius:var(--pill);
+  background:var(--c-fill);color:var(--c-txt2);
+  font-size:12px;font-weight:600;font-family:var(--font);letter-spacing:-.1px;
+  cursor:pointer;-webkit-user-select:none;user-select:none;
   transition:background .15s,color .15s,transform .1s;
 }
 .tab:active{transform:scale(.96)}
 .tab.sport  {background:var(--c-blue);color:#fff}
 .tab.general{background:var(--c-green);color:#000}
 
-/* ─── Channel Rows ──────────────────────────────────────────────── */
-.ch-section{display:none}
-.ch-section.on{display:block}
-
-.ch-row{
-  display:flex;
-  gap:6px;
-  overflow-x:auto;
-  overflow-y:hidden;
-  padding:2px 0 9px;
-  -webkit-overflow-scrolling:touch;
-  touch-action:pan-x;
-  /* thin visible scrollbar */
-  scrollbar-width:thin;
-  scrollbar-color:rgba(255,255,255,.18) transparent;
+/* ── Channel rows ── */
+.sec{display:none}.sec.on{display:block}
+.row{
+  display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;
+  padding:2px 0 9px;-webkit-overflow-scrolling:touch;touch-action:pan-x;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;
 }
-.ch-row::-webkit-scrollbar{height:3px}
-.ch-row::-webkit-scrollbar-track{background:transparent}
-.ch-row::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:2px}
-.ch-row::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.35)}
+.row::-webkit-scrollbar{height:3px}
+.row::-webkit-scrollbar-track{background:transparent}
+.row::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:2px}
+.row::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.35)}
 
-.ch-card{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  flex-shrink:0;
-  width:112px;
+.card{display:flex;flex-direction:column;gap:4px;flex-shrink:0;width:112px}
+
+.cbtn{
+  padding:8px 10px;background:var(--c-fill);color:var(--c-txt);
+  border:none;border-radius:var(--r);font-size:12px;font-weight:500;
+  font-family:var(--font);letter-spacing:-.1px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;text-align:left;cursor:pointer;
+  -webkit-user-select:none;user-select:none;transition:background .12s,transform .1s;
 }
+.cbtn:hover{background:var(--c-fillh)}.cbtn:active{transform:scale(.96);opacity:.75}
+.cbtn.sport  {background:var(--c-blue);color:#fff;font-weight:600}
+.cbtn.general{background:var(--c-green);color:#000;font-weight:600}
 
-.ch-btn{
-  padding:8px 10px;
-  background:var(--c-fill);
-  color:var(--c-text);
-  border:none;
-  border-radius:var(--r);
-  font-size:12px;
-  font-weight:500;
-  font-family:var(--font);
-  letter-spacing:-.1px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  text-align:left;
-  cursor:pointer;
-  -webkit-user-select:none;user-select:none;
-  transition:background .12s,transform .1s;
-}
-.ch-btn:hover{background:var(--c-fill-hover)}
-.ch-btn:active{transform:scale(.96);opacity:.75}
-.ch-btn.sport  {background:var(--c-blue);color:#fff;font-weight:600}
-.ch-btn.general{background:var(--c-green);color:#000;font-weight:600}
-
-/* Source selector */
-.ch-src{
-  padding:4px 22px 4px 8px;
-  background:var(--c-fill);
-  border:none;
-  border-radius:6px;
-  color:var(--c-text-2);
-  font-family:var(--font);
-  font-size:11px;
-  cursor:pointer;
-  width:100%;
-  outline:none;
-  -webkit-appearance:none;appearance:none;
+.csrc{
+  padding:4px 22px 4px 8px;background:var(--c-fill);border:none;border-radius:6px;
+  color:var(--c-txt2);font-family:var(--font);font-size:11px;cursor:pointer;
+  width:100%;outline:none;-webkit-appearance:none;appearance:none;
   -webkit-tap-highlight-color:transparent;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(235,235,245,.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 7px center;
+  background-repeat:no-repeat;background-position:right 7px center;
 }
-.ch-src:hover{color:var(--c-text)}
-.ch-src option{background:#1c1c1e;color:#fff}
+.csrc:hover{color:var(--c-txt)}.csrc option{background:#1c1c1e;color:#fff}
 
-/* ─── Player Container ──────────────────────────────────────────── */
+/* ── Stage / Player ── */
 #stage{
-  position:fixed;
-  inset:0;
-  background:#000;
-  z-index:1;
-  transform:translateZ(0); /* GPU layer — Safari iOS flicker fix */
+  position:fixed;inset:0;background:#000;z-index:1;
+  transform:translateZ(0);
 }
-#stage.fullscreen{z-index:9999!important}
+#stage.fs{z-index:9999!important}
+#player{width:100%;height:100%;border:none;display:block}
 
-#player{
-  width:100%;height:100%;
-  border:none;display:block;
+/* ── Overlays ── */
+.ov{
+  position:absolute;inset:0;display:none;
+  align-items:center;justify-content:center;z-index:10;
 }
-
-/* ─── Overlays ──────────────────────────────────────────────────── */
-.overlay{
-  position:absolute;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
+.ov.on{display:flex}
+.ovc{
+  background:var(--c-glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:.5px solid var(--c-bdr);border-radius:18px;
+  padding:28px 36px;text-align:center;min-width:180px;
 }
-.overlay.on{display:flex}
-
-.overlay-card{
-  background:var(--c-glass);
-  backdrop-filter:var(--blur);
-  -webkit-backdrop-filter:var(--blur);
-  border:.5px solid var(--c-border);
-  border-radius:18px;
-  padding:28px 36px;
-  text-align:center;
-  min-width:180px;
-}
-
-/* Spinner */
 .spin{
-  width:26px;height:26px;
-  border:2.5px solid rgba(255,255,255,.12);
-  border-top-color:var(--c-blue);
-  border-radius:50%;
-  animation:spin .7s linear infinite;
-  margin:0 auto 14px;
+  width:26px;height:26px;border:2.5px solid rgba(255,255,255,.12);
+  border-top-color:var(--c-blue);border-radius:50%;
+  animation:spin .7s linear infinite;margin:0 auto 14px;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
-
-.overlay-card p{
-  font-size:13px;
-  font-weight:500;
-  color:var(--c-text-2);
-  letter-spacing:-.1px;
-}
-#reconnect-msg{
-  margin-top:7px;
-  font-size:11px;
-  color:var(--c-text-3);
-}
-
-/* Error icon */
-.err-icon{
-  width:36px;height:36px;
-  background:rgba(255,69,58,.15);
-  border-radius:50%;
+.ovc p{font-size:13px;font-weight:500;color:var(--c-txt2);letter-spacing:-.1px}
+#rc-msg{margin-top:7px;font-size:11px;color:var(--c-txt3)}
+.eico{
+  width:36px;height:36px;background:rgba(255,69,58,.15);border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  margin:0 auto 12px;
-  font-size:17px;
-  font-weight:700;
-  color:var(--c-red);
-  line-height:1;
+  margin:0 auto 12px;font-size:17px;font-weight:700;color:var(--c-red);line-height:1;
 }
 
-/* ─── Toast ─────────────────────────────────────────────────────── */
+/* ── Toast ── */
 #toast{
-  position:fixed;
-  bottom:24px;
-  left:50%;
+  position:fixed;bottom:24px;left:50%;
   transform:translateX(-50%) translateY(16px);
-  background:var(--c-glass);
-  backdrop-filter:var(--blur);
-  -webkit-backdrop-filter:var(--blur);
-  border:.5px solid var(--c-border);
-  color:var(--c-text);
-  padding:9px 20px;
-  border-radius:var(--r-pill);
-  font-size:13px;
-  font-weight:500;
-  font-family:var(--font);
-  letter-spacing:-.1px;
-  z-index:9000;
-  opacity:0;
-  pointer-events:none;
-  white-space:nowrap;
-  max-width:82vw;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  transition:opacity .18s,transform .22s var(--ease-spring);
+  background:var(--c-glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:.5px solid var(--c-bdr);color:var(--c-txt);padding:9px 20px;
+  border-radius:var(--pill);font-size:13px;font-weight:500;font-family:var(--font);
+  letter-spacing:-.1px;z-index:9000;opacity:0;pointer-events:none;
+  white-space:nowrap;max-width:82vw;overflow:hidden;text-overflow:ellipsis;
+  transition:opacity .18s,transform .22s var(--espring);
 }
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ─── Floating Buttons ──────────────────────────────────────────── */
-#btn-exit-fs,#btn-channels{
-  display:none;
-  position:fixed;
-  z-index:10000;
-  background:var(--c-glass);
-  backdrop-filter:var(--blur);
-  -webkit-backdrop-filter:var(--blur);
-  border:.5px solid var(--c-border);
-  color:var(--c-text);
-  font-family:var(--font);
-  font-size:13px;
-  font-weight:600;
-  cursor:pointer;
-  border-radius:14px;
-  padding:8px 16px;
+/* ── Floating buttons ── */
+#btn-xfs,#btn-chs{
+  display:none;position:fixed;z-index:10000;
+  background:var(--c-glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:.5px solid var(--c-bdr);font-family:var(--font);
+  font-size:13px;font-weight:600;cursor:pointer;border-radius:14px;padding:8px 16px;
 }
-#btn-exit-fs{
-  top:max(12px,env(safe-area-inset-top));
-  right:16px;
-}
-#btn-channels{
-  top:max(12px,env(safe-area-inset-top));
-  left:16px;
-  color:var(--c-blue);
-}
-#btn-exit-fs.on,#btn-channels.on{display:block}
+#btn-xfs{top:max(12px,env(safe-area-inset-top));right:16px;color:var(--c-txt)}
+#btn-chs{top:max(12px,env(safe-area-inset-top));left:16px;color:var(--c-blue)}
+#btn-xfs.on,#btn-chs.on{display:block}
 
-/* ─── TV / D-pad focus styles ───────────────────────────────────── */
-@media (hover:none) and (pointer:coarse){
-  /* Already handled via :active states */
-}
-.ch-btn:focus-visible,.btn:focus-visible,.tab:focus-visible{
-  outline:2px solid var(--c-blue);
-  outline-offset:2px;
-}
+/* ── Focus (TV/keyboard) ── */
+.cbtn:focus-visible,.btn:focus-visible,.tab:focus-visible{outline:2px solid var(--c-blue);outline-offset:2px}
 
-/* ─── Responsive ────────────────────────────────────────────────── */
+/* ── Responsive ── */
 @media(max-width:768px){
-  #hdr{padding:10px 12px 0}
-  .top-bar{gap:6px}
+  #hdr{padding:10px 12px 0}.top-bar{gap:6px}
   #search{width:148px;margin-right:-28px}
   #search:focus{width:185px}
-  .ch-card{width:100px}
-  .ch-btn{font-size:11px;padding:7px 8px}
+  .card{width:100px}.cbtn{font-size:11px;padding:7px 8px}
 }
 @media(max-width:768px) and (orientation:landscape){
-  .ch-card{width:88px}
-  .ch-btn{font-size:10px;padding:6px 7px}
+  .card{width:88px}.cbtn{font-size:10px;padding:6px 7px}
 }
-/* PWA safe areas */
 @media(display-mode:standalone){
   #hdr{padding-top:max(10px,env(safe-area-inset-top))}
   body{padding-bottom:env(safe-area-inset-bottom)}
 }
-/* TV / large screen — bigger tap targets, no hover jank */
 @media(min-width:1280px){
-  .ch-card{width:128px}
-  .ch-btn{font-size:13px;padding:9px 12px}
+  .card{width:128px}.cbtn{font-size:13px;padding:9px 12px}
   .btn{font-size:14px;padding:7px 15px}
 }
 </style>
 </head>
 <body>
 
-<!-- ─── Header ───────────────────────────────────────────────────── -->
 <header id="hdr">
   <div class="top-bar">
     <div id="now-label">Select a Channel</div>
     <div class="controls">
-      <div class="search-wrap">
+      <div class="sw">
         <input id="search" type="search" placeholder="Search" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search channels">
       </div>
-      <button id="btn-refresh"  class="btn">Refresh</button>
-      <button id="btn-fs"       class="btn">Full Screen</button>
-      <button id="btn-signout"  class="btn">Sign Out</button>
+      <button id="btn-ref" class="btn">Refresh</button>
+      <button id="btn-fs"  class="btn">Full Screen</button>
+      <button id="btn-out" class="btn">Sign Out</button>
     </div>
   </div>
-
   <div class="tabs" role="tablist">
-    <button class="tab sport" data-cat="sport"   role="tab" aria-selected="true">Sport</button>
-    <button class="tab"       data-cat="general" role="tab" aria-selected="false">General</button>
+    <button class="tab sport"   data-cat="sport"   role="tab" aria-selected="true">Sport</button>
+    <button class="tab"         data-cat="general" role="tab" aria-selected="false">General</button>
   </div>
-
-  <div id="sec-sport"   class="ch-section on" role="tabpanel">
-    <div id="row-sport"   class="ch-row" role="list" aria-label="Sport channels"></div>
-  </div>
-  <div id="sec-general" class="ch-section" role="tabpanel">
-    <div id="row-general" class="ch-row" role="list" aria-label="General channels"></div>
-  </div>
+  <div id="sec-sport"   class="sec on" role="tabpanel"><div id="row-sport"   class="row" role="list"></div></div>
+  <div id="sec-general" class="sec"    role="tabpanel"><div id="row-general" class="row" role="list"></div></div>
 </header>
 
-<!-- ─── Stage ────────────────────────────────────────────────────── -->
 <main id="stage">
-  <!-- Loading overlay -->
-  <div id="ov-load" class="overlay on" role="status" aria-live="polite">
-    <div class="overlay-card">
-      <div class="spin"></div>
-      <p>Loading</p>
-    </div>
+  <div id="ov-load" class="ov on" role="status" aria-live="polite">
+    <div class="ovc"><div class="spin"></div><p>Loading</p></div>
   </div>
-
-  <!-- Error overlay -->
-  <div id="ov-err" class="overlay" role="alert">
-    <div class="overlay-card">
-      <div class="err-icon">!</div>
+  <div id="ov-err" class="ov" role="alert">
+    <div class="ovc">
+      <div class="eico">!</div>
       <p>Stream Unavailable</p>
-      <div id="reconnect-msg"></div>
+      <div id="rc-msg"></div>
     </div>
   </div>
 
   <iframe id="player"
     allowfullscreen
     allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
-    playsinline
-    webkit-playsinline
-    title="Stream player"
-    loading="eager">
+    playsinline webkit-playsinline
+    title="Stream player">
   </iframe>
 
-  <!-- Floating controls (shown only in mobile fullscreen) -->
-  <button id="btn-exit-fs">&#xD7; &nbsp;Exit Full Screen</button>
-  <button id="btn-channels">Channels</button>
+  <button id="btn-xfs">&#xD7;&nbsp; Exit Full Screen</button>
+  <button id="btn-chs">Channels</button>
 </main>
 
-<!-- Toast -->
 <div id="toast" aria-live="polite"></div>
 
 <script>
-// ─── Security sandbox ──────────────────────────────────────────────
-// All in try/catch — Brave shields etc. can override window properties.
+/* ================================================================
+   POPUP / NAVIGATION BLOCKER
+   Runs before anything else. No sandbox on the iframe — that breaks
+   streams. Instead we intercept every known trick at the JS level.
+   ================================================================ */
 (function(){
-  try{ window.open = function(){ return null; }; }catch(_){}
-  try{ Object.defineProperty(window,'opener',{get:function(){return null;},set:function(){},configurable:false}); }catch(_){}
-  // Kill focus-steal: if the page loses focus within 800ms of gaining it, refocus immediately.
-  var _lf = 0;
+
+  /* 1. window.open → always null, non-writable so streams can't restore it */
+  try{
+    Object.defineProperty(window,'open',{
+      value:function(){return null;},
+      writable:false,configurable:false,enumerable:true
+    });
+  }catch(e){ window.open=function(){return null;}; }
+
+  /* 2. Null the opener reference — kills parent-frame navigation */
+  try{
+    Object.defineProperty(window,'opener',{
+      get:function(){return null;},set:function(){},configurable:false
+    });
+  }catch(e){}
+
+  /* 3. Intercept window.location assignments from injected scripts.
+        Only allow same-origin changes. */
+  var _realLoc = window.location;
+  try{
+    Object.defineProperty(window,'location',{
+      get:function(){ return _realLoc; },
+      set:function(v){
+        if(typeof v==='string'){
+          try{
+            var u = new URL(v, location.href);
+            if(u.origin===location.origin){ _realLoc.href=v; }
+            /* cross-origin → silently ignored */
+          }catch(e){}
+        }
+      },
+      configurable:false
+    });
+  }catch(e){}
+
+  /* 4. Block beforeunload-triggered navigations (ads fire on unload) */
+  window.addEventListener('beforeunload',function(e){
+    e.preventDefault(); e.returnValue=''; return '';
+  },{capture:true});
+
+  /* 5. Focus-steal blocker — if focus leaves < 600ms after arriving, take it back */
+  var _lf=0;
+  window.addEventListener('focus',function(){ _lf=Date.now(); },{passive:true});
   window.addEventListener('blur',function(){
-    var n = Date.now();
-    if(n - _lf < 800){ setTimeout(function(){ try{ window.focus(); }catch(_){} },1); }
-    _lf = n;
+    if(Date.now()-_lf < 600){
+      setTimeout(function(){ try{window.focus();}catch(e){} },10);
+    }
   },{passive:true});
-  // Block navigation via injected <a> clicks
+
+  /* 6. Kill any <a> click that would navigate away from this origin */
   document.addEventListener('click',function(e){
-    var a = e.target.closest('a');
-    if(a && a.href && a.href.indexOf('http')===0 && a.href.indexOf(location.hostname)===-1){
-      e.preventDefault(); e.stopPropagation();
+    var a=e.target.closest('a');
+    if(!a) return;
+    try{
+      var u=new URL(a.href, location.href);
+      if(u.origin!==location.origin){ e.preventDefault(); e.stopPropagation(); }
+    }catch(ex){ e.preventDefault(); e.stopPropagation(); }
+  },true);
+
+  /* 7. Block target=_blank / target=_new on anything */
+  document.addEventListener('click',function(e){
+    var el=e.target.closest('[target]');
+    if(el){
+      var t=el.getAttribute('target');
+      if(t && t!=='_self' && t!=='_top'){
+        e.preventDefault(); e.stopPropagation();
+      }
     }
   },true);
-  // Block iframe right-click context menu
+
+  /* 8. Right-click on iframe → no "Open in new tab" option */
   document.addEventListener('contextmenu',function(e){
     if(e.target.tagName==='IFRAME'){ e.preventDefault(); }
   });
-  // Remove any dynamically injected foreign iframes
-  var mo = new MutationObserver(function(ml){
-    ml.forEach(function(m){
-      m.addedNodes.forEach(function(n){
-        if(n.nodeType===1 && n.tagName==='IFRAME' && n.id!=='player'){ n.remove(); }
+
+  /* 9. MutationObserver — nuke foreign iframes and external ad scripts
+        the instant they appear in the DOM */
+  var HOST = location.hostname;
+  var mo = new MutationObserver(function(records){
+    records.forEach(function(r){
+      r.addedNodes.forEach(function(n){
+        if(n.nodeType!==1) return;
+        /* Remove any iframe that isn't our #player */
+        if(n.tagName==='IFRAME' && n.id!=='player'){
+          n.remove(); return;
+        }
+        /* Remove script tags pointing to external domains */
+        if(n.tagName==='SCRIPT' && n.src){
+          try{
+            var u=new URL(n.src);
+            if(u.hostname!==HOST && u.hostname!==''){ n.remove(); }
+          }catch(e){}
+        }
       });
     });
   });
-  try{ mo.observe(document.body,{childList:true,subtree:true}); }catch(_){}
+  try{ mo.observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
+
 })();
 
-// ─── Config ────────────────────────────────────────────────────────
-var CFG = {
-  BASE:           'https://dlhd.link',
-  LAST_CH:        'lastChannel',
-  DEBOUNCE:       240,
-  LOAD_TIMEOUT:   9000,
-  RECONNECT_MAX:  3,
-  RECONNECT_WAIT: 5000
+/* ================================================================
+   APP
+   ================================================================ */
+
+var CFG={
+  BASE:         'https://dlhd.link',
+  LAST:         'lastCh',
+  DEBOUNCE:     220,
+  LOAD_TIMEOUT: 9000,
+  RC_MAX:       3,
+  RC_WAIT:      5000
 };
 
-// ─── Channel data ──────────────────────────────────────────────────
-var SPORT = [
-  {name:"Sport TV 1", id:49,  cat:"sport"},
-  {name:"Sport TV 2", id:74,  cat:"sport"},
-  {name:"Sport TV 3", id:454, cat:"sport"},
-  {name:"Sport TV 4", id:289, cat:"sport"},
-  {name:"Sport TV 5", id:290, cat:"sport"},
-  {name:"Sport TV 6", id:291, cat:"sport"},
-  {name:"DAZN 1",     id:455, cat:"sport"},
-  {name:"DAZN 2",     id:456, cat:"sport"},
-  {name:"DAZN 3",     id:457, cat:"sport"},
-  {name:"DAZN 4",     id:458, cat:"sport"},
-  {name:"DAZN 5",     id:459, cat:"sport"},
-  {name:"BTV",        id:380, cat:"sport"},
-  {name:"Canal 11",   id:540, cat:"sport"},
-  {name:"Sporting TV",id:716, cat:"sport"}
+var SPORT=[
+  {name:'Sport TV 1', id:49,  cat:'sport'},
+  {name:'Sport TV 2', id:74,  cat:'sport'},
+  {name:'Sport TV 3', id:454, cat:'sport'},
+  {name:'Sport TV 4', id:289, cat:'sport'},
+  {name:'Sport TV 5', id:290, cat:'sport'},
+  {name:'Sport TV 6', id:291, cat:'sport'},
+  {name:'DAZN 1',     id:455, cat:'sport'},
+  {name:'DAZN 2',     id:456, cat:'sport'},
+  {name:'DAZN 3',     id:457, cat:'sport'},
+  {name:'DAZN 4',     id:458, cat:'sport'},
+  {name:'DAZN 5',     id:459, cat:'sport'},
+  {name:'BTV',        id:380, cat:'sport'},
+  {name:'Canal 11',   id:540, cat:'sport'},
+  {name:'Sporting TV',id:716, cat:'sport'}
 ];
-var GENERAL = [
-  {name:"RTP 1",      id:719, cat:"general"},
-  {name:"RTP 2",      id:720, cat:"general"},
-  {name:"SIC",        id:722, cat:"general"},
-  {name:"TVI",        id:723, cat:"general"},
-  {name:"RTP 3",      id:721, cat:"general"},
-  {name:"CMTV",       id:790, cat:"general"},
-  {name:"TVI Reality",id:724, cat:"general"}
+var GENERAL=[
+  {name:'RTP 1',      id:719, cat:'general'},
+  {name:'RTP 2',      id:720, cat:'general'},
+  {name:'SIC',        id:722, cat:'general'},
+  {name:'TVI',        id:723, cat:'general'},
+  {name:'RTP 3',      id:721, cat:'general'},
+  {name:'CMTV',       id:790, cat:'general'},
+  {name:'TVI Reality',id:724, cat:'general'}
 ];
-var ALL = SPORT.concat(GENERAL);
-var FOLDERS = ["player","stream","watch","cast","casting","plus"];
+var ALL=SPORT.concat(GENERAL);
+var SRCS=['player','stream','watch','cast','casting','plus'];
 
-// ─── DOM refs ──────────────────────────────────────────────────────
-var D = {
-  hdr:        document.getElementById('hdr'),
-  nowLabel:   document.getElementById('now-label'),
-  search:     document.getElementById('search'),
-  btnRefresh: document.getElementById('btn-refresh'),
-  btnFS:      document.getElementById('btn-fs'),
-  btnSignout: document.getElementById('btn-signout'),
-  tabs:       document.querySelectorAll('.tab'),
-  secSport:   document.getElementById('sec-sport'),
-  secGeneral: document.getElementById('sec-general'),
-  rowSport:   document.getElementById('row-sport'),
-  rowGeneral: document.getElementById('row-general'),
-  stage:      document.getElementById('stage'),
-  player:     document.getElementById('player'),
-  ovLoad:     document.getElementById('ov-load'),
-  ovErr:      document.getElementById('ov-err'),
-  reconnMsg:  document.getElementById('reconnect-msg'),
-  toast:      document.getElementById('toast'),
-  btnExitFS:  document.getElementById('btn-exit-fs'),
-  btnChans:   document.getElementById('btn-channels')
+var D={
+  hdr:       document.getElementById('hdr'),
+  label:     document.getElementById('now-label'),
+  search:    document.getElementById('search'),
+  btnRef:    document.getElementById('btn-ref'),
+  btnFS:     document.getElementById('btn-fs'),
+  btnOut:    document.getElementById('btn-out'),
+  tabs:      document.querySelectorAll('.tab'),
+  secSport:  document.getElementById('sec-sport'),
+  secGen:    document.getElementById('sec-general'),
+  rowSport:  document.getElementById('row-sport'),
+  rowGen:    document.getElementById('row-general'),
+  stage:     document.getElementById('stage'),
+  player:    document.getElementById('player'),
+  ovLoad:    document.getElementById('ov-load'),
+  ovErr:     document.getElementById('ov-err'),
+  rcMsg:     document.getElementById('rc-msg'),
+  toast:     document.getElementById('toast'),
+  btnXFS:    document.getElementById('btn-xfs'),
+  btnChs:    document.getElementById('btn-chs')
 };
 
-// ─── State ─────────────────────────────────────────────────────────
-var S = {
-  chId:       null,   // currently playing channel id
-  chIdx:      0,      // index in ALL[]
-  cat:        'sport',// active category tab
-  mobileFS:   false,  // mobile fullscreen mode
-  hdrHidden:  false,  // header collapsed
-  lastTap:    0,      // for double-tap detection
-  loadTimer:  null
+var S={
+  chId:null, chIdx:0, cat:'sport',
+  mfs:false, hoff:false, lastTap:0, ltimer:null
 };
 
-// Detect mobile/touch once
-var IS_TV     = /TV|SmartTV|Tizen|WebOS|VIDAA|HbbTV/i.test(navigator.userAgent);
-var IS_TOUCH  = ('ontouchstart' in window) || navigator.maxTouchPoints > 1;
-var IS_MOBILE = IS_TOUCH && !IS_TV && window.innerWidth < 1024;
+var IS_TV    = /TV|SmartTV|Tizen|WebOS|VIDAA|HbbTV/i.test(navigator.userAgent);
+var IS_TOUCH = ('ontouchstart' in window)||navigator.maxTouchPoints>1;
+var IS_MOB   = IS_TOUCH && !IS_TV && window.innerWidth<1024;
 
-// ─── Utilities ─────────────────────────────────────────────────────
-function debounce(fn, ms){
-  var t;
-  return function(){
-    var a = arguments;
-    clearTimeout(t);
-    t = setTimeout(function(){ fn.apply(null,a); }, ms);
-  };
-}
-function store(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(_){} }
-function recall(k){
-  try{ var v=localStorage.getItem(k); return v!==null?JSON.parse(v):null; }catch(_){ return null; }
-}
-function url(id, folder){ return CFG.BASE+'/'+folder+'/stream-'+id+'.php'; }
+/* ── Utils ── */
+function debounce(fn,ms){ var t; return function(){ var a=arguments; clearTimeout(t); t=setTimeout(function(){ fn.apply(null,a); },ms); }; }
+function store(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function recall(k){ try{ var v=localStorage.getItem(k); return v!==null?JSON.parse(v):null; }catch(e){ return null; } }
+function streamURL(id,src){ return CFG.BASE+'/'+src+'/stream-'+id+'.php'; }
+function syncLayout(){ if(!S.mfs){ D.stage.style.paddingTop=D.hdr.offsetHeight+'px'; } }
 
-// Adjust player top padding to clear the header
-function syncLayout(){
-  if(!S.mobileFS){
-    D.stage.style.paddingTop = D.hdr.offsetHeight+'px';
-  }
+var _tt;
+function toast(msg,ms){
+  D.toast.textContent=msg; D.toast.classList.add('on');
+  clearTimeout(_tt); _tt=setTimeout(function(){ D.toast.classList.remove('on'); },ms||2200);
 }
 
-// Toast notification
-var _toastTimer;
-function toast(msg, ms){
-  D.toast.textContent = msg;
-  D.toast.classList.add('on');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(function(){ D.toast.classList.remove('on'); }, ms||2200);
-}
-
-// ─── Loading / Error states ────────────────────────────────────────
+/* ── Loading / Error ── */
 function showLoad(){
-  D.ovLoad.classList.add('on');
-  D.ovErr.classList.remove('on');
-  clearTimeout(S.loadTimer);
-  S.loadTimer = setTimeout(hideLoad, CFG.LOAD_TIMEOUT);
+  D.ovLoad.classList.add('on'); D.ovErr.classList.remove('on');
+  clearTimeout(S.ltimer); S.ltimer=setTimeout(hideLoad,CFG.LOAD_TIMEOUT);
 }
-function hideLoad(){
-  D.ovLoad.classList.remove('on');
-  clearTimeout(S.loadTimer);
-}
-function showErr(){
-  D.ovLoad.classList.remove('on');
-  D.ovErr.classList.add('on');
-  clearTimeout(S.loadTimer);
-}
+function hideLoad(){ D.ovLoad.classList.remove('on'); clearTimeout(S.ltimer); }
+function showErr(){ D.ovLoad.classList.remove('on'); D.ovErr.classList.add('on'); clearTimeout(S.ltimer); }
 
-// ─── Reconnect ─────────────────────────────────────────────────────
-var RC = { n:0, t:null };
+/* ── Reconnect ── */
+var RC={n:0,t:null};
 function rcStart(){
-  if(RC.n >= CFG.RECONNECT_MAX){
-    showErr();
-    D.reconnMsg.textContent = 'Failed after '+CFG.RECONNECT_MAX+' attempts.';
-    return;
-  }
+  if(RC.n>=CFG.RC_MAX){ showErr(); D.rcMsg.textContent='Failed after '+CFG.RC_MAX+' attempts.'; return; }
   RC.n++;
-  D.reconnMsg.textContent = 'Reconnecting\u2026 ('+RC.n+' / '+CFG.RECONNECT_MAX+')';
-  toast('Reconnecting\u2026 '+RC.n+'/'+CFG.RECONNECT_MAX);
-  RC.t = setTimeout(streamRefresh, CFG.RECONNECT_WAIT);
+  D.rcMsg.textContent='Reconnecting\u2026 ('+RC.n+'/'+CFG.RC_MAX+')';
+  toast('Reconnecting\u2026 '+RC.n+'/'+CFG.RC_MAX);
+  RC.t=setTimeout(doRefresh,CFG.RC_WAIT);
 }
-function rcReset(){
-  RC.n = 0; clearTimeout(RC.t);
-  D.reconnMsg.textContent = '';
-}
+function rcReset(){ RC.n=0; clearTimeout(RC.t); D.rcMsg.textContent=''; }
 
-// ─── Tab switching ─────────────────────────────────────────────────
+/* ── Tabs ── */
 function setTab(cat){
-  S.cat = cat;
+  S.cat=cat;
   D.tabs.forEach(function(t){
-    var tc = t.getAttribute('data-cat');
+    var tc=t.getAttribute('data-cat');
     t.classList.remove('sport','general');
-    t.setAttribute('aria-selected', tc===cat ? 'true' : 'false');
+    t.setAttribute('aria-selected',tc===cat?'true':'false');
     if(tc===cat) t.classList.add(cat);
   });
-  // explicit add/remove — classList.toggle(,bool) is broken on Tizen/WebOS
   if(cat==='sport'){
-    D.secSport.classList.add('on');
-    D.secGeneral.classList.remove('on');
+    D.secSport.classList.add('on'); D.secGen.classList.remove('on');
   } else {
-    D.secGeneral.classList.add('on');
-    D.secSport.classList.remove('on');
+    D.secGen.classList.add('on'); D.secSport.classList.remove('on');
   }
   syncLayout();
 }
 
-// ─── Channel card creation ─────────────────────────────────────────
+/* ── Channel cards ── */
 function makeCard(ch){
-  var card = document.createElement('div');
-  card.className = 'ch-card';
-  card.setAttribute('data-id', ch.id);
-  card.setAttribute('role','listitem');
+  var card=document.createElement('div');
+  card.className='card'; card.setAttribute('data-id',ch.id); card.setAttribute('role','listitem');
 
-  var btn = document.createElement('button');
-  btn.className = 'ch-btn';
-  btn.type = 'button';
-  btn.textContent = ch.name;
+  var btn=document.createElement('button');
+  btn.className='cbtn'; btn.type='button'; btn.textContent=ch.name;
 
-  var src = document.createElement('select');
-  src.className = 'ch-src';
-  src.setAttribute('aria-label','Source for '+ch.name);
-  FOLDERS.forEach(function(f){
-    var o = document.createElement('option');
-    o.value = f; o.textContent = f;
-    src.appendChild(o);
+  var sel=document.createElement('select');
+  sel.className='csrc'; sel.setAttribute('aria-label','Source for '+ch.name);
+  SRCS.forEach(function(s){
+    var o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o);
   });
-  src.value = recall('src_'+ch.id) || FOLDERS[0];
+  sel.value=recall('src_'+ch.id)||SRCS[0];
 
-  // Closures bind ch correctly
-  btn.addEventListener('click', (function(c){ return function(){ play(c); }; })(ch));
-  src.addEventListener('change', (function(c){ return function(e){
-    e.stopPropagation();
-    store('src_'+c.id, e.target.value);
-    if(S.chId===c.id){ D.player.src = url(c.id, e.target.value); }
+  btn.addEventListener('click',(function(c){ return function(){ play(c); }; })(ch));
+  sel.addEventListener('change',(function(c){ return function(e){
+    e.stopPropagation(); store('src_'+c.id,e.target.value);
+    if(S.chId===c.id){ D.player.src=streamURL(c.id,e.target.value); }
   }; })(ch));
 
-  card.appendChild(btn);
-  card.appendChild(src);
-  return card;
+  card.appendChild(btn); card.appendChild(sel); return card;
 }
 
-function renderChannels(){
-  D.rowSport.innerHTML = '';
-  D.rowGeneral.innerHTML = '';
-  var fs = document.createDocumentFragment();
-  SPORT.forEach(function(ch){ fs.appendChild(makeCard(ch)); });
-  D.rowSport.appendChild(fs);
-  var fg = document.createDocumentFragment();
-  GENERAL.forEach(function(ch){ fg.appendChild(makeCard(ch)); });
-  D.rowGeneral.appendChild(fg);
+function renderAll(){
+  D.rowSport.innerHTML=''; D.rowGen.innerHTML='';
+  var fs=document.createDocumentFragment();
+  SPORT.forEach(function(ch){ fs.appendChild(makeCard(ch)); }); D.rowSport.appendChild(fs);
+  var fg=document.createDocumentFragment();
+  GENERAL.forEach(function(ch){ fg.appendChild(makeCard(ch)); }); D.rowGen.appendChild(fg);
 }
 
-// ─── Search (show/hide existing cards — zero DOM churn) ────────────
+/* ── Search ── */
 function filterSearch(term){
-  var t = term.toLowerCase().trim();
+  var t=term.toLowerCase().trim();
   if(!t){
-    // restore
-    [D.rowSport, D.rowGeneral].forEach(function(row){
-      row.querySelectorAll('.ch-card').forEach(function(c){ c.style.display=''; });
-    });
-    setTab(S.cat);
-    return;
+    [D.rowSport,D.rowGen].forEach(function(r){ r.querySelectorAll('.card').forEach(function(c){ c.style.display=''; }); });
+    setTab(S.cat); return;
   }
-  // Show both sections during search
-  D.secSport.classList.add('on');
-  D.secGeneral.classList.add('on');
-  [D.rowSport, D.rowGeneral].forEach(function(row){
-    row.querySelectorAll('.ch-card').forEach(function(c){
-      var name = c.querySelector('.ch-btn').textContent.toLowerCase();
-      c.style.display = name.indexOf(t)!==-1 ? '' : 'none';
+  D.secSport.classList.add('on'); D.secGen.classList.add('on');
+  [D.rowSport,D.rowGen].forEach(function(r){
+    r.querySelectorAll('.card').forEach(function(c){
+      c.style.display=c.querySelector('.cbtn').textContent.toLowerCase().indexOf(t)!==-1?'':'none';
     });
   });
   syncLayout();
 }
 
-// ─── Playback ──────────────────────────────────────────────────────
+/* ── Playback ── */
 function play(ch){
   showLoad(); rcReset();
-
-  // Remove previous active class
-  if(S.chId !== null){
-    var old = document.querySelector('.ch-card[data-id="'+S.chId+'"] .ch-btn');
+  if(S.chId!==null){
+    var old=document.querySelector('.card[data-id="'+S.chId+'"] .cbtn');
     if(old){ old.classList.remove('sport','general'); }
   }
-
-  // Set new active class
-  var card = document.querySelector('.ch-card[data-id="'+ch.id+'"]');
+  var card=document.querySelector('.card[data-id="'+ch.id+'"]');
   if(card){
-    var btn = card.querySelector('.ch-btn');
-    if(btn){ btn.classList.add(ch.cat); }
-    // Auto-switch tab unless in search mode
+    var btn=card.querySelector('.cbtn'); if(btn){ btn.classList.add(ch.cat); }
     if(!D.search.value.trim()){ setTab(ch.cat); }
   }
-
-  // Update state
-  S.chId = ch.id;
+  S.chId=ch.id;
   for(var i=0;i<ALL.length;i++){ if(ALL[i].id===ch.id){ S.chIdx=i; break; } }
-
-  D.nowLabel.textContent = ch.name;
-  var sel = card ? card.querySelector('select') : null;
-  D.player.src = url(ch.id, sel ? sel.value : FOLDERS[0]);
-  store(CFG.LAST_CH, ch.id);
-  toast(ch.name);
+  D.label.textContent=ch.name;
+  var sel=card?card.querySelector('select'):null;
+  D.player.src=streamURL(ch.id,sel?sel.value:SRCS[0]);
+  store(CFG.LAST,ch.id); toast(ch.name);
 }
 
-function streamRefresh(){
+function doRefresh(){
   if(!D.player.src) return;
-  showLoad();
-  var s = D.player.src;
-  D.player.src = '';
-  setTimeout(function(){ D.player.src = s; }, 100);
+  showLoad(); var s=D.player.src; D.player.src='';
+  setTimeout(function(){ D.player.src=s; },100);
   toast('Refreshing\u2026');
 }
+function playNext(){ S.chIdx=(S.chIdx+1)%ALL.length; play(ALL[S.chIdx]); }
+function playPrev(){ S.chIdx=(S.chIdx-1+ALL.length)%ALL.length; play(ALL[S.chIdx]); }
 
-function playNext(){
-  if(!ALL.length) return;
-  S.chIdx = (S.chIdx+1) % ALL.length;
-  play(ALL[S.chIdx]);
-}
-function playPrev(){
-  if(!ALL.length) return;
-  S.chIdx = (S.chIdx-1+ALL.length) % ALL.length;
-  play(ALL[S.chIdx]);
-}
-
-// ─── Fullscreen ────────────────────────────────────────────────────
+/* ── Fullscreen ── */
 function enterFS(){
-  var el = D.stage;
-  var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-  if(fn){
-    fn.call(el).then(function(){ D.btnFS.textContent='Exit Full Screen'; }).catch(function(){
-      // Fallback: try the iframe itself
-      var ifn = D.player.requestFullscreen || D.player.webkitRequestFullscreen;
-      if(ifn){ ifn.call(D.player).then(function(){ D.btnFS.textContent='Exit Full Screen'; }).catch(function(){}); }
-    });
-  }
+  var fn=D.stage.requestFullscreen||D.stage.webkitRequestFullscreen||D.stage.mozRequestFullScreen||D.stage.msRequestFullscreen;
+  if(!fn){ fn=D.player.requestFullscreen||D.player.webkitRequestFullscreen; }
+  if(fn){ fn.call(fn===D.player.requestFullscreen||fn===D.player.webkitRequestFullscreen?D.player:D.stage)
+    .then(function(){ D.btnFS.textContent='Exit Full Screen'; })
+    .catch(function(){}); }
 }
 function exitFS(){
-  var fn = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
-  if(fn){ try{ fn.call(document); }catch(_){} }
-  D.btnFS.textContent = 'Full Screen';
+  var fn=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;
+  if(fn){ try{ fn.call(document); }catch(e){} }
+  D.btnFS.textContent='Full Screen';
 }
-function toggleFS(){
-  if(IS_MOBILE){ toggleMobileFS(); return; }
-  if(document.fullscreenElement || document.webkitFullscreenElement){ exitFS(); }
-  else{ enterFS(); }
+function toggleFS(){ if(IS_MOB){ toggleMFS(); return; } (document.fullscreenElement||document.webkitFullscreenElement)?exitFS():enterFS(); }
+
+function toggleMFS(){
+  if(!S.mfs){
+    S.mfs=true; D.stage.classList.add('fs'); D.stage.style.paddingTop='0';
+    D.hdr.style.display='none'; D.btnChs.classList.add('on'); D.btnXFS.classList.add('on');
+    D.btnFS.textContent='Exit Full Screen';
+    try{ screen.orientation.lock('landscape').catch(function(){}); }catch(e){}
+  } else { exitMFS(); }
+}
+function exitMFS(){
+  S.mfs=false; D.stage.classList.remove('fs'); D.hdr.style.display='';
+  D.btnChs.classList.remove('on'); D.btnXFS.classList.remove('on');
+  D.btnFS.textContent='Full Screen';
+  try{ screen.orientation.unlock(); }catch(e){}
+  setTimeout(syncLayout,80);
 }
 
-// Mobile fullscreen (no native API needed — hide header, expand stage)
-function toggleMobileFS(){
-  if(!S.mobileFS){
-    S.mobileFS = true;
-    D.stage.classList.add('fullscreen');
-    D.stage.style.paddingTop = '0';
-    D.hdr.style.display = 'none';
-    D.btnChans.classList.add('on');
-    D.btnExitFS.classList.add('on');
-    D.btnFS.textContent = 'Exit Full Screen';
-    try{ screen.orientation.lock('landscape').catch(function(){}); }catch(_){}
-  } else {
-    exitMobileFS();
-  }
-}
-function exitMobileFS(){
-  S.mobileFS = false;
-  D.stage.classList.remove('fullscreen');
-  D.hdr.style.display = '';
-  D.btnChans.classList.remove('on');
-  D.btnExitFS.classList.remove('on');
-  D.btnFS.textContent = 'Full Screen';
-  try{ screen.orientation.unlock(); }catch(_){}
-  setTimeout(syncLayout, 80);
+function toggleHdr(){
+  S.hoff=!S.hoff;
+  S.hoff?D.hdr.classList.add('off'):D.hdr.classList.remove('off');
+  if(!S.hoff) setTimeout(syncLayout,340);
 }
 
-// ─── Header collapse ───────────────────────────────────────────────
-function toggleHeader(){
-  S.hdrHidden = !S.hdrHidden;
-  if(S.hdrHidden){ D.hdr.classList.add('off'); }
-  else{
-    D.hdr.classList.remove('off');
-    setTimeout(syncLayout, 340); // after transition
-  }
-}
-
-// ─── Touch gestures on player ──────────────────────────────────────
+/* ── Gestures ── */
 function initGestures(){
-  var sx=0, sy=0;
-  D.stage.addEventListener('touchstart',function(e){
-    sx = e.touches[0].clientX;
-    sy = e.touches[0].clientY;
-  },{passive:true});
+  var sx=0,sy=0;
+  D.stage.addEventListener('touchstart',function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
   D.stage.addEventListener('touchend',function(e){
-    var dx = sx - e.changedTouches[0].clientX;
-    var dy = sy - e.changedTouches[0].clientY;
-    // Horizontal swipe → channel change
-    if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 72){
-      if(dx > 0){ playNext(); } else { playPrev(); }
-      return;
-    }
-    // Double-tap → fullscreen
-    var now = Date.now();
-    if(now - S.lastTap < 270 && now - S.lastTap > 30){
-      toggleFS(); e.preventDefault();
-    }
-    S.lastTap = now;
+    var dx=sx-e.changedTouches[0].clientX, dy=sy-e.changedTouches[0].clientY;
+    if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>72){ dx>0?playNext():playPrev(); return; }
+    var now=Date.now();
+    if(now-S.lastTap<270&&now-S.lastTap>30){ toggleFS(); e.preventDefault(); }
+    S.lastTap=now;
   });
-  D.stage.addEventListener('dblclick', toggleFS);
+  D.stage.addEventListener('dblclick',toggleFS);
 }
 
-// ─── Keyboard (desktop + TV D-pad) ────────────────────────────────
+/* ── Keyboard / TV D-pad ── */
 document.addEventListener('keydown',function(e){
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
   switch(e.key){
-    case 'f': case 'F':       e.preventDefault(); toggleFS();    break;
-    case 'ArrowRight':        e.preventDefault(); playNext();     break;
-    case 'ArrowLeft':         e.preventDefault(); playPrev();     break;
-    case 'r': case 'R':       e.preventDefault(); streamRefresh();break;
-    case 'Escape':
-      if(S.mobileFS){ exitMobileFS(); }
-      else{ exitFS(); }
-      break;
-    // TV D-pad OK / Enter on focused channel button handled natively by browser
+    case 'f':case 'F': e.preventDefault(); toggleFS(); break;
+    case 'ArrowRight': e.preventDefault(); playNext(); break;
+    case 'ArrowLeft':  e.preventDefault(); playPrev(); break;
+    case 'r':case 'R': e.preventDefault(); doRefresh(); break;
+    case 'Escape': S.mfs?exitMFS():exitFS(); break;
   }
 });
 
-// ─── Init ──────────────────────────────────────────────────────────
+/* ── Init ── */
 function init(){
-  renderChannels();
-  setTab('sport');
-  syncLayout();
+  renderAll(); setTab('sport'); syncLayout();
+  window.addEventListener('resize',debounce(syncLayout,100));
+  if(IS_MOB||IS_TOUCH) initGestures();
 
-  window.addEventListener('resize', debounce(syncLayout, 100));
-  if(IS_MOBILE || IS_TOUCH) initGestures();
-  // Show floating "Channels" button on mobile/TV for header re-open
-  if(IS_MOBILE || IS_TV){ /* shown only when in mobileFS */ }
-
-  // Restore last channel
-  var lastId = recall(CFG.LAST_CH);
-  var defCh = ALL[0];
-  if(lastId){
-    for(var i=0;i<ALL.length;i++){
-      if(ALL[i].id == lastId){ defCh=ALL[i]; break; }
-    }
-  }
+  var lastId=recall(CFG.LAST), defCh=ALL[0];
+  if(lastId){ for(var i=0;i<ALL.length;i++){ if(ALL[i].id==lastId){ defCh=ALL[i]; break; } } }
   play(defCh);
 
-  // ── Event bindings ─────────────────────────────────────────────
-
-  // Tabs
   D.tabs.forEach(function(tab){
     tab.addEventListener('click',function(){
-      var c = tab.getAttribute('data-cat');
-      // Clear search when switching tabs
+      var c=tab.getAttribute('data-cat');
       if(D.search.value.trim()){
         D.search.value='';
-        [D.rowSport,D.rowGeneral].forEach(function(r){
-          r.querySelectorAll('.ch-card').forEach(function(card){ card.style.display=''; });
-        });
+        [D.rowSport,D.rowGen].forEach(function(r){ r.querySelectorAll('.card').forEach(function(c){ c.style.display=''; }); });
       }
       setTab(c);
     });
   });
 
-  // Search
-  D.search.addEventListener('input', debounce(function(e){
-    filterSearch(e.target.value);
-  }, CFG.DEBOUNCE));
+  D.search.addEventListener('input',debounce(function(e){ filterSearch(e.target.value); },CFG.DEBOUNCE));
+  D.search.addEventListener('keydown',function(e){ if(e.key==='Escape'){ D.search.value=''; filterSearch(''); D.search.blur(); } });
 
-  // Clear search on Escape
-  D.search.addEventListener('keydown',function(e){
-    if(e.key==='Escape'){
-      D.search.value='';
-      filterSearch('');
-      D.search.blur();
-    }
-  });
+  D.btnRef.addEventListener('click',doRefresh);
+  D.btnFS.addEventListener('click',toggleFS);
+  D.btnXFS.addEventListener('click',exitMFS);
+  D.btnChs.addEventListener('click',toggleHdr);
 
-  // Buttons
-  D.btnRefresh.addEventListener('click', streamRefresh);
-  D.btnFS.addEventListener('click', toggleFS);
-  D.btnExitFS.addEventListener('click', exitMobileFS);
-  D.btnChans.addEventListener('click', toggleHeader);
-
-  D.btnSignout.addEventListener('click',function(){
+  D.btnOut.addEventListener('click',function(){
     if(confirm('Sign out?')){
       document.cookie='auth_token=;Path=/;Expires=Thu,01 Jan 1970 00:00:01 GMT;Secure;SameSite=Strict';
       location.href='/';
     }
   });
 
-  // Sync fullscreen button label with browser state
   ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(function(ev){
     document.addEventListener(ev,function(){
-      var active = !!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
-      D.btnFS.textContent = active ? 'Exit Full Screen' : 'Full Screen';
+      var on=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
+      D.btnFS.textContent=on?'Exit Full Screen':'Full Screen';
     });
   });
 
-  // Player iframe events
-  D.player.addEventListener('load',  function(){ hideLoad(); rcReset(); });
-  D.player.addEventListener('error', function(){ rcStart(); });
+  D.player.addEventListener('load', function(){ hideLoad(); rcReset(); });
+  D.player.addEventListener('error',function(){ rcStart(); });
 
-  // Block body scroll creep (iOS Safari bounce)
   document.addEventListener('touchmove',function(e){
-    var t = e.target;
-    if(t.closest('.ch-row') || t.closest('#hdr')) return; // allow horizontal scroll in rows
-    if(t.closest('#stage')) return;
+    if(e.target.closest('.row')||e.target.closest('#hdr')||e.target.closest('#stage')) return;
     e.preventDefault();
   },{passive:false});
 
-  // Network feedback
-  window.addEventListener('online',  function(){ toast('Back Online'); });
-  window.addEventListener('offline', function(){ toast('No Connection',3500); });
-
-  // Visibility — pause/resume is handled by the iframe's own player,
-  // but we ensure layout is fresh when the tab becomes visible again.
-  document.addEventListener('visibilitychange',function(){
-    if(!document.hidden){ syncLayout(); }
-  });
+  window.addEventListener('online', function(){ toast('Back Online'); });
+  window.addEventListener('offline',function(){ toast('No Connection',3500); });
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) syncLayout(); });
 }
 
-// Boot
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 </script>
 </body>
 </html>
