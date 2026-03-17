@@ -459,7 +459,6 @@ body{
   <iframe id="player"
     allowfullscreen
     allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
     playsinline
     webkit-playsinline
     title="Stream player"
@@ -475,37 +474,68 @@ body{
 <div id="toast" aria-live="polite"></div>
 
 <script>
-// ─── Security sandbox ──────────────────────────────────────────────
-// All in try/catch — Brave shields etc. can override window properties.
+// ─── Security — JS-level popup & navigation blocking ───────────────
+// No sandbox on the iframe (breaks streams). We block everything here instead.
 (function(){
-  // Override window.open so nothing the iframe injects can open a new tab/window
-  try{ window.open = function(){ return null; }; }catch(_){}
-  // Prevent the parent page from being navigated away by iframe scripts
-  try{ window.onbeforeunload = function(e){ e.preventDefault(); e.returnValue=''; return ''; }; }catch(_){}
+  // 1. Kill window.open — locked non-configurable so iframe scripts can't restore it
+  try{
+    Object.defineProperty(window,'open',{
+      value:function(){ return null; },
+      writable:false, configurable:false
+    });
+  }catch(_){ try{ window.open=function(){return null;}; }catch(_){} }
+
+  // 2. Kill window.opener so nothing can navigate the parent
   try{ Object.defineProperty(window,'opener',{get:function(){return null;},set:function(){},configurable:false}); }catch(_){}
-  // Kill focus-steal: if the page loses focus within 800ms of gaining it, refocus immediately.
+
+  // 3. Intercept any attempt to navigate the top/parent frame via location
+  try{
+    Object.defineProperty(window,'location',{
+      get:function(){ return location; },
+      set:function(v){
+        // Only allow same-origin assignment
+        if(typeof v==='string' && v.indexOf(location.hostname)!==-1){ location.href=v; }
+      }
+    });
+  }catch(_){}
+
+  // 4. Block beforeunload-triggered navigation (ads that navigate on unload)
+  window.addEventListener('beforeunload',function(e){ e.preventDefault(); e.returnValue=''; return ''; },{capture:true});
+
+  // 5. Focus-steal blocker — if focus leaves within 800ms, take it back
   var _lf = 0;
   window.addEventListener('blur',function(){
     var n = Date.now();
     if(n - _lf < 800){ setTimeout(function(){ try{ window.focus(); }catch(_){} },1); }
     _lf = n;
   },{passive:true});
-  // Block navigation via injected <a> clicks
+
+  // 6. Block all external link clicks injected into the page
   document.addEventListener('click',function(e){
     var a = e.target.closest('a');
     if(a && a.href && a.href.indexOf('http')===0 && a.href.indexOf(location.hostname)===-1){
       e.preventDefault(); e.stopPropagation();
     }
+    // Also block target=_blank on any element
+    var t = e.target.closest('[target="_blank"],[target="_new"]');
+    if(t){ e.preventDefault(); e.stopPropagation(); }
   },true);
-  // Block iframe right-click context menu
+
+  // 7. Block iframe right-click (prevents "open in new tab" on the player)
   document.addEventListener('contextmenu',function(e){
     if(e.target.tagName==='IFRAME'){ e.preventDefault(); }
   });
-  // Remove any dynamically injected foreign iframes
+
+  // 8. Remove any foreign iframes injected by ad scripts
   var mo = new MutationObserver(function(ml){
     ml.forEach(function(m){
       m.addedNodes.forEach(function(n){
         if(n.nodeType===1 && n.tagName==='IFRAME' && n.id!=='player'){ n.remove(); }
+        // Also nuke injected script tags pointing to ad networks
+        if(n.nodeType===1 && n.tagName==='SCRIPT'){
+          var s = n.src||'';
+          if(s && s.indexOf(location.hostname)===-1){ try{ n.remove(); }catch(_){} }
+        }
       });
     });
   });
