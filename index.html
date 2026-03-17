@@ -9,7 +9,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
-<!-- Blocks script injection from leaking out of the stream iframe into this page -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-src https:; connect-src https: wss:; media-src https: blob:; img-src 'self' data: https:; worker-src blob:">
 <style>
 /* ─── Reset & Tokens ────────────────────────────────────────────── */
@@ -460,8 +459,6 @@ body{
   <iframe id="player"
     allowfullscreen
     allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
-    referrerpolicy="no-referrer"
     playsinline
     webkit-playsinline
     title="Stream player"
