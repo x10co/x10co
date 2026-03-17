@@ -666,109 +666,6 @@
       padding: 4px 0;
       white-space: nowrap;
     }
-
-    /* Channel logo inside button */
-    .ch-logo {
-      width: 18px;
-      height: 18px;
-      object-fit: contain;
-      border-radius: 3px;
-      flex-shrink: 0;
-      opacity: 0.85;
-      display: block;
-      margin: 0 auto 3px;
-    }
-
-    .ch-btn.has-logo {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      padding: 7px 10px;
-    }
-
-    /* API key setup panel */
-    #api-panel {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 500;
-      background: var(--surface-1);
-      backdrop-filter: var(--blur-md);
-      -webkit-backdrop-filter: var(--blur-md);
-      border: 0.5px solid var(--border-active);
-      border-radius: var(--r-lg);
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      width: 240px;
-      transition: opacity 0.25s, transform 0.25s var(--ease-spring);
-    }
-
-    #api-panel.hidden { opacity: 0; pointer-events: none; transform: translateY(8px) scale(0.97); }
-
-    .api-panel-title {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.4px;
-      text-transform: uppercase;
-      color: var(--label-3);
-      font-family: var(--mono);
-    }
-
-    .api-input-row {
-      display: flex;
-      gap: 6px;
-    }
-
-    .api-input-row input {
-      flex: 1;
-      padding: 7px 10px;
-      background: var(--surface-3);
-      border: 0.5px solid var(--border);
-      border-radius: var(--r-sm);
-      color: var(--label);
-      font-family: var(--mono);
-      font-size: 12px;
-      outline: none;
-      -webkit-appearance: none;
-      transition: border-color 0.15s;
-    }
-
-    .api-input-row input:focus { border-color: var(--accent); }
-    .api-input-row input::placeholder { color: var(--label-3); }
-
-    .api-save-btn {
-      padding: 7px 12px;
-      background: var(--accent);
-      border: none;
-      border-radius: var(--r-sm);
-      color: #fff;
-      font-family: var(--font);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: opacity 0.12s, transform 0.1s var(--ease-spring);
-    }
-
-    .api-save-btn:hover  { opacity: 0.85; }
-    .api-save-btn:active { transform: scale(0.93); }
-
-    .api-panel-note {
-      font-size: 10.5px;
-      color: var(--label-3);
-      line-height: 1.5;
-    }
-
-    .api-panel-note a {
-      color: var(--accent-text);
-      text-decoration: none;
-    }
-
-    /* API key button in topbar */
-    .icon-btn.api-active { border-color: rgba(59,130,246,0.35); color: var(--accent-text); }
   </style>
 </head>
 <body>
@@ -814,13 +711,6 @@
       </svg>
     </button>
 
-    <button id="api-key-btn" class="icon-btn" aria-label="API key settings" title="API Key">
-      <svg viewBox="0 0 20 20" fill="none">
-        <circle cx="8" cy="12" r="3.5" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M10.5 9.5l5-5M14 4l2 2M12 6l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-    </button>
-
     <button id="fullscreen-btn" class="icon-btn" aria-label="Toggle full screen" title="Full Screen (F)">
       <svg id="fs-icon" viewBox="0 0 20 20" fill="none">
         <path d="M4 4h4M4 4v4M16 4h-4M16 4v4M4 16h4M4 16v-4M16 16h-4M16 16v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -858,7 +748,6 @@
     </div>
   </div>
 
-  <!-- Per API docs: proper allow attrs for cross-origin player pages -->
   <iframe id="player"
     allowfullscreen
     allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write"
@@ -884,20 +773,6 @@
   </svg>
   Exit
 </button>
-
-<!-- ── API KEY PANEL ── -->
-<div id="api-panel" class="hidden" role="complementary" aria-label="API key settings">
-  <div class="api-panel-title">🔑 API Key</div>
-  <div class="api-input-row">
-    <input type="password" id="api-key-input" placeholder="Your API key" autocomplete="off" spellcheck="false" aria-label="API key">
-    <button class="api-save-btn" id="api-save-btn">Save</button>
-  </div>
-  <div class="api-panel-note">
-    With a key: channels load with logos from the live API.<br>
-    Without a key: uses the built-in channel list.<br>
-    <a href="https://dlstreams.top" target="_blank" rel="noopener">Get a key →</a>
-  </div>
-</div>
 
 <!-- ── TOAST STACK ── -->
 <div id="toast-stack" aria-live="polite" aria-atomic="false"></div>
@@ -932,31 +807,28 @@ const CFG = {
   KEY_LAST:      'stream_last_ch',
   KEY_FOLDER:    'stream_ch_folder_',
   BASE_URL:      'https://dlstreams.top',
-  LOGO_BASE:     'https://dlstreams.top/',
   DEBOUNCE:      260,
   LOAD_TIMEOUT:  10000,
-  RECONNECT_MAX: 6,   // one attempt per folder
+  RECONNECT_MAX: 6,
   RECONNECT_GAP: 1500
 };
 
 /* ── DATA ─────────────────────────────────────────────────────── */
-// Channel IDs are strings per API spec — kept as numbers here for compat
 const CHANNELS = [
-  { name: "Sport TV 1", id: 49,  cat: "Sport TV", logo: null },
-  { name: "Sport TV 2", id: 74,  cat: "Sport TV", logo: null },
-  { name: "Sport TV 3", id: 454, cat: "Sport TV", logo: null },
-  { name: "Sport TV 4", id: 289, cat: "Sport TV", logo: null },
-  { name: "Sport TV 5", id: 290, cat: "Sport TV", logo: null },
-  { name: "Sport TV 6", id: 291, cat: "Sport TV", logo: null },
-  { name: "DAZN 1",     id: 455, cat: "DAZN",     logo: null },
-  { name: "DAZN 2",     id: 456, cat: "DAZN",     logo: null },
-  { name: "DAZN 3",     id: 457, cat: "DAZN",     logo: null },
-  { name: "DAZN 4",     id: 458, cat: "DAZN",     logo: null },
-  { name: "DAZN 5",     id: 459, cat: "DAZN",     logo: null },
-  { name: "BTV",        id: 380, cat: "Other",    logo: null }
+  { name: "Sport TV 1", id: 49,  cat: "Sport TV" },
+  { name: "Sport TV 2", id: 74,  cat: "Sport TV" },
+  { name: "Sport TV 3", id: 454, cat: "Sport TV" },
+  { name: "Sport TV 4", id: 289, cat: "Sport TV" },
+  { name: "Sport TV 5", id: 290, cat: "Sport TV" },
+  { name: "Sport TV 6", id: 291, cat: "Sport TV" },
+  { name: "DAZN 1",     id: 455, cat: "DAZN"     },
+  { name: "DAZN 2",     id: 456, cat: "DAZN"     },
+  { name: "DAZN 3",     id: 457, cat: "DAZN"     },
+  { name: "DAZN 4",     id: 458, cat: "DAZN"     },
+  { name: "DAZN 5",     id: 459, cat: "DAZN"     },
+  { name: "BTV",        id: 380, cat: "Other"    }
 ];
 
-// Folder order per API docs — auto-fallback cycles through all
 const FOLDERS = ["stream","player","watch","cast","casting","plus"];
 
 /* ── ELEMENTS ─────────────────────────────────────────────────── */
@@ -978,11 +850,7 @@ const E = {
   floatRail:   document.getElementById('float-rail-btn'),
   floatExit:   document.getElementById('float-exit-fs'),
   toastStack:  document.getElementById('toast-stack'),
-  kbHint:      document.getElementById('kb-hint'),
-  apiKeyBtn:   document.getElementById('api-key-btn'),
-  apiPanel:    document.getElementById('api-panel'),
-  apiKeyInput: document.getElementById('api-key-input'),
-  apiSaveBtn:  document.getElementById('api-save-btn')
+  kbHint:      document.getElementById('kb-hint')
 };
 
 /* ── STATE ─────────────────────────────────────────────────────── */
@@ -1049,12 +917,11 @@ const overlay = {
   }
 };
 
-/* ── RECONNECT — cycles through all folders automatically ─────── */
+/* ── RECONNECT ────────────────────────────────────────────────── */
 const reconnect = {
   reset() { S.reconnectN = 0; clearTimeout(S.reconnectT); },
   attempt() {
     if (!S.activeId) return;
-    // Cycle through every folder before giving up
     if (S.reconnectN >= FOLDERS.length) {
       overlay.showError('All sources failed — try another channel');
       return;
@@ -1065,7 +932,6 @@ const reconnect = {
     S.reconnectT = setTimeout(() => {
       overlay.showLoading();
       E.player.src = streamUrl(S.activeId, nextFolder);
-      // Also update the selector in the active wrapper to reflect current folder
       const wrap = E.rail.querySelector(`[data-ch-id="${S.activeId}"]`);
       if (wrap) { const sel = wrap.querySelector('.src-sel'); if (sel) sel.value = nextFolder; }
     }, CFG.RECONNECT_GAP);
@@ -1148,61 +1014,7 @@ const player = {
   }
 };
 
-/* ── API KEY + CHANNEL FETCH ──────────────────────────────────── */
-const api = {
-  KEY_STORE: 'stream_api_key',
-
-  getKey() { return store.get(this.KEY_STORE, null); },
-  setKey(k) { store.set(this.KEY_STORE, k.trim()); },
-
-  /** Resolve logo URL: prepend base if relative path */
-  resolveLogoUrl(raw) {
-    if (!raw) return null;
-    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-    return CFG.LOGO_BASE + raw;
-  },
-
-  /** Fetch channels from API and merge logos into CHANNELS array */
-  async fetchChannels(key) {
-    const url = `https://dlstreams.top/daddyapi.php?key=${encodeURIComponent(key)}&endpoint=channels`;
-    try {
-      const res  = await fetch(url);
-      const body = await res.json();
-      // API wraps in { success, data } or returns array directly
-      const list = Array.isArray(body) ? body : (body.success ? body.data : null);
-      if (!list) { toast('API key invalid or error'); return false; }
-
-      // Merge logo_url and channel_id into our CHANNELS by matching id
-      let matched = 0;
-      list.forEach(item => {
-        const id  = parseInt(item.channel_id, 10);
-        const ch  = CHANNELS.find(c => c.id === id);
-        if (ch) { ch.logo = this.resolveLogoUrl(item.logo_url); matched++; }
-      });
-
-      // Also add any new channels from API not in our static list
-      list.forEach(item => {
-        const id = parseInt(item.channel_id, 10);
-        if (!CHANNELS.find(c => c.id === id)) {
-          CHANNELS.push({
-            name: item.channel_name,
-            id,
-            cat: 'API',
-            logo: this.resolveLogoUrl(item.logo_url)
-          });
-        }
-      });
-
-      toast(`✓ Loaded ${list.length} channels`);
-      return true;
-    } catch(e) {
-      toast('Could not reach API');
-      return false;
-    }
-  }
-};
-
-
+/* ── HELPERS ──────────────────────────────────────────────────── */
 function groupBy(arr, key) {
   return arr.reduce((acc, item) => { (acc[item[key]] = acc[item[key]] || []).push(item); return acc; }, {});
 }
@@ -1217,19 +1029,6 @@ function makeWrapper(ch) {
   btn.className = 'ch-btn';
   btn.type = 'button';
   btn.setAttribute('aria-label', ch.name);
-
-  // Logo (populated after API key save)
-  if (ch.logo) {
-    btn.classList.add('has-logo');
-    const img = document.createElement('img');
-    img.className = 'ch-logo';
-    img.src = ch.logo;
-    img.alt = '';
-    img.loading = 'lazy';
-    img.draggable = false;
-    img.onerror = () => { img.remove(); btn.classList.remove('has-logo'); };
-    btn.appendChild(img);
-  }
 
   const nameSpan = document.createElement('span');
   nameSpan.textContent = ch.name;
@@ -1314,7 +1113,6 @@ function filterChannels(term) {
   const t = term.toLowerCase().trim();
   S.visible = t ? CHANNELS.filter(c => c.name.toLowerCase().includes(t) || c.cat.toLowerCase().includes(t)) : [...CHANNELS];
   renderRail();
-  // Restore active state
   if (S.activeId) {
     const w = E.rail.querySelector(`[data-ch-id="${S.activeId}"]`);
     if (w) { S.activeBtn = w.querySelector('.ch-btn'); S.activeBtn?.classList.add('active'); }
@@ -1374,7 +1172,7 @@ E.floatRail.addEventListener('click', () => {
 });
 
 /* ── INIT ─────────────────────────────────────────────────────── */
-async function init() {
+function init() {
   renderRail();
   syncPadding();
 
@@ -1383,16 +1181,6 @@ async function init() {
   // Keyboard hint (desktop only)
   setTimeout(() => E.kbHint.classList.add('show'), 1200);
   setTimeout(() => E.kbHint.classList.remove('show'), 6000);
-
-  // If API key already saved, fetch channels silently
-  const savedKey = api.getKey();
-  if (savedKey) {
-    E.apiKeyBtn.classList.add('api-active');
-    E.apiKeyInput.value = savedKey;
-    await api.fetchChannels(savedKey);
-    renderRail(); // re-render with logos
-    S.visible = [...CHANNELS];
-  }
 
   // Auto-play last or default
   const lastId = store.get(CFG.KEY_LAST);
@@ -1411,36 +1199,6 @@ async function init() {
     }
   });
   E.floatExit.addEventListener('click', () => player._exitMobileFS());
-
-  // API key panel toggle
-  let apiPanelOpen = false;
-  E.apiKeyBtn.addEventListener('click', () => {
-    apiPanelOpen = !apiPanelOpen;
-    E.apiPanel.classList.toggle('hidden', !apiPanelOpen);
-    if (apiPanelOpen) E.apiKeyInput.focus();
-  });
-  document.addEventListener('click', e => {
-    if (apiPanelOpen && !E.apiPanel.contains(e.target) && e.target !== E.apiKeyBtn) {
-      apiPanelOpen = false;
-      E.apiPanel.classList.add('hidden');
-    }
-  });
-  E.apiSaveBtn.addEventListener('click', async () => {
-    const key = E.apiKeyInput.value.trim();
-    if (!key) { toast('Enter an API key'); return; }
-    api.setKey(key);
-    E.apiKeyBtn.classList.add('api-active');
-    E.apiSaveBtn.textContent = '…';
-    const ok = await api.fetchChannels(key);
-    E.apiSaveBtn.textContent = 'Save';
-    if (ok) {
-      S.visible = [...CHANNELS];
-      renderRail();
-      apiPanelOpen = false;
-      E.apiPanel.classList.add('hidden');
-    }
-  });
-  E.apiKeyInput.addEventListener('keydown', e => { if (e.key === 'Enter') E.apiSaveBtn.click(); });
 
   E.player.addEventListener('load',  () => { overlay.hideLoading(); reconnect.reset(); });
   E.player.addEventListener('error', () => reconnect.attempt());
