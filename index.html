@@ -48,6 +48,7 @@ body{
   overflow:hidden;
   height:100vh;
   height:-webkit-fill-available;
+  /* block any rubber-band bounce from accidentally revealing underlying page */
   overscroll-behavior:none;
 }
 
@@ -61,12 +62,14 @@ body{
   -webkit-backdrop-filter:var(--blur);
   border-bottom:.5px solid var(--c-border);
   padding:10px 16px 0;
+  /* GPU layer — prevents Safari iOS repaint flicker */
   transform:translateZ(0);
   will-change:transform;
   transition:transform .32s var(--ease-out);
 }
 #hdr.off{transform:translateY(-110%)}
 
+/* top bar */
 .top-bar{
   display:flex;
   align-items:center;
@@ -91,6 +94,7 @@ body{
   flex-shrink:0;
 }
 
+/* Search input — 16px font prevents iOS Safari auto-zoom, scaled back visually */
 .search-wrap{position:relative;display:flex;align-items:center}
 .search-wrap::before{
   content:'';
@@ -104,7 +108,7 @@ body{
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' fill='none' stroke='white' stroke-width='2.2'/%3E%3Cpath d='M16.5 16.5L22 22' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
 }
 #search{
-  font-size:16px;
+  font-size:16px; /* ← must stay ≥16px on iOS */
   transform:scale(.8125);
   transform-origin:left center;
   width:197px;
@@ -122,6 +126,7 @@ body{
 #search:focus{background:rgba(255,255,255,.1);width:246px}
 #search::placeholder{color:var(--c-text-3)}
 
+/* Buttons */
 .btn{
   padding:6px 13px;
   background:var(--c-fill);
@@ -177,6 +182,7 @@ body{
   padding:2px 0 9px;
   -webkit-overflow-scrolling:touch;
   touch-action:pan-x;
+  /* thin visible scrollbar */
   scrollbar-width:thin;
   scrollbar-color:rgba(255,255,255,.18) transparent;
 }
@@ -216,6 +222,7 @@ body{
 .ch-btn.sport  {background:var(--c-blue);color:#fff;font-weight:600}
 .ch-btn.general{background:var(--c-green);color:#000;font-weight:600}
 
+/* Source selector */
 .ch-src{
   padding:4px 22px 4px 8px;
   background:var(--c-fill);
@@ -242,7 +249,7 @@ body{
   inset:0;
   background:#000;
   z-index:1;
-  transform:translateZ(0);
+  transform:translateZ(0); /* GPU layer — Safari iOS flicker fix */
 }
 #stage.fullscreen{z-index:9999!important}
 
@@ -273,6 +280,7 @@ body{
   min-width:180px;
 }
 
+/* Spinner */
 .spin{
   width:26px;height:26px;
   border:2.5px solid rgba(255,255,255,.12);
@@ -295,6 +303,7 @@ body{
   color:var(--c-text-3);
 }
 
+/* Error icon */
 .err-icon{
   width:36px;height:36px;
   background:rgba(255,69,58,.15);
@@ -363,6 +372,10 @@ body{
 }
 #btn-exit-fs.on,#btn-channels.on{display:block}
 
+/* ─── TV / D-pad focus styles ───────────────────────────────────── */
+@media (hover:none) and (pointer:coarse){
+  /* Already handled via :active states */
+}
 .ch-btn:focus-visible,.btn:focus-visible,.tab:focus-visible{
   outline:2px solid var(--c-blue);
   outline-offset:2px;
@@ -381,10 +394,12 @@ body{
   .ch-card{width:88px}
   .ch-btn{font-size:10px;padding:6px 7px}
 }
+/* PWA safe areas */
 @media(display-mode:standalone){
   #hdr{padding-top:max(10px,env(safe-area-inset-top))}
   body{padding-bottom:env(safe-area-inset-bottom)}
 }
+/* TV / large screen — bigger tap targets, no hover jank */
 @media(min-width:1280px){
   .ch-card{width:128px}
   .ch-btn{font-size:13px;padding:9px 12px}
@@ -441,7 +456,6 @@ body{
   </div>
 
   <iframe id="player"
-    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups-to-escape-sandbox"
     allowfullscreen
     allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
     playsinline
@@ -450,6 +464,7 @@ body{
     loading="eager">
   </iframe>
 
+  <!-- Floating controls (shown only in mobile fullscreen) -->
   <button id="btn-exit-fs">&#xD7; &nbsp;Exit Full Screen</button>
   <button id="btn-channels">Channels</button>
 </main>
@@ -459,24 +474,29 @@ body{
 
 <script>
 // ─── Security sandbox ──────────────────────────────────────────────
+// All in try/catch — Brave shields etc. can override window properties.
 (function(){
   try{ window.open = function(){ return null; }; }catch(_){}
   try{ Object.defineProperty(window,'opener',{get:function(){return null;},set:function(){},configurable:false}); }catch(_){}
+  // Kill focus-steal: if the page loses focus within 800ms of gaining it, refocus immediately.
   var _lf = 0;
   window.addEventListener('blur',function(){
     var n = Date.now();
     if(n - _lf < 800){ setTimeout(function(){ try{ window.focus(); }catch(_){} },1); }
     _lf = n;
   },{passive:true});
+  // Block navigation via injected <a> clicks
   document.addEventListener('click',function(e){
     var a = e.target.closest('a');
     if(a && a.href && a.href.indexOf('http')===0 && a.href.indexOf(location.hostname)===-1){
       e.preventDefault(); e.stopPropagation();
     }
   },true);
+  // Block iframe right-click context menu
   document.addEventListener('contextmenu',function(e){
     if(e.target.tagName==='IFRAME'){ e.preventDefault(); }
   });
+  // Remove any dynamically injected foreign iframes
   var mo = new MutationObserver(function(ml){
     ml.forEach(function(m){
       m.addedNodes.forEach(function(n){
@@ -489,6 +509,7 @@ body{
 
 // ─── Config ────────────────────────────────────────────────────────
 var CFG = {
+  BASE:           'https://dlhd.link',
   LAST_CH:        'lastChannel',
   DEBOUNCE:       240,
   LOAD_TIMEOUT:   9000,
@@ -550,15 +571,16 @@ var D = {
 
 // ─── State ─────────────────────────────────────────────────────────
 var S = {
-  chId:       null,
-  chIdx:      0,
-  cat:        'sport',
-  mobileFS:   false,
-  hdrHidden:  false,
-  lastTap:    0,
+  chId:       null,   // currently playing channel id
+  chIdx:      0,      // index in ALL[]
+  cat:        'sport',// active category tab
+  mobileFS:   false,  // mobile fullscreen mode
+  hdrHidden:  false,  // header collapsed
+  lastTap:    0,      // for double-tap detection
   loadTimer:  null
 };
 
+// Detect mobile/touch once
 var IS_TV     = /TV|SmartTV|Tizen|WebOS|VIDAA|HbbTV/i.test(navigator.userAgent);
 var IS_TOUCH  = ('ontouchstart' in window) || navigator.maxTouchPoints > 1;
 var IS_MOBILE = IS_TOUCH && !IS_TV && window.innerWidth < 1024;
@@ -576,13 +598,16 @@ function store(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(_){}
 function recall(k){
   try{ var v=localStorage.getItem(k); return v!==null?JSON.parse(v):null; }catch(_){ return null; }
 }
+function url(id, folder){ return CFG.BASE+'/'+folder+'/stream-'+id+'.php'; }
 
+// Adjust player top padding to clear the header
 function syncLayout(){
   if(!S.mobileFS){
     D.stage.style.paddingTop = D.hdr.offsetHeight+'px';
   }
 }
 
+// Toast notification
 var _toastTimer;
 function toast(msg, ms){
   D.toast.textContent = msg;
@@ -619,33 +644,11 @@ function rcStart(){
   RC.n++;
   D.reconnMsg.textContent = 'Reconnecting\u2026 ('+RC.n+' / '+CFG.RECONNECT_MAX+')';
   toast('Reconnecting\u2026 '+RC.n+'/'+CFG.RECONNECT_MAX);
-  RC.t = setTimeout(function(){
-    var card = document.querySelector('.ch-card[data-id="'+S.chId+'"]');
-    var sel  = card ? card.querySelector('select') : null;
-    loadStream(S.chId, sel ? sel.value : FOLDERS[0]);
-  }, CFG.RECONNECT_WAIT);
+  RC.t = setTimeout(streamRefresh, CFG.RECONNECT_WAIT);
 }
 function rcReset(){
   RC.n = 0; clearTimeout(RC.t);
   D.reconnMsg.textContent = '';
-}
-
-// ─── Fetch stream via proxy → inject into iframe srcdoc ───────────
-// credentials:'same-origin' sends the auth cookie so the worker
-// does not return 401 Unauthorized.
-function loadStream(id, folder){
-  if(!id) return;
-  showLoad();
-  fetch('/proxy?id='+id+'&folder='+folder, { credentials:'same-origin' })
-    .then(function(res){
-      if(!res.ok){ rcStart(); return null; }
-      return res.text();
-    })
-    .then(function(html){
-      if(!html) return;
-      D.player.srcdoc = html;
-    })
-    .catch(function(){ rcStart(); });
 }
 
 // ─── Tab switching ─────────────────────────────────────────────────
@@ -657,6 +660,7 @@ function setTab(cat){
     t.setAttribute('aria-selected', tc===cat ? 'true' : 'false');
     if(tc===cat) t.classList.add(cat);
   });
+  // explicit add/remove — classList.toggle(,bool) is broken on Tizen/WebOS
   if(cat==='sport'){
     D.secSport.classList.add('on');
     D.secGeneral.classList.remove('on');
@@ -689,11 +693,12 @@ function makeCard(ch){
   });
   src.value = recall('src_'+ch.id) || FOLDERS[0];
 
+  // Closures bind ch correctly
   btn.addEventListener('click', (function(c){ return function(){ play(c); }; })(ch));
   src.addEventListener('change', (function(c){ return function(e){
     e.stopPropagation();
     store('src_'+c.id, e.target.value);
-    if(S.chId===c.id){ loadStream(c.id, e.target.value); }
+    if(S.chId===c.id){ D.player.src = url(c.id, e.target.value); }
   }; })(ch));
 
   card.appendChild(btn);
@@ -712,16 +717,18 @@ function renderChannels(){
   D.rowGeneral.appendChild(fg);
 }
 
-// ─── Search ────────────────────────────────────────────────────────
+// ─── Search (show/hide existing cards — zero DOM churn) ────────────
 function filterSearch(term){
   var t = term.toLowerCase().trim();
   if(!t){
+    // restore
     [D.rowSport, D.rowGeneral].forEach(function(row){
       row.querySelectorAll('.ch-card').forEach(function(c){ c.style.display=''; });
     });
     setTab(S.cat);
     return;
   }
+  // Show both sections during search
   D.secSport.classList.add('on');
   D.secGeneral.classList.add('on');
   [D.rowSport, D.rowGeneral].forEach(function(row){
@@ -735,37 +742,40 @@ function filterSearch(term){
 
 // ─── Playback ──────────────────────────────────────────────────────
 function play(ch){
-  rcReset();
+  showLoad(); rcReset();
 
+  // Remove previous active class
   if(S.chId !== null){
     var old = document.querySelector('.ch-card[data-id="'+S.chId+'"] .ch-btn');
     if(old){ old.classList.remove('sport','general'); }
   }
 
+  // Set new active class
   var card = document.querySelector('.ch-card[data-id="'+ch.id+'"]');
   if(card){
     var btn = card.querySelector('.ch-btn');
     if(btn){ btn.classList.add(ch.cat); }
+    // Auto-switch tab unless in search mode
     if(!D.search.value.trim()){ setTab(ch.cat); }
   }
 
+  // Update state
   S.chId = ch.id;
   for(var i=0;i<ALL.length;i++){ if(ALL[i].id===ch.id){ S.chIdx=i; break; } }
 
   D.nowLabel.textContent = ch.name;
   var sel = card ? card.querySelector('select') : null;
-  var folder = sel ? sel.value : FOLDERS[0];
-
-  loadStream(ch.id, folder);
+  D.player.src = url(ch.id, sel ? sel.value : FOLDERS[0]);
   store(CFG.LAST_CH, ch.id);
   toast(ch.name);
 }
 
 function streamRefresh(){
-  if(S.chId === null) return;
-  var card = document.querySelector('.ch-card[data-id="'+S.chId+'"]');
-  var sel  = card ? card.querySelector('select') : null;
-  loadStream(S.chId, sel ? sel.value : FOLDERS[0]);
+  if(!D.player.src) return;
+  showLoad();
+  var s = D.player.src;
+  D.player.src = '';
+  setTimeout(function(){ D.player.src = s; }, 100);
   toast('Refreshing\u2026');
 }
 
@@ -786,6 +796,7 @@ function enterFS(){
   var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if(fn){
     fn.call(el).then(function(){ D.btnFS.textContent='Exit Full Screen'; }).catch(function(){
+      // Fallback: try the iframe itself
       var ifn = D.player.requestFullscreen || D.player.webkitRequestFullscreen;
       if(ifn){ ifn.call(D.player).then(function(){ D.btnFS.textContent='Exit Full Screen'; }).catch(function(){}); }
     });
@@ -802,6 +813,7 @@ function toggleFS(){
   else{ enterFS(); }
 }
 
+// Mobile fullscreen (no native API needed — hide header, expand stage)
 function toggleMobileFS(){
   if(!S.mobileFS){
     S.mobileFS = true;
@@ -833,11 +845,11 @@ function toggleHeader(){
   if(S.hdrHidden){ D.hdr.classList.add('off'); }
   else{
     D.hdr.classList.remove('off');
-    setTimeout(syncLayout, 340);
+    setTimeout(syncLayout, 340); // after transition
   }
 }
 
-// ─── Touch gestures ────────────────────────────────────────────────
+// ─── Touch gestures on player ──────────────────────────────────────
 function initGestures(){
   var sx=0, sy=0;
   D.stage.addEventListener('touchstart',function(e){
@@ -847,10 +859,12 @@ function initGestures(){
   D.stage.addEventListener('touchend',function(e){
     var dx = sx - e.changedTouches[0].clientX;
     var dy = sy - e.changedTouches[0].clientY;
+    // Horizontal swipe → channel change
     if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 72){
       if(dx > 0){ playNext(); } else { playPrev(); }
       return;
     }
+    // Double-tap → fullscreen
     var now = Date.now();
     if(now - S.lastTap < 270 && now - S.lastTap > 30){
       toggleFS(); e.preventDefault();
@@ -860,18 +874,19 @@ function initGestures(){
   D.stage.addEventListener('dblclick', toggleFS);
 }
 
-// ─── Keyboard ──────────────────────────────────────────────────────
+// ─── Keyboard (desktop + TV D-pad) ────────────────────────────────
 document.addEventListener('keydown',function(e){
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
   switch(e.key){
-    case 'f': case 'F':   e.preventDefault(); toggleFS();     break;
-    case 'ArrowRight':    e.preventDefault(); playNext();      break;
-    case 'ArrowLeft':     e.preventDefault(); playPrev();      break;
-    case 'r': case 'R':   e.preventDefault(); streamRefresh(); break;
+    case 'f': case 'F':       e.preventDefault(); toggleFS();    break;
+    case 'ArrowRight':        e.preventDefault(); playNext();     break;
+    case 'ArrowLeft':         e.preventDefault(); playPrev();     break;
+    case 'r': case 'R':       e.preventDefault(); streamRefresh();break;
     case 'Escape':
       if(S.mobileFS){ exitMobileFS(); }
       else{ exitFS(); }
       break;
+    // TV D-pad OK / Enter on focused channel button handled natively by browser
   }
 });
 
@@ -883,7 +898,10 @@ function init(){
 
   window.addEventListener('resize', debounce(syncLayout, 100));
   if(IS_MOBILE || IS_TOUCH) initGestures();
+  // Show floating "Channels" button on mobile/TV for header re-open
+  if(IS_MOBILE || IS_TV){ /* shown only when in mobileFS */ }
 
+  // Restore last channel
   var lastId = recall(CFG.LAST_CH);
   var defCh = ALL[0];
   if(lastId){
@@ -893,9 +911,13 @@ function init(){
   }
   play(defCh);
 
+  // ── Event bindings ─────────────────────────────────────────────
+
+  // Tabs
   D.tabs.forEach(function(tab){
     tab.addEventListener('click',function(){
       var c = tab.getAttribute('data-cat');
+      // Clear search when switching tabs
       if(D.search.value.trim()){
         D.search.value='';
         [D.rowSport,D.rowGeneral].forEach(function(r){
@@ -906,10 +928,12 @@ function init(){
     });
   });
 
+  // Search
   D.search.addEventListener('input', debounce(function(e){
     filterSearch(e.target.value);
   }, CFG.DEBOUNCE));
 
+  // Clear search on Escape
   D.search.addEventListener('keydown',function(e){
     if(e.key==='Escape'){
       D.search.value='';
@@ -918,6 +942,7 @@ function init(){
     }
   });
 
+  // Buttons
   D.btnRefresh.addEventListener('click', streamRefresh);
   D.btnFS.addEventListener('click', toggleFS);
   D.btnExitFS.addEventListener('click', exitMobileFS);
@@ -930,6 +955,7 @@ function init(){
     }
   });
 
+  // Sync fullscreen button label with browser state
   ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(function(ev){
     document.addEventListener(ev,function(){
       var active = !!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
@@ -937,25 +963,30 @@ function init(){
     });
   });
 
-  // srcdoc loads fire the load event just like src does
+  // Player iframe events
   D.player.addEventListener('load',  function(){ hideLoad(); rcReset(); });
   D.player.addEventListener('error', function(){ rcStart(); });
 
+  // Block body scroll creep (iOS Safari bounce)
   document.addEventListener('touchmove',function(e){
     var t = e.target;
-    if(t.closest('.ch-row') || t.closest('#hdr')) return;
+    if(t.closest('.ch-row') || t.closest('#hdr')) return; // allow horizontal scroll in rows
     if(t.closest('#stage')) return;
     e.preventDefault();
   },{passive:false});
 
+  // Network feedback
   window.addEventListener('online',  function(){ toast('Back Online'); });
   window.addEventListener('offline', function(){ toast('No Connection',3500); });
 
+  // Visibility — pause/resume is handled by the iframe's own player,
+  // but we ensure layout is fresh when the tab becomes visible again.
   document.addEventListener('visibilitychange',function(){
     if(!document.hidden){ syncLayout(); }
   });
 }
 
+// Boot
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded', init);
 } else {
