@@ -1,672 +1,998 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Stream</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#000000">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>Stream</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<style>
+/* ─── Reset & Tokens ────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
-  <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0; padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
+:root{
+  --c-bg:          #000;
+  --c-glass:       rgba(18,18,20,.82);
+  --c-glass-hover: rgba(38,38,42,.9);
+  --c-fill:        rgba(255,255,255,.07);
+  --c-fill-hover:  rgba(255,255,255,.11);
+  --c-border:      rgba(255,255,255,.08);
+  --c-text:        #fff;
+  --c-text-2:      rgba(235,235,245,.55);
+  --c-text-3:      rgba(235,235,245,.28);
+  --c-blue:        #0a84ff;
+  --c-green:       #32d74b;
+  --c-red:         #ff453a;
+  --blur:          saturate(200%) blur(24px);
+  --r:             9px;
+  --r-pill:        100px;
+  --font:          -apple-system,"SF Pro Text","SF Pro Display","Helvetica Neue",sans-serif;
+  --ease-out:      cubic-bezier(.25,.46,.45,.94);
+  --ease-spring:   cubic-bezier(.34,1.56,.64,1);
+}
 
-    :root {
-      --bg:           #000000;
-      --bg-elevated:  rgba(28, 28, 30, 0.72);
-      --bg-grouped:   rgba(44, 44, 46, 0.6);
-      --bg-fill:      rgba(58, 58, 60, 0.36);
-      --separator:    rgba(84, 84, 88, 0.34);
+/* ─── Base ──────────────────────────────────────────────────────── */
+html{
+  height:-webkit-fill-available;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+body{
+  font-family:var(--font);
+  background:var(--c-bg);
+  color:var(--c-text);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  height:100vh;
+  height:-webkit-fill-available;
+  /* block any rubber-band bounce from accidentally revealing underlying page */
+  overscroll-behavior:none;
+}
 
-      --label:        rgba(255, 255, 255, 1);
-      --label-2:      rgba(235, 235, 245, 0.6);
-      --label-3:      rgba(235, 235, 245, 0.3);
+/* ─── Header ────────────────────────────────────────────────────── */
+#hdr{
+  position:fixed;
+  inset:0 0 auto 0;
+  z-index:200;
+  background:var(--c-glass);
+  backdrop-filter:var(--blur);
+  -webkit-backdrop-filter:var(--blur);
+  border-bottom:.5px solid var(--c-border);
+  padding:10px 16px 0;
+  /* GPU layer — prevents Safari iOS repaint flicker */
+  transform:translateZ(0);
+  will-change:transform;
+  transition:transform .32s var(--ease-out);
+}
+#hdr.off{transform:translateY(-110%)}
 
-      --blue:         #0a84ff;
+/* top bar */
+.top-bar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+}
 
-      --font: -apple-system, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
+#now-label{
+  flex:1;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:-.3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-xl: 20px;
+.controls{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-shrink:0;
+}
 
-      --blur: saturate(180%) blur(20px);
-    }
+/* Search input — 16px font prevents iOS Safari auto-zoom, scaled back visually */
+.search-wrap{position:relative;display:flex;align-items:center}
+.search-wrap::before{
+  content:'';
+  position:absolute;
+  left:9px;
+  width:13px;height:13px;
+  background:var(--c-text-3);
+  pointer-events:none;
+  z-index:1;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' fill='none' stroke='white' stroke-width='2.2'/%3E%3Cpath d='M16.5 16.5L22 22' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' fill='none' stroke='white' stroke-width='2.2'/%3E%3Cpath d='M16.5 16.5L22 22' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+#search{
+  font-size:16px; /* ← must stay ≥16px on iOS */
+  transform:scale(.8125);
+  transform-origin:left center;
+  width:197px;
+  margin-right:-36px;
+  padding:7px 10px 7px 28px;
+  background:var(--c-fill);
+  border:none;
+  border-radius:var(--r);
+  color:var(--c-text);
+  font-family:var(--font);
+  outline:none;
+  -webkit-appearance:none;
+  transition:width .2s var(--ease-out),background .15s;
+}
+#search:focus{background:rgba(255,255,255,.1);width:246px}
+#search::placeholder{color:var(--c-text-3)}
 
-    html { height: -webkit-fill-available; }
+/* Buttons */
+.btn{
+  padding:6px 13px;
+  background:var(--c-fill);
+  color:var(--c-blue);
+  border:none;
+  border-radius:var(--r);
+  font-size:13px;
+  font-weight:500;
+  font-family:var(--font);
+  letter-spacing:-.1px;
+  cursor:pointer;
+  white-space:nowrap;
+  -webkit-user-select:none;user-select:none;
+  transition:background .12s,opacity .12s;
+}
+.btn:hover{background:var(--c-fill-hover)}
+.btn:active{opacity:.55}
+#btn-signout{color:var(--c-text-2)}
 
-    body {
-      background: var(--bg);
-      color: var(--label);
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-      overflow: hidden;
-      min-height: 100vh;
-      min-height: -webkit-fill-available;
-    }
+/* ─── Category Tabs ─────────────────────────────────────────────── */
+.tabs{
+  display:flex;
+  gap:5px;
+  margin-bottom:9px;
+}
+.tab{
+  padding:5px 15px;
+  border:none;
+  border-radius:var(--r-pill);
+  background:var(--c-fill);
+  color:var(--c-text-2);
+  font-size:12px;
+  font-weight:600;
+  font-family:var(--font);
+  letter-spacing:-.1px;
+  cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+  transition:background .15s,color .15s,transform .1s;
+}
+.tab:active{transform:scale(.96)}
+.tab.sport  {background:var(--c-blue);color:#fff}
+.tab.general{background:var(--c-green);color:#000}
 
-    /* ── HEADER ── */
-    #header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      background: var(--bg-elevated);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-      border-bottom: 0.5px solid var(--separator);
-      padding: 10px 16px 8px;
-      max-height: 55vh;
-      overflow-y: auto;
-      scrollbar-width: none;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+/* ─── Channel Rows ──────────────────────────────────────────────── */
+.ch-section{display:none}
+.ch-section.on{display:block}
 
-    #header::-webkit-scrollbar { display: none; }
-    #header.collapsed { transform: translateY(-100%); }
+.ch-row{
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 0 9px;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x;
+  /* thin visible scrollbar */
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.18) transparent;
+}
+.ch-row::-webkit-scrollbar{height:3px}
+.ch-row::-webkit-scrollbar-track{background:transparent}
+.ch-row::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:2px}
+.ch-row::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.35)}
 
-    .header-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
+.ch-card{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  flex-shrink:0;
+  width:112px;
+}
 
-    #status-label {
-      flex: 1;
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: -0.3px;
-      color: var(--label);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+.ch-btn{
+  padding:8px 10px;
+  background:var(--c-fill);
+  color:var(--c-text);
+  border:none;
+  border-radius:var(--r);
+  font-size:12px;
+  font-weight:500;
+  font-family:var(--font);
+  letter-spacing:-.1px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-align:left;
+  cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+  transition:background .12s,transform .1s;
+}
+.ch-btn:hover{background:var(--c-fill-hover)}
+.ch-btn:active{transform:scale(.96);opacity:.75}
+.ch-btn.sport  {background:var(--c-blue);color:#fff;font-weight:600}
+.ch-btn.general{background:var(--c-green);color:#000;font-weight:600}
 
-    .header-controls {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      flex-shrink: 0;
-    }
+/* Source selector */
+.ch-src{
+  padding:4px 22px 4px 8px;
+  background:var(--c-fill);
+  border:none;
+  border-radius:6px;
+  color:var(--c-text-2);
+  font-family:var(--font);
+  font-size:11px;
+  cursor:pointer;
+  width:100%;
+  outline:none;
+  -webkit-appearance:none;appearance:none;
+  -webkit-tap-highlight-color:transparent;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(235,235,245,.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 7px center;
+}
+.ch-src:hover{color:var(--c-text)}
+.ch-src option{background:#1c1c1e;color:#fff}
 
-    /* Search */
-    .search-wrap { position: relative; display: flex; align-items: center; }
+/* ─── Player Container ──────────────────────────────────────────── */
+#stage{
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:1;
+  transform:translateZ(0); /* GPU layer — Safari iOS flicker fix */
+}
+#stage.fullscreen{z-index:9999!important}
 
-    .search-wrap::before {
-      content: '';
-      position: absolute;
-      left: 9px;
-      width: 13px; height: 13px;
-      background: var(--label-3);
-      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' fill='none' stroke='white' stroke-width='2'/%3E%3Cline x1='16.5' y1='16.5' x2='22' y2='22' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
-      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' fill='none' stroke='white' stroke-width='2'/%3E%3Cline x1='16.5' y1='16.5' x2='22' y2='22' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
-      pointer-events: none;
-      z-index: 1;
-    }
+#player{
+  width:100%;height:100%;
+  border:none;display:block;
+}
 
-    input[type="search"] {
-      padding: 7px 10px 7px 28px;
-      background: var(--bg-fill);
-      border: none;
-      border-radius: var(--radius-sm);
-      color: var(--label);
-      font-family: var(--font);
-      font-size: 13px;
-      width: 160px;
-      outline: none;
-      transition: width 0.2s ease, background 0.15s;
-      -webkit-appearance: none;
-    }
+/* ─── Overlays ──────────────────────────────────────────────────── */
+.overlay{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
+}
+.overlay.on{display:flex}
 
-    input[type="search"]:focus {
-      background: rgba(58, 58, 60, 0.6);
-      width: 200px;
-    }
+.overlay-card{
+  background:var(--c-glass);
+  backdrop-filter:var(--blur);
+  -webkit-backdrop-filter:var(--blur);
+  border:.5px solid var(--c-border);
+  border-radius:18px;
+  padding:28px 36px;
+  text-align:center;
+  min-width:180px;
+}
 
-    input[type="search"]::placeholder { color: var(--label-3); }
+/* Spinner */
+.spin{
+  width:26px;height:26px;
+  border:2.5px solid rgba(255,255,255,.12);
+  border-top-color:var(--c-blue);
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  margin:0 auto 14px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-    /* Buttons */
-    .btn {
-      padding: 6px 13px;
-      background: var(--bg-fill);
-      color: var(--blue);
-      border: none;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      font-family: var(--font);
-      letter-spacing: -0.1px;
-      transition: background 0.12s, opacity 0.12s;
-      white-space: nowrap;
-      -webkit-user-select: none;
-      user-select: none;
-    }
+.overlay-card p{
+  font-size:13px;
+  font-weight:500;
+  color:var(--c-text-2);
+  letter-spacing:-.1px;
+}
+#reconnect-msg{
+  margin-top:7px;
+  font-size:11px;
+  color:var(--c-text-3);
+}
 
-    .btn:hover  { background: var(--bg-grouped); }
-    .btn:active { opacity: 0.6; }
-    #logout-btn { color: var(--label-2); }
+/* Error icon */
+.err-icon{
+  width:36px;height:36px;
+  background:rgba(255,69,58,.15);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;
+  font-size:17px;
+  font-weight:700;
+  color:var(--c-red);
+  line-height:1;
+}
 
-    /* ── CHANNELS ── */
-    #channels {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      overflow-y: hidden;
-      padding: 2px 0 6px;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-      touch-action: pan-x;
-    }
+/* ─── Toast ─────────────────────────────────────────────────────── */
+#toast{
+  position:fixed;
+  bottom:24px;
+  left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:var(--c-glass);
+  backdrop-filter:var(--blur);
+  -webkit-backdrop-filter:var(--blur);
+  border:.5px solid var(--c-border);
+  color:var(--c-text);
+  padding:9px 20px;
+  border-radius:var(--r-pill);
+  font-size:13px;
+  font-weight:500;
+  font-family:var(--font);
+  letter-spacing:-.1px;
+  z-index:9000;
+  opacity:0;
+  pointer-events:none;
+  white-space:nowrap;
+  max-width:82vw;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  transition:opacity .18s,transform .22s var(--ease-spring);
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    #channels::-webkit-scrollbar { display: none; }
+/* ─── Floating Buttons ──────────────────────────────────────────── */
+#btn-exit-fs,#btn-channels{
+  display:none;
+  position:fixed;
+  z-index:10000;
+  background:var(--c-glass);
+  backdrop-filter:var(--blur);
+  -webkit-backdrop-filter:var(--blur);
+  border:.5px solid var(--c-border);
+  color:var(--c-text);
+  font-family:var(--font);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  border-radius:14px;
+  padding:8px 16px;
+}
+#btn-exit-fs{
+  top:max(12px,env(safe-area-inset-top));
+  right:16px;
+}
+#btn-channels{
+  top:max(12px,env(safe-area-inset-top));
+  left:16px;
+  color:var(--c-blue);
+}
+#btn-exit-fs.on,#btn-channels.on{display:block}
 
-    .channel-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex-shrink: 0;
-      min-width: 112px;
-      max-width: 112px;
-    }
+/* ─── TV / D-pad focus styles ───────────────────────────────────── */
+@media (hover:none) and (pointer:coarse){
+  /* Already handled via :active states */
+}
+.ch-btn:focus-visible,.btn:focus-visible,.tab:focus-visible{
+  outline:2px solid var(--c-blue);
+  outline-offset:2px;
+}
 
-    .channel-btn {
-      padding: 8px 10px;
-      background: var(--bg-fill);
-      color: var(--label);
-      border: none;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      font-family: var(--font);
-      letter-spacing: -0.1px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: background 0.12s, transform 0.1s;
-      -webkit-user-select: none;
-      user-select: none;
-      text-align: left;
-    }
-
-    .channel-btn:hover  { background: var(--bg-grouped); }
-    .channel-btn:active { transform: scale(0.97); opacity: 0.8; }
-    .channel-btn.active { background: var(--blue); color: #fff; font-weight: 600; }
-
-    .folder-selector {
-      padding: 4px 22px 4px 8px;
-      background: var(--bg-fill);
-      border: none;
-      border-radius: 6px;
-      color: var(--label-2);
-      font-family: var(--font);
-      font-size: 11px;
-      cursor: pointer;
-      width: 100%;
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(235,235,245,0.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 7px center;
-    }
-
-    .folder-selector:hover { color: var(--label); }
-
-    /* ── PLAYER ── */
-    #player-container {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      width: 100%; height: 100vh;
-      background: #000;
-      z-index: 1;
-    }
-
-    #player-container.mobile-fullscreen { z-index: 999999 !important; }
-
-    iframe { width: 100%; height: 100%; border: none; display: block; }
-
-    /* Overlays */
-    .overlay-message {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      z-index: 10;
-      display: none;
-      background: var(--bg-elevated);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-      padding: 28px 32px;
-      border-radius: var(--radius-xl);
-      border: 0.5px solid var(--separator);
-      min-width: 200px;
-    }
-
-    #loading.show, #error-msg.show { display: block; }
-
-    .spinner {
-      width: 28px; height: 28px;
-      border: 2.5px solid rgba(84,84,88,.34);
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: spin 0.75s linear infinite;
-      margin: 0 auto 14px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    #loading p, #error-msg p {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--label-2);
-      letter-spacing: -0.1px;
-    }
-
-    .reconnect-info { margin-top: 8px; font-size: 12px; color: var(--label-3); }
-
-    /* Toast */
-    #toast {
-      position: fixed;
-      bottom: 22px;
-      left: 50%;
-      transform: translateX(-50%) translateY(12px);
-      background: var(--bg-elevated);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-      border: 0.5px solid var(--separator);
-      color: var(--label);
-      padding: 9px 18px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
-      font-family: var(--font);
-      letter-spacing: -0.1px;
-      z-index: 10000;
-      opacity: 0;
-      transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      pointer-events: none;
-      white-space: nowrap;
-      max-width: 80vw;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* Mobile controls */
-    #mobile-exit-fullscreen {
-      display: none;
-      position: fixed;
-      top: max(12px, env(safe-area-inset-top));
-      right: 16px;
-      z-index: 1000000;
-      background: var(--bg-elevated);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-      border: 0.5px solid var(--separator);
-      color: var(--label);
-      padding: 8px 16px;
-      border-radius: var(--radius-lg);
-      font-size: 13px;
-      font-weight: 600;
-      font-family: var(--font);
-      cursor: pointer;
-    }
-
-    #mobile-exit-fullscreen.show { display: block; }
-
-    #toggle-header-btn {
-      display: none;
-      position: fixed;
-      top: max(12px, env(safe-area-inset-top));
-      left: 16px;
-      z-index: 99;
-      background: var(--bg-elevated);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-      border: 0.5px solid var(--separator);
-      color: var(--blue);
-      padding: 7px 14px;
-      border-radius: var(--radius-lg);
-      font-size: 13px;
-      font-weight: 600;
-      font-family: var(--font);
-      cursor: pointer;
-    }
-
-    #toggle-header-btn.show { display: block; }
-
-    /* Mobile responsive */
-    @media (max-width: 768px) {
-      #header { padding: 10px 12px 8px; }
-      .header-top { gap: 8px; }
-      input[type="search"]       { width: 120px; }
-      input[type="search"]:focus { width: 150px; }
-      .channel-wrapper { min-width: 100px; max-width: 100px; }
-      .channel-btn     { font-size: 11px; padding: 7px 8px; }
-    }
-
-    @media (max-width: 768px) and (orientation: landscape) {
-      .channel-wrapper { min-width: 90px; max-width: 90px; }
-      .channel-btn     { font-size: 10px; }
-    }
-
-    @media (display-mode: standalone) {
-      body    { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-      #header { padding-top: max(10px, env(safe-area-inset-top)); }
-    }
-  </style>
+/* ─── Responsive ────────────────────────────────────────────────── */
+@media(max-width:768px){
+  #hdr{padding:10px 12px 0}
+  .top-bar{gap:6px}
+  #search{width:148px;margin-right:-28px}
+  #search:focus{width:185px}
+  .ch-card{width:100px}
+  .ch-btn{font-size:11px;padding:7px 8px}
+}
+@media(max-width:768px) and (orientation:landscape){
+  .ch-card{width:88px}
+  .ch-btn{font-size:10px;padding:6px 7px}
+}
+/* PWA safe areas */
+@media(display-mode:standalone){
+  #hdr{padding-top:max(10px,env(safe-area-inset-top))}
+  body{padding-bottom:env(safe-area-inset-bottom)}
+}
+/* TV / large screen — bigger tap targets, no hover jank */
+@media(min-width:1280px){
+  .ch-card{width:128px}
+  .ch-btn{font-size:13px;padding:9px 12px}
+  .btn{font-size:14px;padding:7px 15px}
+}
+</style>
 </head>
 <body>
 
-<div id="app">
-  <header id="header">
-    <div class="header-top">
-      <div id="status-label">Select a Channel</div>
-      <div class="header-controls">
-        <div class="search-wrap">
-          <input type="search" id="search-box" placeholder="Search" aria-label="Search channels">
-        </div>
-        <button id="refresh-btn" class="btn">Refresh</button>
-        <button id="fullscreen-btn" class="btn">Full Screen</button>
-        <button id="logout-btn" class="btn">Sign Out</button>
+<!-- ─── Header ───────────────────────────────────────────────────── -->
+<header id="hdr">
+  <div class="top-bar">
+    <div id="now-label">Select a Channel</div>
+    <div class="controls">
+      <div class="search-wrap">
+        <input id="search" type="search" placeholder="Search" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search channels">
       </div>
+      <button id="btn-refresh"  class="btn">Refresh</button>
+      <button id="btn-fs"       class="btn">Full Screen</button>
+      <button id="btn-signout"  class="btn">Sign Out</button>
     </div>
-    <div id="channels" role="list" aria-label="Channel list"></div>
-  </header>
+  </div>
 
-  <main id="player-container">
-    <div id="loading" class="overlay-message" role="status">
-      <div class="spinner"></div>
+  <div class="tabs" role="tablist">
+    <button class="tab sport" data-cat="sport"   role="tab" aria-selected="true">Sport</button>
+    <button class="tab"       data-cat="general" role="tab" aria-selected="false">General</button>
+  </div>
+
+  <div id="sec-sport"   class="ch-section on" role="tabpanel">
+    <div id="row-sport"   class="ch-row" role="list" aria-label="Sport channels"></div>
+  </div>
+  <div id="sec-general" class="ch-section" role="tabpanel">
+    <div id="row-general" class="ch-row" role="list" aria-label="General channels"></div>
+  </div>
+</header>
+
+<!-- ─── Stage ────────────────────────────────────────────────────── -->
+<main id="stage">
+  <!-- Loading overlay -->
+  <div id="ov-load" class="overlay on" role="status" aria-live="polite">
+    <div class="overlay-card">
+      <div class="spin"></div>
       <p>Loading</p>
     </div>
-    <div id="error-msg" class="overlay-message" role="alert">
-      <p style="font-size:30px;margin-bottom:10px;">⚠️</p>
-      <p>Stream Unavailable</p>
-      <small style="font-size:12px;color:var(--label-3);margin-top:6px;display:block;">Try another channel or refresh</small>
-      <div class="reconnect-info" id="reconnect-info"></div>
-    </div>
+  </div>
 
-<iframe id="player"
-  allowfullscreen
-  allow="autoplay; fullscreen; picture-in-picture"
-  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
-  title="Stream player">
-</iframe>
-    
-    <button id="mobile-exit-fullscreen">✕  Exit Full Screen</button>
-    <button id="toggle-header-btn">Channels</button>
-    <div id="toast" role="status" aria-live="polite"></div>
-  </main>
-</div>
+  <!-- Error overlay -->
+  <div id="ov-err" class="overlay" role="alert">
+    <div class="overlay-card">
+      <div class="err-icon">!</div>
+      <p>Stream Unavailable</p>
+      <div id="reconnect-msg"></div>
+    </div>
+  </div>
+
+  <iframe id="player"
+    allowfullscreen
+    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
+    playsinline
+    webkit-playsinline
+    title="Stream player"
+    loading="eager">
+  </iframe>
+
+  <!-- Floating controls (shown only in mobile fullscreen) -->
+  <button id="btn-exit-fs">&#xD7; &nbsp;Exit Full Screen</button>
+  <button id="btn-channels">Channels</button>
+</main>
+
+<!-- Toast -->
+<div id="toast" aria-live="polite"></div>
 
 <script>
-'use strict';
-
-(function() {
-  window.open = () => null;
-  try { Object.defineProperty(window, 'opener', { get: () => null, set: () => {}, configurable: false }); } catch(e) {}
-  let lb = 0;
-  window.addEventListener('blur', () => { const n = Date.now(); if (n - lb < 1000) setTimeout(() => window.focus(), 1); lb = n; });
-  document.addEventListener('click', e => { const a = e.target.closest('a'); if (a?.href?.startsWith('http') && !a.href.includes(window.location.hostname)) { e.preventDefault(); e.stopPropagation(); } }, true);
-  document.addEventListener('contextmenu', e => { if (e.target.tagName === 'IFRAME') e.preventDefault(); });
-  const obs = new MutationObserver(m => m.forEach(x => x.addedNodes.forEach(n => { if (n.tagName === 'IFRAME' && n.id !== 'player') n.remove(); })));
-  if (document.body) obs.observe(document.body, { childList: true, subtree: true });
+// ─── Security sandbox ──────────────────────────────────────────────
+// All in try/catch — Brave shields etc. can override window properties.
+(function(){
+  try{ window.open = function(){ return null; }; }catch(_){}
+  try{ Object.defineProperty(window,'opener',{get:function(){return null;},set:function(){},configurable:false}); }catch(_){}
+  // Kill focus-steal: if the page loses focus within 800ms of gaining it, refocus immediately.
+  var _lf = 0;
+  window.addEventListener('blur',function(){
+    var n = Date.now();
+    if(n - _lf < 800){ setTimeout(function(){ try{ window.focus(); }catch(_){} },1); }
+    _lf = n;
+  },{passive:true});
+  // Block navigation via injected <a> clicks
+  document.addEventListener('click',function(e){
+    var a = e.target.closest('a');
+    if(a && a.href && a.href.indexOf('http')===0 && a.href.indexOf(location.hostname)===-1){
+      e.preventDefault(); e.stopPropagation();
+    }
+  },true);
+  // Block iframe right-click context menu
+  document.addEventListener('contextmenu',function(e){
+    if(e.target.tagName==='IFRAME'){ e.preventDefault(); }
+  });
+  // Remove any dynamically injected foreign iframes
+  var mo = new MutationObserver(function(ml){
+    ml.forEach(function(m){
+      m.addedNodes.forEach(function(n){
+        if(n.nodeType===1 && n.tagName==='IFRAME' && n.id!=='player'){ n.remove(); }
+      });
+    });
+  });
+  try{ mo.observe(document.body,{childList:true,subtree:true}); }catch(_){}
 })();
 
-const CONFIG = {
-  LAST_CHANNEL_KEY: 'lastChannel',
-  STREAM_BASE_URL:  'https://dlhd.link',
-  DEBOUNCE_DELAY:   280,
-  LOADING_TIMEOUT:  8000,
-  RECONNECT_MAX:    3,
-  RECONNECT_DELAY:  5000
+// ─── Config ────────────────────────────────────────────────────────
+var CFG = {
+  BASE:           'https://dlhd.link',
+  LAST_CH:        'lastChannel',
+  DEBOUNCE:       240,
+  LOAD_TIMEOUT:   9000,
+  RECONNECT_MAX:  3,
+  RECONNECT_WAIT: 5000
 };
 
-const channels = [
-  { name: "Sport TV 1", id: 49,  category: "sport" },
-  { name: "Sport TV 2", id: 74,  category: "sport" },
-  { name: "Sport TV 3", id: 454, category: "sport" },
-  { name: "Sport TV 4", id: 289, category: "sport" },
-  { name: "Sport TV 5", id: 290, category: "sport" },
-  { name: "Sport TV 6", id: 291, category: "sport" },
-  { name: "DAZN 1",     id: 455, category: "dazn"  },
-  { name: "DAZN 2",     id: 456, category: "dazn"  },
-  { name: "DAZN 3",     id: 457, category: "dazn"  },
-  { name: "DAZN 4",     id: 458, category: "dazn"  },
-  { name: "DAZN 5",     id: 459, category: "dazn"  },
-  { name: "BTV",        id: 380, category: "other" }
+// ─── Channel data ──────────────────────────────────────────────────
+var SPORT = [
+  {name:"Sport TV 1", id:49,  cat:"sport"},
+  {name:"Sport TV 2", id:74,  cat:"sport"},
+  {name:"Sport TV 3", id:454, cat:"sport"},
+  {name:"Sport TV 4", id:289, cat:"sport"},
+  {name:"Sport TV 5", id:290, cat:"sport"},
+  {name:"Sport TV 6", id:291, cat:"sport"},
+  {name:"DAZN 1",     id:455, cat:"sport"},
+  {name:"DAZN 2",     id:456, cat:"sport"},
+  {name:"DAZN 3",     id:457, cat:"sport"},
+  {name:"DAZN 4",     id:458, cat:"sport"},
+  {name:"DAZN 5",     id:459, cat:"sport"},
+  {name:"BTV",        id:380, cat:"sport"},
+  {name:"Canal 11",   id:540, cat:"sport"},
+  {name:"Sporting TV",id:716, cat:"sport"}
 ];
+var GENERAL = [
+  {name:"RTP 1",      id:719, cat:"general"},
+  {name:"RTP 2",      id:720, cat:"general"},
+  {name:"SIC",        id:722, cat:"general"},
+  {name:"TVI",        id:723, cat:"general"},
+  {name:"RTP 3",      id:721, cat:"general"},
+  {name:"CMTV",       id:790, cat:"general"},
+  {name:"TVI Reality",id:724, cat:"general"}
+];
+var ALL = SPORT.concat(GENERAL);
+var FOLDERS = ["player","stream","watch","cast","casting","plus"];
 
-const folders = ["player", "stream", "watch", "cast", "casting", "plus"];
-
-const el = {
-  channelsDiv:     document.getElementById("channels"),
-  searchBox:       document.getElementById("search-box"),
-  statusLabel:     document.getElementById("status-label"),
-  player:          document.getElementById("player"),
-  loading:         document.getElementById("loading"),
-  errorMsg:        document.getElementById("error-msg"),
-  reconnectInfo:   document.getElementById("reconnect-info"),
-  fullscreenBtn:   document.getElementById("fullscreen-btn"),
-  refreshBtn:      document.getElementById("refresh-btn"),
-  toast:           document.getElementById("toast"),
-  logoutBtn:       document.getElementById("logout-btn"),
-  playerContainer: document.getElementById("player-container"),
-  mobileExit:      document.getElementById("mobile-exit-fullscreen"),
-  toggleHeaderBtn: document.getElementById("toggle-header-btn"),
-  header:          document.getElementById("header")
+// ─── DOM refs ──────────────────────────────────────────────────────
+var D = {
+  hdr:        document.getElementById('hdr'),
+  nowLabel:   document.getElementById('now-label'),
+  search:     document.getElementById('search'),
+  btnRefresh: document.getElementById('btn-refresh'),
+  btnFS:      document.getElementById('btn-fs'),
+  btnSignout: document.getElementById('btn-signout'),
+  tabs:       document.querySelectorAll('.tab'),
+  secSport:   document.getElementById('sec-sport'),
+  secGeneral: document.getElementById('sec-general'),
+  rowSport:   document.getElementById('row-sport'),
+  rowGeneral: document.getElementById('row-general'),
+  stage:      document.getElementById('stage'),
+  player:     document.getElementById('player'),
+  ovLoad:     document.getElementById('ov-load'),
+  ovErr:      document.getElementById('ov-err'),
+  reconnMsg:  document.getElementById('reconnect-msg'),
+  toast:      document.getElementById('toast'),
+  btnExitFS:  document.getElementById('btn-exit-fs'),
+  btnChans:   document.getElementById('btn-channels')
 };
 
-const state = {
-  currentBtn: null, currentChannelId: null, currentChannelIdx: 0,
-  visibleChannels: [...channels], loadingTimer: null,
-  isMobileFullscreen: false, headerCollapsed: false, lastTap: 0
+// ─── State ─────────────────────────────────────────────────────────
+var S = {
+  chId:       null,   // currently playing channel id
+  chIdx:      0,      // index in ALL[]
+  cat:        'sport',// active category tab
+  mobileFS:   false,  // mobile fullscreen mode
+  hdrHidden:  false,  // header collapsed
+  lastTap:    0,      // for double-tap detection
+  loadTimer:  null
 };
 
-const utils = {
-  debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; },
-  isMobile() { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || navigator.maxTouchPoints > 2; },
-  adjustPlayer() { if (!state.isMobileFullscreen) el.playerContainer.style.paddingTop = `${el.header.offsetHeight}px`; },
-  toast(msg, duration = 2000) {
-    el.toast.textContent = msg; el.toast.classList.add('show');
-    clearTimeout(el.toast._t); el.toast._t = setTimeout(() => el.toast.classList.remove('show'), duration);
-  },
-  streamUrl(id, folder) { return `${CONFIG.STREAM_BASE_URL}/${folder}/stream-${id}.php`; },
-  save(k, v)      { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} },
-  load(k, def=null) { try { const i = localStorage.getItem(k); return i ? JSON.parse(i) : def; } catch(e) { return def; } }
-};
+// Detect mobile/touch once
+var IS_TV     = /TV|SmartTV|Tizen|WebOS|VIDAA|HbbTV/i.test(navigator.userAgent);
+var IS_TOUCH  = ('ontouchstart' in window) || navigator.maxTouchPoints > 1;
+var IS_MOBILE = IS_TOUCH && !IS_TV && window.innerWidth < 1024;
 
-const reconnect = {
-  n: 0, t: null,
-  start() {
-    if (this.n >= CONFIG.RECONNECT_MAX) { stream.showError(); el.reconnectInfo.textContent = `Failed after ${CONFIG.RECONNECT_MAX} attempts`; return; }
-    this.n++;
-    el.reconnectInfo.textContent = `Reconnecting… (${this.n} of ${CONFIG.RECONNECT_MAX})`;
-    utils.toast(`Reconnecting… (${this.n}/${CONFIG.RECONNECT_MAX})`);
-    this.t = setTimeout(() => stream.refresh(), CONFIG.RECONNECT_DELAY);
-  },
-  reset() { this.n = 0; clearTimeout(this.t); el.reconnectInfo.textContent = ''; }
-};
+// ─── Utilities ─────────────────────────────────────────────────────
+function debounce(fn, ms){
+  var t;
+  return function(){
+    var a = arguments;
+    clearTimeout(t);
+    t = setTimeout(function(){ fn.apply(null,a); }, ms);
+  };
+}
+function store(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(_){} }
+function recall(k){
+  try{ var v=localStorage.getItem(k); return v!==null?JSON.parse(v):null; }catch(_){ return null; }
+}
+function url(id, folder){ return CFG.BASE+'/'+folder+'/stream-'+id+'.php'; }
 
-const stream = {
-  showLoading() {
-    el.loading.classList.add('show'); el.errorMsg.classList.remove('show');
-    clearTimeout(state.loadingTimer); state.loadingTimer = setTimeout(() => this.hideLoading(), CONFIG.LOADING_TIMEOUT);
-  },
-  hideLoading() { el.loading.classList.remove('show'); clearTimeout(state.loadingTimer); },
-  showError()   { el.loading.classList.remove('show'); el.errorMsg.classList.add('show'); },
-  play(id, wrapper, name) {
-    this.showLoading(); reconnect.reset();
-    if (state.currentBtn) state.currentBtn.classList.remove('active');
-    const btn = wrapper.querySelector('.channel-btn');
-    state.currentBtn = btn; btn.classList.add('active');
-    state.currentChannelId  = id;
-    state.currentChannelIdx = state.visibleChannels.findIndex(c => c.id === id);
-    el.statusLabel.textContent = name;
-    const sel = wrapper.querySelector('select');
-    el.player.src = utils.streamUrl(id, sel ? sel.value : folders[0]);
-    utils.save(CONFIG.LAST_CHANNEL_KEY, id);
-    utils.toast(name);
-  },
-  refresh() {
-    if (!el.player.src) return;
-    this.showLoading(); const src = el.player.src; el.player.src = '';
-    setTimeout(() => el.player.src = src, 80); utils.toast('Refreshing…');
-  },
-  next() {
-    if (!state.visibleChannels.length) return;
-    state.currentChannelIdx = (state.currentChannelIdx + 1) % state.visibleChannels.length;
-    const ch = state.visibleChannels[state.currentChannelIdx];
-    const w  = document.querySelector(`[data-channel-id="${ch.id}"]`);
-    if (w) this.play(ch.id, w, ch.name);
-  },
-  prev() {
-    if (!state.visibleChannels.length) return;
-    state.currentChannelIdx = (state.currentChannelIdx - 1 + state.visibleChannels.length) % state.visibleChannels.length;
-    const ch = state.visibleChannels[state.currentChannelIdx];
-    const w  = document.querySelector(`[data-channel-id="${ch.id}"]`);
-    if (w) this.play(ch.id, w, ch.name);
-  },
-  toggleFullscreen() {
-    if (utils.isMobile()) { this.toggleMobileFS(); return; }
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      (el.player.requestFullscreen?.() || el.player.webkitRequestFullscreen?.() || Promise.reject())
-        .then(() => el.fullscreenBtn.textContent = 'Exit Full Screen')
-        .catch(() => {
-          (el.playerContainer.requestFullscreen?.() || el.playerContainer.webkitRequestFullscreen?.())
-            ?.then(() => el.fullscreenBtn.textContent = 'Exit Full Screen')
-            .catch(() => utils.toast('Full Screen not available'));
-        });
-    } else {
-      document.exitFullscreen?.() || document.webkitExitFullscreen?.();
-      el.fullscreenBtn.textContent = 'Full Screen';
-    }
-  },
-  toggleMobileFS() {
-    if (!state.isMobileFullscreen) {
-      el.playerContainer.classList.add('mobile-fullscreen');
-      el.mobileExit.classList.add('show'); el.header.style.display = 'none';
-      el.toggleHeaderBtn.classList.remove('show'); state.isMobileFullscreen = true;
-      el.fullscreenBtn.textContent = 'Exit Full Screen';
-      screen.orientation?.lock?.('landscape').catch(() => {});
-    } else { this.exitMobileFS(); }
-  },
-  exitMobileFS() {
-    el.playerContainer.classList.remove('mobile-fullscreen');
-    el.mobileExit.classList.remove('show'); el.header.style.display = '';
-    el.toggleHeaderBtn.classList.add('show'); state.isMobileFullscreen = false;
-    el.fullscreenBtn.textContent = 'Full Screen';
-    screen.orientation?.unlock?.();
-    setTimeout(() => utils.adjustPlayer(), 80);
+// Adjust player top padding to clear the header
+function syncLayout(){
+  if(!S.mobileFS){
+    D.stage.style.paddingTop = D.hdr.offsetHeight+'px';
   }
-};
-
-const channelMgr = {
-  filter(term) {
-    const t = term.toLowerCase().trim();
-    state.visibleChannels = t ? channels.filter(c => c.name.toLowerCase().includes(t) || c.category.includes(t)) : [...channels];
-    this.render();
-  },
-  createWrapper(ch) {
-    const wrap = document.createElement('div');
-    wrap.className = 'channel-wrapper'; wrap.dataset.channelId = ch.id; wrap.setAttribute('role','listitem');
-    const btn = document.createElement('button');
-    btn.className = 'channel-btn'; btn.textContent = ch.name; btn.type = 'button';
-    btn.onclick = () => stream.play(ch.id, wrap, ch.name);
-    const sel = document.createElement('select'); sel.className = 'folder-selector';
-    sel.setAttribute('aria-label', `Source for ${ch.name}`);
-    folders.forEach(f => { const o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o); });
-    sel.value = utils.load(`ch_${ch.id}_folder`) || folders[0];
-    sel.addEventListener('change', e => {
-      e.stopPropagation(); utils.save(`ch_${ch.id}_folder`, e.target.value);
-      if (state.currentChannelId === ch.id) el.player.src = utils.streamUrl(ch.id, e.target.value);
-    });
-    wrap.appendChild(btn); wrap.appendChild(sel); return wrap;
-  },
-  render() {
-    el.channelsDiv.innerHTML = '';
-    if (!state.visibleChannels.length) {
-      el.channelsDiv.innerHTML = '<p style="color:var(--label-3);font-size:13px;padding:10px 4px;">No channels found</p>';
-    } else {
-      state.visibleChannels.forEach(ch => el.channelsDiv.appendChild(this.createWrapper(ch)));
-    }
-    setTimeout(() => utils.adjustPlayer(), 80);
-  }
-};
-
-function initGestures() {
-  let sx = 0, sy = 0;
-  el.playerContainer.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; });
-  el.playerContainer.addEventListener('touchend', e => {
-    const dx = sx - e.changedTouches[0].clientX, dy = sy - e.changedTouches[0].clientY;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 80) dx > 0 ? stream.next() : stream.prev();
-    const now = Date.now();
-    if (now - state.lastTap < 280 && now - state.lastTap > 0) { stream.toggleFullscreen(); e.preventDefault(); }
-    state.lastTap = now;
-  });
-  el.playerContainer.addEventListener('dblclick', () => stream.toggleFullscreen());
 }
 
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-  const k = e.key;
-  if (k === 'f' || k === 'F') { e.preventDefault(); stream.toggleFullscreen(); }
-  else if (k === 'ArrowRight') { e.preventDefault(); stream.next(); }
-  else if (k === 'ArrowLeft')  { e.preventDefault(); stream.prev(); }
-  else if (k === 'r' || k === 'R') { e.preventDefault(); stream.refresh(); }
-  else if (k === 'Escape') { if (state.isMobileFullscreen) stream.exitMobileFS(); else document.exitFullscreen?.() || document.webkitExitFullscreen?.(); }
+// Toast notification
+var _toastTimer;
+function toast(msg, ms){
+  D.toast.textContent = msg;
+  D.toast.classList.add('on');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ D.toast.classList.remove('on'); }, ms||2200);
+}
+
+// ─── Loading / Error states ────────────────────────────────────────
+function showLoad(){
+  D.ovLoad.classList.add('on');
+  D.ovErr.classList.remove('on');
+  clearTimeout(S.loadTimer);
+  S.loadTimer = setTimeout(hideLoad, CFG.LOAD_TIMEOUT);
+}
+function hideLoad(){
+  D.ovLoad.classList.remove('on');
+  clearTimeout(S.loadTimer);
+}
+function showErr(){
+  D.ovLoad.classList.remove('on');
+  D.ovErr.classList.add('on');
+  clearTimeout(S.loadTimer);
+}
+
+// ─── Reconnect ─────────────────────────────────────────────────────
+var RC = { n:0, t:null };
+function rcStart(){
+  if(RC.n >= CFG.RECONNECT_MAX){
+    showErr();
+    D.reconnMsg.textContent = 'Failed after '+CFG.RECONNECT_MAX+' attempts.';
+    return;
+  }
+  RC.n++;
+  D.reconnMsg.textContent = 'Reconnecting\u2026 ('+RC.n+' / '+CFG.RECONNECT_MAX+')';
+  toast('Reconnecting\u2026 '+RC.n+'/'+CFG.RECONNECT_MAX);
+  RC.t = setTimeout(streamRefresh, CFG.RECONNECT_WAIT);
+}
+function rcReset(){
+  RC.n = 0; clearTimeout(RC.t);
+  D.reconnMsg.textContent = '';
+}
+
+// ─── Tab switching ─────────────────────────────────────────────────
+function setTab(cat){
+  S.cat = cat;
+  D.tabs.forEach(function(t){
+    var tc = t.getAttribute('data-cat');
+    t.classList.remove('sport','general');
+    t.setAttribute('aria-selected', tc===cat ? 'true' : 'false');
+    if(tc===cat) t.classList.add(cat);
+  });
+  // explicit add/remove — classList.toggle(,bool) is broken on Tizen/WebOS
+  if(cat==='sport'){
+    D.secSport.classList.add('on');
+    D.secGeneral.classList.remove('on');
+  } else {
+    D.secGeneral.classList.add('on');
+    D.secSport.classList.remove('on');
+  }
+  syncLayout();
+}
+
+// ─── Channel card creation ─────────────────────────────────────────
+function makeCard(ch){
+  var card = document.createElement('div');
+  card.className = 'ch-card';
+  card.setAttribute('data-id', ch.id);
+  card.setAttribute('role','listitem');
+
+  var btn = document.createElement('button');
+  btn.className = 'ch-btn';
+  btn.type = 'button';
+  btn.textContent = ch.name;
+
+  var src = document.createElement('select');
+  src.className = 'ch-src';
+  src.setAttribute('aria-label','Source for '+ch.name);
+  FOLDERS.forEach(function(f){
+    var o = document.createElement('option');
+    o.value = f; o.textContent = f;
+    src.appendChild(o);
+  });
+  src.value = recall('src_'+ch.id) || FOLDERS[0];
+
+  // Closures bind ch correctly
+  btn.addEventListener('click', (function(c){ return function(){ play(c); }; })(ch));
+  src.addEventListener('change', (function(c){ return function(e){
+    e.stopPropagation();
+    store('src_'+c.id, e.target.value);
+    if(S.chId===c.id){ D.player.src = url(c.id, e.target.value); }
+  }; })(ch));
+
+  card.appendChild(btn);
+  card.appendChild(src);
+  return card;
+}
+
+function renderChannels(){
+  D.rowSport.innerHTML = '';
+  D.rowGeneral.innerHTML = '';
+  var fs = document.createDocumentFragment();
+  SPORT.forEach(function(ch){ fs.appendChild(makeCard(ch)); });
+  D.rowSport.appendChild(fs);
+  var fg = document.createDocumentFragment();
+  GENERAL.forEach(function(ch){ fg.appendChild(makeCard(ch)); });
+  D.rowGeneral.appendChild(fg);
+}
+
+// ─── Search (show/hide existing cards — zero DOM churn) ────────────
+function filterSearch(term){
+  var t = term.toLowerCase().trim();
+  if(!t){
+    // restore
+    [D.rowSport, D.rowGeneral].forEach(function(row){
+      row.querySelectorAll('.ch-card').forEach(function(c){ c.style.display=''; });
+    });
+    setTab(S.cat);
+    return;
+  }
+  // Show both sections during search
+  D.secSport.classList.add('on');
+  D.secGeneral.classList.add('on');
+  [D.rowSport, D.rowGeneral].forEach(function(row){
+    row.querySelectorAll('.ch-card').forEach(function(c){
+      var name = c.querySelector('.ch-btn').textContent.toLowerCase();
+      c.style.display = name.indexOf(t)!==-1 ? '' : 'none';
+    });
+  });
+  syncLayout();
+}
+
+// ─── Playback ──────────────────────────────────────────────────────
+function play(ch){
+  showLoad(); rcReset();
+
+  // Remove previous active class
+  if(S.chId !== null){
+    var old = document.querySelector('.ch-card[data-id="'+S.chId+'"] .ch-btn');
+    if(old){ old.classList.remove('sport','general'); }
+  }
+
+  // Set new active class
+  var card = document.querySelector('.ch-card[data-id="'+ch.id+'"]');
+  if(card){
+    var btn = card.querySelector('.ch-btn');
+    if(btn){ btn.classList.add(ch.cat); }
+    // Auto-switch tab unless in search mode
+    if(!D.search.value.trim()){ setTab(ch.cat); }
+  }
+
+  // Update state
+  S.chId = ch.id;
+  for(var i=0;i<ALL.length;i++){ if(ALL[i].id===ch.id){ S.chIdx=i; break; } }
+
+  D.nowLabel.textContent = ch.name;
+  var sel = card ? card.querySelector('select') : null;
+  D.player.src = url(ch.id, sel ? sel.value : FOLDERS[0]);
+  store(CFG.LAST_CH, ch.id);
+  toast(ch.name);
+}
+
+function streamRefresh(){
+  if(!D.player.src) return;
+  showLoad();
+  var s = D.player.src;
+  D.player.src = '';
+  setTimeout(function(){ D.player.src = s; }, 100);
+  toast('Refreshing\u2026');
+}
+
+function playNext(){
+  if(!ALL.length) return;
+  S.chIdx = (S.chIdx+1) % ALL.length;
+  play(ALL[S.chIdx]);
+}
+function playPrev(){
+  if(!ALL.length) return;
+  S.chIdx = (S.chIdx-1+ALL.length) % ALL.length;
+  play(ALL[S.chIdx]);
+}
+
+// ─── Fullscreen ────────────────────────────────────────────────────
+function enterFS(){
+  var el = D.stage;
+  var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if(fn){
+    fn.call(el).then(function(){ D.btnFS.textContent='Exit Full Screen'; }).catch(function(){
+      // Fallback: try the iframe itself
+      var ifn = D.player.requestFullscreen || D.player.webkitRequestFullscreen;
+      if(ifn){ ifn.call(D.player).then(function(){ D.btnFS.textContent='Exit Full Screen'; }).catch(function(){}); }
+    });
+  }
+}
+function exitFS(){
+  var fn = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+  if(fn){ try{ fn.call(document); }catch(_){} }
+  D.btnFS.textContent = 'Full Screen';
+}
+function toggleFS(){
+  if(IS_MOBILE){ toggleMobileFS(); return; }
+  if(document.fullscreenElement || document.webkitFullscreenElement){ exitFS(); }
+  else{ enterFS(); }
+}
+
+// Mobile fullscreen (no native API needed — hide header, expand stage)
+function toggleMobileFS(){
+  if(!S.mobileFS){
+    S.mobileFS = true;
+    D.stage.classList.add('fullscreen');
+    D.stage.style.paddingTop = '0';
+    D.hdr.style.display = 'none';
+    D.btnChans.classList.add('on');
+    D.btnExitFS.classList.add('on');
+    D.btnFS.textContent = 'Exit Full Screen';
+    try{ screen.orientation.lock('landscape').catch(function(){}); }catch(_){}
+  } else {
+    exitMobileFS();
+  }
+}
+function exitMobileFS(){
+  S.mobileFS = false;
+  D.stage.classList.remove('fullscreen');
+  D.hdr.style.display = '';
+  D.btnChans.classList.remove('on');
+  D.btnExitFS.classList.remove('on');
+  D.btnFS.textContent = 'Full Screen';
+  try{ screen.orientation.unlock(); }catch(_){}
+  setTimeout(syncLayout, 80);
+}
+
+// ─── Header collapse ───────────────────────────────────────────────
+function toggleHeader(){
+  S.hdrHidden = !S.hdrHidden;
+  if(S.hdrHidden){ D.hdr.classList.add('off'); }
+  else{
+    D.hdr.classList.remove('off');
+    setTimeout(syncLayout, 340); // after transition
+  }
+}
+
+// ─── Touch gestures on player ──────────────────────────────────────
+function initGestures(){
+  var sx=0, sy=0;
+  D.stage.addEventListener('touchstart',function(e){
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+  },{passive:true});
+  D.stage.addEventListener('touchend',function(e){
+    var dx = sx - e.changedTouches[0].clientX;
+    var dy = sy - e.changedTouches[0].clientY;
+    // Horizontal swipe → channel change
+    if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 72){
+      if(dx > 0){ playNext(); } else { playPrev(); }
+      return;
+    }
+    // Double-tap → fullscreen
+    var now = Date.now();
+    if(now - S.lastTap < 270 && now - S.lastTap > 30){
+      toggleFS(); e.preventDefault();
+    }
+    S.lastTap = now;
+  });
+  D.stage.addEventListener('dblclick', toggleFS);
+}
+
+// ─── Keyboard (desktop + TV D-pad) ────────────────────────────────
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  switch(e.key){
+    case 'f': case 'F':       e.preventDefault(); toggleFS();    break;
+    case 'ArrowRight':        e.preventDefault(); playNext();     break;
+    case 'ArrowLeft':         e.preventDefault(); playPrev();     break;
+    case 'r': case 'R':       e.preventDefault(); streamRefresh();break;
+    case 'Escape':
+      if(S.mobileFS){ exitMobileFS(); }
+      else{ exitFS(); }
+      break;
+    // TV D-pad OK / Enter on focused channel button handled natively by browser
+  }
 });
 
-function init() {
-  channelMgr.render(); utils.adjustPlayer();
-  window.addEventListener('resize', utils.debounce(utils.adjustPlayer, 120));
-  initGestures();
-  if (utils.isMobile()) el.toggleHeaderBtn.classList.add('show');
+// ─── Init ──────────────────────────────────────────────────────────
+function init(){
+  renderChannels();
+  setTab('sport');
+  syncLayout();
 
-  const lastId = utils.load(CONFIG.LAST_CHANNEL_KEY);
-  const def    = lastId ? (channels.find(c => c.id == lastId) || channels[0]) : channels[0];
-  const defW   = document.querySelector(`[data-channel-id="${def.id}"]`);
-  if (defW) stream.play(def.id, defW, def.name);
+  window.addEventListener('resize', debounce(syncLayout, 100));
+  if(IS_MOBILE || IS_TOUCH) initGestures();
+  // Show floating "Channels" button on mobile/TV for header re-open
+  if(IS_MOBILE || IS_TV){ /* shown only when in mobileFS */ }
 
-  el.searchBox.addEventListener('input', utils.debounce(e => channelMgr.filter(e.target.value), CONFIG.DEBOUNCE_DELAY));
-  el.refreshBtn.addEventListener('click', () => stream.refresh());
-  el.fullscreenBtn.addEventListener('click', () => stream.toggleFullscreen());
-  el.logoutBtn.addEventListener('click', () => {
-    if (confirm('Sign out?')) { document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Secure; SameSite=Strict'; window.location.href = '/'; }
-  });
-  el.mobileExit.addEventListener('click', () => stream.exitMobileFS());
-  el.toggleHeaderBtn.addEventListener('click', () => { state.headerCollapsed = !state.headerCollapsed; el.header.classList.toggle('collapsed', state.headerCollapsed); });
+  // Restore last channel
+  var lastId = recall(CFG.LAST_CH);
+  var defCh = ALL[0];
+  if(lastId){
+    for(var i=0;i<ALL.length;i++){
+      if(ALL[i].id == lastId){ defCh=ALL[i]; break; }
+    }
+  }
+  play(defCh);
 
-  ['fullscreenchange','webkitfullscreenchange'].forEach(ev => {
-    document.addEventListener(ev, () => {
-      el.fullscreenBtn.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? 'Exit Full Screen' : 'Full Screen';
+  // ── Event bindings ─────────────────────────────────────────────
+
+  // Tabs
+  D.tabs.forEach(function(tab){
+    tab.addEventListener('click',function(){
+      var c = tab.getAttribute('data-cat');
+      // Clear search when switching tabs
+      if(D.search.value.trim()){
+        D.search.value='';
+        [D.rowSport,D.rowGeneral].forEach(function(r){
+          r.querySelectorAll('.ch-card').forEach(function(card){ card.style.display=''; });
+        });
+      }
+      setTab(c);
     });
   });
 
-  el.player.addEventListener('load',  () => { stream.hideLoading(); reconnect.reset(); });
-  el.player.addEventListener('error', () => reconnect.start());
+  // Search
+  D.search.addEventListener('input', debounce(function(e){
+    filterSearch(e.target.value);
+  }, CFG.DEBOUNCE));
 
-  document.addEventListener('touchmove', e => {
-    if (e.target.closest('#channels') || e.target.closest('#header')) return;
-    if (e.target.closest('#player-container')) return;
+  // Clear search on Escape
+  D.search.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      D.search.value='';
+      filterSearch('');
+      D.search.blur();
+    }
+  });
+
+  // Buttons
+  D.btnRefresh.addEventListener('click', streamRefresh);
+  D.btnFS.addEventListener('click', toggleFS);
+  D.btnExitFS.addEventListener('click', exitMobileFS);
+  D.btnChans.addEventListener('click', toggleHeader);
+
+  D.btnSignout.addEventListener('click',function(){
+    if(confirm('Sign out?')){
+      document.cookie='auth_token=;Path=/;Expires=Thu,01 Jan 1970 00:00:01 GMT;Secure;SameSite=Strict';
+      location.href='/';
+    }
+  });
+
+  // Sync fullscreen button label with browser state
+  ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(function(ev){
+    document.addEventListener(ev,function(){
+      var active = !!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
+      D.btnFS.textContent = active ? 'Exit Full Screen' : 'Full Screen';
+    });
+  });
+
+  // Player iframe events
+  D.player.addEventListener('load',  function(){ hideLoad(); rcReset(); });
+  D.player.addEventListener('error', function(){ rcStart(); });
+
+  // Block body scroll creep (iOS Safari bounce)
+  document.addEventListener('touchmove',function(e){
+    var t = e.target;
+    if(t.closest('.ch-row') || t.closest('#hdr')) return; // allow horizontal scroll in rows
+    if(t.closest('#stage')) return;
     e.preventDefault();
-  }, { passive: false });
+  },{passive:false});
 
-  window.addEventListener('online',  () => utils.toast('Back Online'));
-  window.addEventListener('offline', () => utils.toast('No Connection'));
+  // Network feedback
+  window.addEventListener('online',  function(){ toast('Back Online'); });
+  window.addEventListener('offline', function(){ toast('No Connection',3500); });
+
+  // Visibility — pause/resume is handled by the iframe's own player,
+  // but we ensure layout is fresh when the tab becomes visible again.
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden){ syncLayout(); }
+  });
 }
 
-document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
+// Boot
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
