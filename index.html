@@ -34,7 +34,6 @@
   --ease-spring:   cubic-bezier(.34,1.56,.64,1);
 }
 
-/* ─── Base ──────────────────────────────────────────────────────── */
 html{
   height:-webkit-fill-available;
   -webkit-text-size-adjust:100%;
@@ -423,7 +422,6 @@ body{
 
 <!-- ─── Stage ────────────────────────────────────────────────────── -->
 <main id="stage">
-  <!-- Loading overlay -->
   <div id="ov-load" class="overlay on" role="status" aria-live="polite">
     <div class="overlay-card">
       <div class="spin"></div>
@@ -431,7 +429,6 @@ body{
     </div>
   </div>
 
-  <!-- Error overlay -->
   <div id="ov-err" class="overlay" role="alert">
     <div class="overlay-card">
       <div class="err-icon">!</div>
@@ -440,6 +437,8 @@ body{
     </div>
   </div>
 
+  <!-- sandbox blocks popups/redirects; stream pages never see it
+       because they load from your own worker domain via /proxy -->
   <iframe id="player"
     sandbox="allow-scripts allow-same-origin allow-presentation allow-popups-to-escape-sandbox"
     allowfullscreen
@@ -454,7 +453,6 @@ body{
   <button id="btn-channels">Channels</button>
 </main>
 
-<!-- Toast -->
 <div id="toast" aria-live="polite"></div>
 
 <script>
@@ -550,13 +548,13 @@ var D = {
 
 // ─── State ─────────────────────────────────────────────────────────
 var S = {
-  chId:       null,
-  chIdx:      0,
-  cat:        'sport',
-  mobileFS:   false,
-  hdrHidden:  false,
-  lastTap:    0,
-  loadTimer:  null
+  chId:      null,
+  chIdx:     0,
+  cat:       'sport',
+  mobileFS:  false,
+  hdrHidden: false,
+  lastTap:   0,
+  loadTimer: null
 };
 
 var IS_TV     = /TV|SmartTV|Tizen|WebOS|VIDAA|HbbTV/i.test(navigator.userAgent);
@@ -630,22 +628,14 @@ function rcReset(){
   D.reconnMsg.textContent = '';
 }
 
-// ─── Fetch stream via proxy → inject into iframe srcdoc ───────────
-// credentials:'same-origin' sends the auth cookie so the worker
-// does not return 401 Unauthorized.
+// ─── Load stream via worker proxy ─────────────────────────────────
+// iframe.src = /proxy so all sub-requests (HLS, scripts, assets)
+// resolve correctly. Worker checks Referer/Origin instead of cookie
+// so no cross-origin auth issues.
 function loadStream(id, folder){
   if(!id) return;
   showLoad();
-  fetch('/proxy?id='+id+'&folder='+folder, { credentials:'same-origin' })
-    .then(function(res){
-      if(!res.ok){ rcStart(); return null; }
-      return res.text();
-    })
-    .then(function(html){
-      if(!html) return;
-      D.player.srcdoc = html;
-    })
-    .catch(function(){ rcStart(); });
+  D.player.src = '/proxy?id='+id+'&folder='+folder;
 }
 
 // ─── Tab switching ─────────────────────────────────────────────────
@@ -754,9 +744,7 @@ function play(ch){
 
   D.nowLabel.textContent = ch.name;
   var sel = card ? card.querySelector('select') : null;
-  var folder = sel ? sel.value : FOLDERS[0];
-
-  loadStream(ch.id, folder);
+  loadStream(ch.id, sel ? sel.value : FOLDERS[0]);
   store(CFG.LAST_CH, ch.id);
   toast(ch.name);
 }
@@ -937,7 +925,6 @@ function init(){
     });
   });
 
-  // srcdoc loads fire the load event just like src does
   D.player.addEventListener('load',  function(){ hideLoad(); rcReset(); });
   D.player.addEventListener('error', function(){ rcStart(); });
 
