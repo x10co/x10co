@@ -9,6 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
+<!-- Blocks script injection from leaking out of the stream iframe into this page -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-src https:; connect-src https: wss:; media-src https: blob:; img-src 'self' data: https:; worker-src blob:">
 <style>
 /* ─── Reset & Tokens ────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -459,6 +461,7 @@ body{
     allowfullscreen
     allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
     sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
+    referrerpolicy="no-referrer"
     playsinline
     webkit-playsinline
     title="Stream player"
@@ -477,7 +480,10 @@ body{
 // ─── Security sandbox ──────────────────────────────────────────────
 // All in try/catch — Brave shields etc. can override window properties.
 (function(){
+  // Override window.open so nothing the iframe injects can open a new tab/window
   try{ window.open = function(){ return null; }; }catch(_){}
+  // Prevent the parent page from being navigated away by iframe scripts
+  try{ window.onbeforeunload = function(e){ e.preventDefault(); e.returnValue=''; return ''; }; }catch(_){}
   try{ Object.defineProperty(window,'opener',{get:function(){return null;},set:function(){},configurable:false}); }catch(_){}
   // Kill focus-steal: if the page loses focus within 800ms of gaining it, refocus immediately.
   var _lf = 0;
@@ -510,7 +516,7 @@ body{
 
 // ─── Config ────────────────────────────────────────────────────────
 var CFG = {
-  BASE:           'https://dlhd.link',
+  BASE:           'https://dlstreams.top',
   LAST_CH:        'lastChannel',
   DEBOUNCE:       240,
   LOAD_TIMEOUT:   9000,
