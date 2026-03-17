@@ -48,6 +48,7 @@ body{
   overflow:hidden;
   height:100vh;
   height:-webkit-fill-available;
+  /* block any rubber-band bounce from accidentally revealing underlying page */
   overscroll-behavior:none;
 }
 
@@ -68,6 +69,7 @@ body{
 }
 #hdr.off{transform:translateY(-110%)}
 
+/* top bar */
 .top-bar{
   display:flex;
   align-items:center;
@@ -92,7 +94,7 @@ body{
   flex-shrink:0;
 }
 
-/* ─── Search — 16px prevents iOS Safari auto-zoom ───────────────── */
+/* Search input — 16px font prevents iOS Safari auto-zoom, scaled back visually */
 .search-wrap{position:relative;display:flex;align-items:center}
 .search-wrap::before{
   content:'';
@@ -106,7 +108,7 @@ body{
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' fill='none' stroke='white' stroke-width='2.2'/%3E%3Cpath d='M16.5 16.5L22 22' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
 }
 #search{
-  font-size:16px; /* ← must stay ≥16px on iOS to prevent auto-zoom */
+  font-size:16px; /* ← must stay ≥16px on iOS */
   transform:scale(.8125);
   transform-origin:left center;
   width:197px;
@@ -124,7 +126,7 @@ body{
 #search:focus{background:rgba(255,255,255,.1);width:246px}
 #search::placeholder{color:var(--c-text-3)}
 
-/* ─── Buttons ───────────────────────────────────────────────────── */
+/* Buttons */
 .btn{
   padding:6px 13px;
   background:var(--c-fill);
@@ -180,6 +182,7 @@ body{
   padding:2px 0 9px;
   -webkit-overflow-scrolling:touch;
   touch-action:pan-x;
+  /* thin visible scrollbar */
   scrollbar-width:thin;
   scrollbar-color:rgba(255,255,255,.18) transparent;
 }
@@ -219,7 +222,7 @@ body{
 .ch-btn.sport  {background:var(--c-blue);color:#fff;font-weight:600}
 .ch-btn.general{background:var(--c-green);color:#000;font-weight:600}
 
-/* ─── Source selector ───────────────────────────────────────────── */
+/* Source selector */
 .ch-src{
   padding:4px 22px 4px 8px;
   background:var(--c-fill);
@@ -240,7 +243,7 @@ body{
 .ch-src:hover{color:var(--c-text)}
 .ch-src option{background:#1c1c1e;color:#fff}
 
-/* ─── Stage (player container) ──────────────────────────────────── */
+/* ─── Player Container ──────────────────────────────────────────── */
 #stage{
   position:fixed;
   inset:0;
@@ -277,6 +280,7 @@ body{
   min-width:180px;
 }
 
+/* Spinner */
 .spin{
   width:26px;height:26px;
   border:2.5px solid rgba(255,255,255,.12);
@@ -299,6 +303,7 @@ body{
   color:var(--c-text-3);
 }
 
+/* Error icon */
 .err-icon{
   width:36px;height:36px;
   background:rgba(255,69,58,.15);
@@ -367,7 +372,10 @@ body{
 }
 #btn-exit-fs.on,#btn-channels.on{display:block}
 
-/* ─── Focus styles ──────────────────────────────────────────────── */
+/* ─── TV / D-pad focus styles ───────────────────────────────────── */
+@media (hover:none) and (pointer:coarse){
+  /* Already handled via :active states */
+}
 .ch-btn:focus-visible,.btn:focus-visible,.tab:focus-visible{
   outline:2px solid var(--c-blue);
   outline-offset:2px;
@@ -386,10 +394,12 @@ body{
   .ch-card{width:88px}
   .ch-btn{font-size:10px;padding:6px 7px}
 }
+/* PWA safe areas */
 @media(display-mode:standalone){
   #hdr{padding-top:max(10px,env(safe-area-inset-top))}
   body{padding-bottom:env(safe-area-inset-bottom)}
 }
+/* TV / large screen — bigger tap targets, no hover jank */
 @media(min-width:1280px){
   .ch-card{width:128px}
   .ch-btn{font-size:13px;padding:9px 12px}
@@ -407,9 +417,9 @@ body{
       <div class="search-wrap">
         <input id="search" type="search" placeholder="Search" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search channels">
       </div>
-      <button id="btn-refresh" class="btn">Refresh</button>
-      <button id="btn-fs"      class="btn">Full Screen</button>
-      <button id="btn-signout" class="btn">Sign Out</button>
+      <button id="btn-refresh"  class="btn">Refresh</button>
+      <button id="btn-fs"       class="btn">Full Screen</button>
+      <button id="btn-signout"  class="btn">Sign Out</button>
     </div>
   </div>
 
@@ -428,7 +438,7 @@ body{
 
 <!-- ─── Stage ────────────────────────────────────────────────────── -->
 <main id="stage">
-
+  <!-- Loading overlay -->
   <div id="ov-load" class="overlay on" role="status" aria-live="polite">
     <div class="overlay-card">
       <div class="spin"></div>
@@ -436,6 +446,7 @@ body{
     </div>
   </div>
 
+  <!-- Error overlay -->
   <div id="ov-err" class="overlay" role="alert">
     <div class="overlay-card">
       <div class="err-icon">!</div>
@@ -444,124 +455,58 @@ body{
     </div>
   </div>
 
-  <!-- NO sandbox — allow-scripts + allow-same-origin together defeat the sandbox entirely (MDN).
-       All popup/redirect/navigation threats are neutralised at the JS level below. -->
   <iframe id="player"
     allowfullscreen
     allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+    sandbox="allow-scripts allow-forms allow-presentation allow-fullscreen"
     playsinline
     webkit-playsinline
     title="Stream player"
     loading="eager">
   </iframe>
 
-  <button id="btn-exit-fs">&#xD7;&nbsp; Exit Full Screen</button>
+  <!-- Floating controls (shown only in mobile fullscreen) -->
+  <button id="btn-exit-fs">&#xD7; &nbsp;Exit Full Screen</button>
   <button id="btn-channels">Channels</button>
 </main>
 
+<!-- Toast -->
 <div id="toast" aria-live="polite"></div>
 
 <script>
-/* ================================================================
-   SECURITY — popup / navigation / injection blocker
-   Runs before anything else. All wrapped in try/catch so Brave
-   shields and other hardened environments cannot break the app.
-   ================================================================ */
+// ─── Security sandbox ──────────────────────────────────────────────
+// All in try/catch — Brave shields etc. can override window properties.
 (function(){
-
-  /* 1. window.open → always null, non-writable so streams can't restore it */
-  try{
-    Object.defineProperty(window,'open',{
-      value:function(){return null;},
-      writable:false,configurable:false,enumerable:true
-    });
-  }catch(e){ window.open=function(){return null;}; }
-
-  /* 2. Null the opener reference — kills parent-frame navigation */
-  try{
-    Object.defineProperty(window,'opener',{
-      get:function(){return null;},set:function(){},configurable:false
-    });
-  }catch(e){}
-
-  /* 3. Intercept window.location assignments from injected scripts.
-        Only allow same-origin changes. Cross-origin → silently dropped. */
-  var _realLoc=window.location;
-  try{
-    Object.defineProperty(window,'location',{
-      get:function(){return _realLoc;},
-      set:function(v){
-        if(typeof v==='string'){
-          try{
-            var u=new URL(v,location.href);
-            if(u.origin===location.origin){_realLoc.href=v;}
-          }catch(e){}
-        }
-      },
-      configurable:false
-    });
-  }catch(e){}
-
-  /* 4. Block beforeunload-triggered navigations (common ad trick) */
-  window.addEventListener('beforeunload',function(e){
-    e.preventDefault();e.returnValue='';return '';
-  },{capture:true});
-
-  /* 5. Focus-steal blocker — refocus instantly if stolen within 600ms */
-  var _lf=0;
-  window.addEventListener('focus',function(){_lf=Date.now();},{passive:true});
+  try{ window.open = function(){ return null; }; }catch(_){}
+  try{ Object.defineProperty(window,'opener',{get:function(){return null;},set:function(){},configurable:false}); }catch(_){}
+  // Kill focus-steal: if the page loses focus within 800ms of gaining it, refocus immediately.
+  var _lf = 0;
   window.addEventListener('blur',function(){
-    if(Date.now()-_lf<600){setTimeout(function(){try{window.focus();}catch(e){}},10);}
+    var n = Date.now();
+    if(n - _lf < 800){ setTimeout(function(){ try{ window.focus(); }catch(_){} },1); }
+    _lf = n;
   },{passive:true});
-
-  /* 6. Kill any <a> click that would navigate away from this origin */
+  // Block navigation via injected <a> clicks
   document.addEventListener('click',function(e){
-    var a=e.target.closest('a');
-    if(!a)return;
-    try{
-      var u=new URL(a.href,location.href);
-      if(u.origin!==location.origin){e.preventDefault();e.stopPropagation();}
-    }catch(ex){e.preventDefault();e.stopPropagation();}
-  },true);
-
-  /* 7. Block target=_blank / target=_new on any element */
-  document.addEventListener('click',function(e){
-    var el=e.target.closest('[target]');
-    if(el){
-      var t=el.getAttribute('target');
-      if(t&&t!=='_self'&&t!=='_top'){e.preventDefault();e.stopPropagation();}
+    var a = e.target.closest('a');
+    if(a && a.href && a.href.indexOf('http')===0 && a.href.indexOf(location.hostname)===-1){
+      e.preventDefault(); e.stopPropagation();
     }
   },true);
-
-  /* 8. Right-click on the iframe → no "Open in new tab" */
+  // Block iframe right-click context menu
   document.addEventListener('contextmenu',function(e){
-    if(e.target.tagName==='IFRAME'){e.preventDefault();}
+    if(e.target.tagName==='IFRAME'){ e.preventDefault(); }
   });
-
-  /* 9. MutationObserver — remove foreign iframes and external ad scripts
-        the instant they are injected into the DOM */
-  var HOST=location.hostname;
-  var mo=new MutationObserver(function(records){
-    records.forEach(function(r){
-      r.addedNodes.forEach(function(n){
-        if(n.nodeType!==1)return;
-        if(n.tagName==='IFRAME'&&n.id!=='player'){n.remove();return;}
-        if(n.tagName==='SCRIPT'&&n.src){
-          try{
-            var u=new URL(n.src);
-            if(u.hostname!==HOST&&u.hostname!==''){n.remove();}
-          }catch(e){}
-        }
+  // Remove any dynamically injected foreign iframes
+  var mo = new MutationObserver(function(ml){
+    ml.forEach(function(m){
+      m.addedNodes.forEach(function(n){
+        if(n.nodeType===1 && n.tagName==='IFRAME' && n.id!=='player'){ n.remove(); }
       });
     });
   });
-  try{mo.observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
-
+  try{ mo.observe(document.body,{childList:true,subtree:true}); }catch(_){}
 })();
-
-/* ================================================================
-   APP
-   ================================================================ */
 
 // ─── Config ────────────────────────────────────────────────────────
 var CFG = {
@@ -599,7 +544,7 @@ var GENERAL = [
   {name:"CMTV",       id:790, cat:"general"},
   {name:"TVI Reality",id:724, cat:"general"}
 ];
-var ALL     = SPORT.concat(GENERAL);
+var ALL = SPORT.concat(GENERAL);
 var FOLDERS = ["player","stream","watch","cast","casting","plus"];
 
 // ─── DOM refs ──────────────────────────────────────────────────────
@@ -627,16 +572,16 @@ var D = {
 
 // ─── State ─────────────────────────────────────────────────────────
 var S = {
-  chId:      null,    // currently playing channel id
-  chIdx:     0,       // index in ALL[]
-  cat:       'sport', // active category tab
-  mobileFS:  false,   // mobile fullscreen active
-  hdrHidden: false,   // header collapsed
-  lastTap:   0,       // for double-tap detection
-  loadTimer: null
+  chId:       null,   // currently playing channel id
+  chIdx:      0,      // index in ALL[]
+  cat:        'sport',// active category tab
+  mobileFS:   false,  // mobile fullscreen mode
+  hdrHidden:  false,  // header collapsed
+  lastTap:    0,      // for double-tap detection
+  loadTimer:  null
 };
 
-// Detect device type once at startup
+// Detect mobile/touch once
 var IS_TV     = /TV|SmartTV|Tizen|WebOS|VIDAA|HbbTV/i.test(navigator.userAgent);
 var IS_TOUCH  = ('ontouchstart' in window) || navigator.maxTouchPoints > 1;
 var IS_MOBILE = IS_TOUCH && !IS_TV && window.innerWidth < 1024;
@@ -654,14 +599,16 @@ function store(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(_){}
 function recall(k){
   try{ var v=localStorage.getItem(k); return v!==null?JSON.parse(v):null; }catch(_){ return null; }
 }
-function streamUrl(id, folder){ return CFG.BASE+'/'+folder+'/stream-'+id+'.php'; }
+function url(id, folder){ return CFG.BASE+'/'+folder+'/stream-'+id+'.php'; }
 
+// Adjust player top padding to clear the header
 function syncLayout(){
   if(!S.mobileFS){
     D.stage.style.paddingTop = D.hdr.offsetHeight+'px';
   }
 }
 
+// Toast notification
 var _toastTimer;
 function toast(msg, ms){
   D.toast.textContent = msg;
@@ -701,8 +648,8 @@ function rcStart(){
   RC.t = setTimeout(streamRefresh, CFG.RECONNECT_WAIT);
 }
 function rcReset(){
-  RC.n=0; clearTimeout(RC.t);
-  D.reconnMsg.textContent='';
+  RC.n = 0; clearTimeout(RC.t);
+  D.reconnMsg.textContent = '';
 }
 
 // ─── Tab switching ─────────────────────────────────────────────────
@@ -714,7 +661,7 @@ function setTab(cat){
     t.setAttribute('aria-selected', tc===cat ? 'true' : 'false');
     if(tc===cat) t.classList.add(cat);
   });
-  // explicit add/remove — classList.toggle(bool) is broken on Tizen/WebOS
+  // explicit add/remove — classList.toggle(,bool) is broken on Tizen/WebOS
   if(cat==='sport'){
     D.secSport.classList.add('on');
     D.secGeneral.classList.remove('on');
@@ -747,11 +694,12 @@ function makeCard(ch){
   });
   src.value = recall('src_'+ch.id) || FOLDERS[0];
 
+  // Closures bind ch correctly
   btn.addEventListener('click', (function(c){ return function(){ play(c); }; })(ch));
   src.addEventListener('change', (function(c){ return function(e){
     e.stopPropagation();
     store('src_'+c.id, e.target.value);
-    if(S.chId===c.id){ D.player.src = streamUrl(c.id, e.target.value); }
+    if(S.chId===c.id){ D.player.src = url(c.id, e.target.value); }
   }; })(ch));
 
   card.appendChild(btn);
@@ -760,7 +708,7 @@ function makeCard(ch){
 }
 
 function renderChannels(){
-  D.rowSport.innerHTML   = '';
+  D.rowSport.innerHTML = '';
   D.rowGeneral.innerHTML = '';
   var fs = document.createDocumentFragment();
   SPORT.forEach(function(ch){ fs.appendChild(makeCard(ch)); });
@@ -770,17 +718,18 @@ function renderChannels(){
   D.rowGeneral.appendChild(fg);
 }
 
-// ─── Search — show/hide existing cards, zero DOM churn ─────────────
+// ─── Search (show/hide existing cards — zero DOM churn) ────────────
 function filterSearch(term){
   var t = term.toLowerCase().trim();
   if(!t){
+    // restore
     [D.rowSport, D.rowGeneral].forEach(function(row){
       row.querySelectorAll('.ch-card').forEach(function(c){ c.style.display=''; });
     });
     setTab(S.cat);
     return;
   }
-  // Show both sections while searching
+  // Show both sections during search
   D.secSport.classList.add('on');
   D.secGeneral.classList.add('on');
   [D.rowSport, D.rowGeneral].forEach(function(row){
@@ -796,13 +745,13 @@ function filterSearch(term){
 function play(ch){
   showLoad(); rcReset();
 
-  // Remove old active highlight
+  // Remove previous active class
   if(S.chId !== null){
     var old = document.querySelector('.ch-card[data-id="'+S.chId+'"] .ch-btn');
     if(old){ old.classList.remove('sport','general'); }
   }
 
-  // Apply new active highlight
+  // Set new active class
   var card = document.querySelector('.ch-card[data-id="'+ch.id+'"]');
   if(card){
     var btn = card.querySelector('.ch-btn');
@@ -811,12 +760,13 @@ function play(ch){
     if(!D.search.value.trim()){ setTab(ch.cat); }
   }
 
+  // Update state
   S.chId = ch.id;
   for(var i=0;i<ALL.length;i++){ if(ALL[i].id===ch.id){ S.chIdx=i; break; } }
 
   D.nowLabel.textContent = ch.name;
   var sel = card ? card.querySelector('select') : null;
-  D.player.src = streamUrl(ch.id, sel ? sel.value : FOLDERS[0]);
+  D.player.src = url(ch.id, sel ? sel.value : FOLDERS[0]);
   store(CFG.LAST_CH, ch.id);
   toast(ch.name);
 }
@@ -844,29 +794,27 @@ function playPrev(){
 // ─── Fullscreen ────────────────────────────────────────────────────
 function enterFS(){
   var el = D.stage;
-  var fn = el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+  var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if(fn){
-    fn.call(el)
-      .then(function(){ D.btnFS.textContent='Exit Full Screen'; })
-      .catch(function(){
-        // Fallback: try the iframe itself
-        var ifn = D.player.requestFullscreen||D.player.webkitRequestFullscreen;
-        if(ifn){ ifn.call(D.player).then(function(){ D.btnFS.textContent='Exit Full Screen'; }).catch(function(){}); }
-      });
+    fn.call(el).then(function(){ D.btnFS.textContent='Exit Full Screen'; }).catch(function(){
+      // Fallback: try the iframe itself
+      var ifn = D.player.requestFullscreen || D.player.webkitRequestFullscreen;
+      if(ifn){ ifn.call(D.player).then(function(){ D.btnFS.textContent='Exit Full Screen'; }).catch(function(){}); }
+    });
   }
 }
 function exitFS(){
-  var fn = document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;
+  var fn = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
   if(fn){ try{ fn.call(document); }catch(_){} }
-  D.btnFS.textContent='Full Screen';
+  D.btnFS.textContent = 'Full Screen';
 }
 function toggleFS(){
   if(IS_MOBILE){ toggleMobileFS(); return; }
-  if(document.fullscreenElement||document.webkitFullscreenElement){ exitFS(); }
+  if(document.fullscreenElement || document.webkitFullscreenElement){ exitFS(); }
   else{ enterFS(); }
 }
 
-// Mobile fullscreen — hide header, expand stage (no native API required)
+// Mobile fullscreen (no native API needed — hide header, expand stage)
 function toggleMobileFS(){
   if(!S.mobileFS){
     S.mobileFS = true;
@@ -896,40 +844,50 @@ function exitMobileFS(){
 function toggleHeader(){
   S.hdrHidden = !S.hdrHidden;
   if(S.hdrHidden){ D.hdr.classList.add('off'); }
-  else{ D.hdr.classList.remove('off'); setTimeout(syncLayout, 340); }
+  else{
+    D.hdr.classList.remove('off');
+    setTimeout(syncLayout, 340); // after transition
+  }
 }
 
-// ─── Touch gestures ────────────────────────────────────────────────
+// ─── Touch gestures on player ──────────────────────────────────────
 function initGestures(){
   var sx=0, sy=0;
   D.stage.addEventListener('touchstart',function(e){
-    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
   },{passive:true});
   D.stage.addEventListener('touchend',function(e){
-    var dx=sx-e.changedTouches[0].clientX;
-    var dy=sy-e.changedTouches[0].clientY;
-    if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>72){
-      if(dx>0){ playNext(); }else{ playPrev(); }
+    var dx = sx - e.changedTouches[0].clientX;
+    var dy = sy - e.changedTouches[0].clientY;
+    // Horizontal swipe → channel change
+    if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 72){
+      if(dx > 0){ playNext(); } else { playPrev(); }
       return;
     }
-    var now=Date.now();
-    if(now-S.lastTap<270&&now-S.lastTap>30){ toggleFS(); e.preventDefault(); }
-    S.lastTap=now;
+    // Double-tap → fullscreen
+    var now = Date.now();
+    if(now - S.lastTap < 270 && now - S.lastTap > 30){
+      toggleFS(); e.preventDefault();
+    }
+    S.lastTap = now;
   });
   D.stage.addEventListener('dblclick', toggleFS);
 }
 
-// ─── Keyboard / TV D-pad ───────────────────────────────────────────
+// ─── Keyboard (desktop + TV D-pad) ────────────────────────────────
 document.addEventListener('keydown',function(e){
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
   switch(e.key){
-    case 'f': case 'F':   e.preventDefault(); toggleFS();     break;
-    case 'ArrowRight':    e.preventDefault(); playNext();      break;
-    case 'ArrowLeft':     e.preventDefault(); playPrev();      break;
-    case 'r': case 'R':   e.preventDefault(); streamRefresh(); break;
+    case 'f': case 'F':       e.preventDefault(); toggleFS();    break;
+    case 'ArrowRight':        e.preventDefault(); playNext();     break;
+    case 'ArrowLeft':         e.preventDefault(); playPrev();     break;
+    case 'r': case 'R':       e.preventDefault(); streamRefresh();break;
     case 'Escape':
-      if(S.mobileFS){ exitMobileFS(); }else{ exitFS(); }
+      if(S.mobileFS){ exitMobileFS(); }
+      else{ exitFS(); }
       break;
+    // TV D-pad OK / Enter on focused channel button handled natively by browser
   }
 });
 
@@ -940,20 +898,23 @@ function init(){
   syncLayout();
 
   window.addEventListener('resize', debounce(syncLayout, 100));
-  if(IS_MOBILE||IS_TOUCH) initGestures();
+  if(IS_MOBILE || IS_TOUCH) initGestures();
+  // Show floating "Channels" button on mobile/TV for header re-open
+  if(IS_MOBILE || IS_TV){ /* shown only when in mobileFS */ }
 
   // Restore last channel
   var lastId = recall(CFG.LAST_CH);
-  var defCh  = ALL[0];
+  var defCh = ALL[0];
   if(lastId){
     for(var i=0;i<ALL.length;i++){
-      if(ALL[i].id==lastId){ defCh=ALL[i]; break; }
+      if(ALL[i].id == lastId){ defCh=ALL[i]; break; }
     }
   }
   play(defCh);
 
-  // ── Event bindings ────────────────────────────────────────────
+  // ── Event bindings ─────────────────────────────────────────────
 
+  // Tabs
   D.tabs.forEach(function(tab){
     tab.addEventListener('click',function(){
       var c = tab.getAttribute('data-cat');
@@ -968,19 +929,25 @@ function init(){
     });
   });
 
+  // Search
   D.search.addEventListener('input', debounce(function(e){
     filterSearch(e.target.value);
   }, CFG.DEBOUNCE));
 
-  // Escape clears search
+  // Clear search on Escape
   D.search.addEventListener('keydown',function(e){
-    if(e.key==='Escape'){ D.search.value=''; filterSearch(''); D.search.blur(); }
+    if(e.key==='Escape'){
+      D.search.value='';
+      filterSearch('');
+      D.search.blur();
+    }
   });
 
+  // Buttons
   D.btnRefresh.addEventListener('click', streamRefresh);
-  D.btnFS.addEventListener('click',      toggleFS);
-  D.btnExitFS.addEventListener('click',  exitMobileFS);
-  D.btnChans.addEventListener('click',   toggleHeader);
+  D.btnFS.addEventListener('click', toggleFS);
+  D.btnExitFS.addEventListener('click', exitMobileFS);
+  D.btnChans.addEventListener('click', toggleHeader);
 
   D.btnSignout.addEventListener('click',function(){
     if(confirm('Sign out?')){
@@ -989,34 +956,38 @@ function init(){
     }
   });
 
-  // Keep fullscreen button label in sync with browser state
+  // Sync fullscreen button label with browser state
   ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(function(ev){
     document.addEventListener(ev,function(){
-      var on=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
-      D.btnFS.textContent = on ? 'Exit Full Screen' : 'Full Screen';
+      var active = !!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
+      D.btnFS.textContent = active ? 'Exit Full Screen' : 'Full Screen';
     });
   });
 
+  // Player iframe events
   D.player.addEventListener('load',  function(){ hideLoad(); rcReset(); });
   D.player.addEventListener('error', function(){ rcStart(); });
 
-  // Block iOS Safari rubber-band bounce; allow scroll inside channel rows and header
+  // Block body scroll creep (iOS Safari bounce)
   document.addEventListener('touchmove',function(e){
-    var t=e.target;
-    if(t.closest('.ch-row')||t.closest('#hdr')) return;
+    var t = e.target;
+    if(t.closest('.ch-row') || t.closest('#hdr')) return; // allow horizontal scroll in rows
     if(t.closest('#stage')) return;
     e.preventDefault();
   },{passive:false});
 
+  // Network feedback
   window.addEventListener('online',  function(){ toast('Back Online'); });
   window.addEventListener('offline', function(){ toast('No Connection',3500); });
 
-  // Refresh layout when tab becomes visible again
+  // Visibility — pause/resume is handled by the iframe's own player,
+  // but we ensure layout is fresh when the tab becomes visible again.
   document.addEventListener('visibilitychange',function(){
     if(!document.hidden){ syncLayout(); }
   });
 }
 
+// Boot
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded', init);
 } else {
