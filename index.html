@@ -300,12 +300,16 @@
       padding: 10px 20px 10px;
       overflow-x: auto;
       overflow-y: hidden;
-      scrollbar-width: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.15) transparent;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-x;
     }
 
-    #rail::-webkit-scrollbar { display: none; }
+    #rail::-webkit-scrollbar { height: 4px; }
+    #rail::-webkit-scrollbar-track { background: transparent; }
+    #rail::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 999px; }
+    #rail::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.30); }
 
     /* Category group */
     .cat-group {
@@ -842,12 +846,13 @@ const CHANNELS = [
   { name: "Sport TV 4", id: 289, cat: "Sport TV" },
   { name: "Sport TV 5", id: 290, cat: "Sport TV" },
   { name: "Sport TV 6", id: 291, cat: "Sport TV" },
-  { name: "Sporting TV", id: 716, cat: "Clubes"   },
   { name: "DAZN 1",     id: 455, cat: "DAZN"     },
   { name: "DAZN 2",     id: 456, cat: "DAZN"     },
   { name: "DAZN 3",     id: 457, cat: "DAZN"     },
   { name: "DAZN 4",     id: 458, cat: "DAZN"     },
   { name: "DAZN 5",     id: 459, cat: "DAZN"     },
+  { name: "Sporting TV", id: 716, cat: "Clubs"   },
+  { name: "BTV",        id: 380, cat: "Clubs"    },
   { name: "RTP 1",      id: 719, cat: "Geral"    },
   { name: "RTP 2",      id: 720, cat: "Geral"    },
   { name: "RTP 3",      id: 721, cat: "Geral"    },
@@ -855,8 +860,7 @@ const CHANNELS = [
   { name: "TVI",        id: 723, cat: "Geral"    },
   { name: "TVI Reality",id: 724, cat: "Geral"    },
   { name: "Canal 11",   id: 540, cat: "Geral"    },
-  { name: "CMTV",       id: 790, cat: "Geral"    },
-  { name: "BTV",        id: 380, cat: "Clubes"   }
+  { name: "CMTV",       id: 790, cat: "Geral"    }
 ];
 
 const FOLDERS = ["player","stream","watch","cast","casting","plus"];
