@@ -326,6 +326,9 @@
       color: var(--label-3);
       font-family: var(--mono);
       padding: 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .cat-channels {
@@ -848,14 +851,14 @@ const CHANNELS = [
   { name: "DAZN 5",     id: 459, cat: "DAZN"     },
   { name: "Sporting TV", id: 716, cat: "Clubs"   },
   { name: "BTV",        id: 380, cat: "Clubs"    },
-  { name: "RTP 1",      id: 719, cat: "Geral"    },
-  { name: "RTP 2",      id: 720, cat: "Geral"    },
-  { name: "RTP 3",      id: 721, cat: "Geral"    },
-  { name: "SIC",        id: 722, cat: "Geral"    },
-  { name: "TVI",        id: 723, cat: "Geral"    },
-  { name: "TVI Reality",id: 724, cat: "Geral"    },
-  { name: "Canal 11",   id: 540, cat: "Geral"    },
-  { name: "CMTV",       id: 790, cat: "Geral"    }
+  { name: "RTP 1",      id: 719, cat: "General TV" },
+  { name: "RTP 2",      id: 720, cat: "General TV" },
+  { name: "RTP 3",      id: 721, cat: "General TV" },
+  { name: "SIC",        id: 722, cat: "General TV" },
+  { name: "TVI",        id: 723, cat: "General TV" },
+  { name: "TVI Reality",id: 724, cat: "General TV" },
+  { name: "Canal 11",   id: 540, cat: "General TV" },
+  { name: "CMTV",       id: 790, cat: "General TV" }
 ];
 
 const FOLDERS = ["player","stream","watch","cast","casting","plus"];
