@@ -540,32 +540,7 @@
 
     /* ══════════════════════════════════════════
        FLOATING CONTROLS (mobile)
-    ══════════════════════════════════════════ */
-    #float-rail-btn {
-      display: none;
-      position: fixed;
-      top: max(14px, env(safe-area-inset-top));
-      left: 16px;
-      z-index: 300;
-      background: var(--surface-1);
-      backdrop-filter: var(--blur-md);
-      -webkit-backdrop-filter: var(--blur-md);
-      border: 0.5px solid var(--border-active);
-      border-radius: var(--r-full);
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--accent-text);
-      cursor: pointer;
-      gap: 6px;
-      align-items: center;
-      transition: opacity 0.2s, transform 0.2s var(--ease-spring);
-    }
-
-    #float-rail-btn.show { display: flex; }
-    #float-rail-btn:active { transform: scale(0.93); }
-
-    #float-exit-fs {
+    ══════════════════════════════════════════ */    #float-exit-fs {
       display: none;
       position: fixed;
       top: max(14px, env(safe-area-inset-top));
@@ -764,16 +739,6 @@
   </iframe>
 </main>
 
-<!-- ── FLOATING BUTTONS (mobile) ── -->
-<button id="float-rail-btn" aria-label="Show channels">
-  <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-    <rect x="3" y="4" width="14" height="2.5" rx="1.25" fill="currentColor"/>
-    <rect x="3" y="8.75" width="14" height="2.5" rx="1.25" fill="currentColor"/>
-    <rect x="3" y="13.5" width="14" height="2.5" rx="1.25" fill="currentColor"/>
-  </svg>
-  Channels
-</button>
-
 <button id="float-exit-fs" aria-label="Exit full screen">
   <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
     <path d="M4 8V4h4M16 8V4h-4M4 12v4h4M16 12v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -879,7 +844,6 @@ const E = {
   refreshBtn:  document.getElementById('refresh-btn'),
   logoutBtn:   document.getElementById('logout-btn'),
   stage:       document.getElementById('stage'),
-  floatRail:   document.getElementById('float-rail-btn'),
   floatExit:   document.getElementById('float-exit-fs'),
   toastStack:  document.getElementById('toast-stack'),
   kbHint:      document.getElementById('kb-hint')
@@ -1029,7 +993,6 @@ const player = {
       E.topbar.classList.add('hidden');
       E.railWrap.classList.add('hidden');
       E.floatExit.classList.add('show');
-      E.floatRail.classList.remove('show');
       screen.orientation?.lock?.('landscape').catch(() => {});
     } else {
       this._exitMobileFS();
@@ -1041,7 +1004,6 @@ const player = {
     E.topbar.classList.remove('hidden');
     E.railWrap.classList.remove('hidden');
     E.floatExit.classList.remove('show');
-    if (isMobile()) E.floatRail.classList.add('show');
     screen.orientation?.unlock?.();
     setTimeout(() => syncPadding(), 60);
   }
@@ -1197,13 +1159,6 @@ document.addEventListener('keydown', e => {
 });
 
 /* ── RAIL TOGGLE (mobile) ─────────────────────────────────────── */
-E.floatRail.addEventListener('click', () => {
-  S.headerHidden = !S.headerHidden;
-  E.topbar.classList.toggle('hidden', S.headerHidden);
-  E.railWrap.classList.toggle('hidden', S.headerHidden);
-  setTimeout(syncPadding, 60);
-});
-
 /* ── INIT ─────────────────────────────────────────────────────── */
 function init() {
   // Block navigation away while a stream is active
@@ -1212,8 +1167,6 @@ function init() {
   });
   renderRail();
   syncPadding();
-
-  if (isMobile()) E.floatRail.classList.add('show');
 
   // Keyboard hint (desktop only)
   setTimeout(() => E.kbHint.classList.add('show'), 1200);
