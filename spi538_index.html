@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPI538 · Football Intelligence 2025–26</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;600&family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080a0f;--s1:#0e1117;--s2:#141720;--s3:#1c2030;
+  --border:#1f2535;--border2:#2a3147;
+  --cyan:#00d4ff;--orange:#ff6b2b;--green:#00e676;--red:#ff4757;
+  --yellow:#ffd32a;--purple:#9c88ff;
+  --text:#dde3f0;--muted:#5a6480;--muted2:#7b87a8;
+  --font-head:'Bebas Neue',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --font-body:'Figtree',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body)}
+
+/* LOADING SCREEN */
+#loading{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+.load-logo{font-family:var(--font-head);font-size:48px;letter-spacing:6px;color:var(--cyan)}
+.load-logo em{color:var(--orange);font-style:normal}
+.load-bar-wrap{width:300px;height:3px;background:var(--s2);border-radius:2px;overflow:hidden}
+.load-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--orange));border-radius:2px;animation:loadAnim 1.5s ease-in-out infinite}
+@keyframes loadAnim{0%{width:0%;margin-left:0}50%{width:70%}100%{width:0%;margin-left:100%}}
+.load-txt{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:2px}
+
+/* APP LAYOUT */
+.app{display:grid;grid-template-rows:56px 1fr;height:100vh;overflow:hidden;opacity:0;transition:opacity .3s}
+.app.ready{opacity:1}
+header{
+  display:flex;align-items:center;
+  background:linear-gradient(90deg,#080a0f,#0e1117 40%,#080a0f);
+  border-bottom:1px solid var(--border);padding:0 20px;position:relative;z-index:50;
+}
+.logo{font-family:var(--font-head);font-size:24px;letter-spacing:3px;color:var(--cyan);margin-right:6px}
+.logo em{color:var(--orange);font-style:normal}
+.logo-sub{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-right:28px;border-left:1px solid var(--border2);padding-left:12px}
+nav{display:flex;gap:2px;height:100%;align-items:center}
+.nb{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:8px 14px;cursor:pointer;border:1px solid transparent;border-radius:6px;color:var(--muted);background:none;transition:all .2s;display:flex;align-items:center;gap:6px}
+.nb:hover{color:var(--text);background:var(--s2)}
+.nb.on{color:var(--cyan);background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.2)}
+.nb svg{width:13px;height:13px;fill:currentColor}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.live-badge{font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);color:var(--green);padding:4px 10px;border-radius:12px;display:flex;align-items:center;gap:5px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.main{overflow:hidden}
+.tab{display:none;height:calc(100vh - 56px);overflow-y:auto;padding:20px 24px}
+.tab.on{display:block;animation:slideIn .2s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* CONTROLS */
+.ctrl-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.inp{background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 12px;font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--cyan)}
+.sel{background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 12px;font-family:var(--font-mono);font-size:11px;outline:none;cursor:pointer}
+.btn{background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--muted2);padding:8px 14px;font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.active{background:rgba(0,212,255,.1);border-color:var(--cyan);color:var(--cyan)}
+.btn-primary{background:var(--cyan);color:#000;border:none;border-radius:8px;font-family:var(--font-head);font-size:17px;letter-spacing:2px;padding:12px 28px;cursor:pointer;transition:opacity .2s}
+.btn-primary:hover{opacity:.85}
+
+/* SECTION HEADERS */
+.sec-hdr{font-family:var(--font-head);font-size:20px;letter-spacing:2px;display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+.sec-hdr em{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:1px;font-style:normal;font-weight:400}
+
+/* KPI CARDS */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cyan)}
+.kpi.org::after{background:var(--orange)}.kpi.grn::after{background:var(--green)}.kpi.pur::after{background:var(--purple)}.kpi.yel::after{background:var(--yellow)}
+.kpi-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.kpi-val{font-family:var(--font-head);font-size:30px;line-height:1.1;margin-top:3px}
+.kpi-sub{font-size:11px;color:var(--muted2);margin-top:2px}
+
+/* TABLE */
+.tbl-wrap{border:1px solid var(--border);border-radius:10px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{background:var(--s2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:9px 12px;text-align:left;position:sticky;top:0;z-index:2;border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{color:var(--cyan)}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px solid rgba(31,37,53,.7);transition:background .1s}
+tbody tr:hover{background:var(--s2)}
+td{padding:9px 12px;white-space:nowrap}
+td.r{text-align:right;font-family:var(--font-mono);font-size:12px}
+.rk{font-family:var(--font-head);font-size:17px;color:var(--muted)}
+.rk1{color:#ffd700}.rk2{color:#c0c0c0}.rk3{color:#cd7f32}
+.tn{font-weight:600}
+.ltag{font-family:var(--font-mono);font-size:9px;background:var(--s3);border:1px solid var(--border2);color:var(--muted2);padding:2px 6px;border-radius:4px}
+.spi-bar-wrap{display:flex;align-items:center;gap:7px;justify-content:flex-end}
+.spi-bar{height:5px;border-radius:3px;min-width:2px}
+.spi-num{font-family:var(--font-head);font-size:17px;min-width:42px}
+.off-v{color:var(--green);font-family:var(--font-mono);font-size:11px}
+.def-v{color:var(--red);font-family:var(--font-mono);font-size:11px}
+.mkt-v{color:var(--purple);font-family:var(--font-mono);font-size:11px}
+.form-str{display:flex;gap:3px;align-items:center}
+.fd{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.fd.W{background:var(--green)}.fd.D{background:var(--yellow)}.fd.L{background:var(--red)}
+
+/* PREDICTOR */
+.pred-grid{display:grid;grid-template-columns:1fr 60px 1fr;gap:16px;margin-bottom:20px}
+.team-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px}
+.team-card h3{font-family:var(--font-head);font-size:16px;letter-spacing:2px;color:var(--muted);margin-bottom:14px}
+.vs-mid{display:flex;align-items:center;justify-content:center;padding-top:50px}
+.vs-txt{font-family:var(--font-head);font-size:28px;color:var(--border2)}
+.venue-row{display:flex;gap:6px;margin:10px 0}
+.vbtn{flex:1;background:var(--s2);border:1px solid var(--border2);color:var(--muted);padding:7px 6px;border-radius:6px;cursor:pointer;font-size:11px;font-family:var(--font-mono);transition:all .2s}
+.vbtn.on{background:rgba(0,212,255,.1);border-color:var(--cyan);color:var(--cyan)}
+.team-info-box{font-family:var(--font-mono);font-size:11px;color:var(--muted2);padding:10px;background:var(--s2);border-radius:6px;line-height:1.7;margin-top:8px}
+
+/* RESULT PANELS */
+.res-area{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.res-full{grid-column:1/-1}
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px}
+.panel h4{font-family:var(--font-head);font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:14px}
+.proj-score{font-family:var(--font-head);font-size:60px;text-align:center;letter-spacing:8px;line-height:1;margin:10px 0}
+.proj-score .sc1{color:var(--cyan)}.proj-score .dash{color:var(--border2)}.proj-score .sc2{color:var(--orange)}
+.prob-trio{display:flex;gap:12px;margin-bottom:0}
+.prob-box{flex:1;text-align:center;background:var(--s2);border-radius:8px;padding:14px 6px}
+.prob-out{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.prob-val{font-family:var(--font-head);font-size:36px;line-height:1}
+.prob-box.h1 .prob-val{color:var(--cyan)}.prob-box.dr .prob-val{color:var(--muted2)}.prob-box.h2 .prob-val{color:var(--orange)}
+.prob-clv{font-size:10px;font-family:var(--font-mono);margin-top:4px}
+.clv-pos{color:var(--green)}.clv-neg{color:var(--red)}.clv-neu{color:var(--muted)}
+.matrix-grid{display:grid;gap:2px;font-family:var(--font-mono);font-size:10px}
+.mc{border-radius:3px;padding:5px 2px;text-align:center}
+.mc:hover{outline:1px solid var(--cyan)}
+.mc-hdr{background:transparent;color:var(--muted);font-size:9px}
+.lines-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.line-card{background:var(--s2);border-radius:8px;padding:12px;text-align:center}
+.line-lbl{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.line-val{font-family:var(--font-head);font-size:22px}
+.line-sub{font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin-top:2px}
+.value-meter{height:8px;border-radius:4px;background:var(--s3);position:relative;overflow:hidden;margin:6px 0}
+.value-fill{height:100%;border-radius:4px;transition:width .5s}
+.value-row{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--muted2);margin-bottom:2px}
+.value-verdict{font-family:var(--font-head);font-size:22px;letter-spacing:2px;padding:12px 20px;border-radius:8px;text-align:center;margin-top:10px}
+.verdict-bet{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);color:var(--green)}
+.verdict-pass{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);color:var(--red)}
+.verdict-edge{background:rgba(255,211,42,.1);border:1px solid rgba(255,211,42,.3);color:var(--yellow)}
+.news-item{border-bottom:1px solid var(--border);padding:10px 0;font-size:13px;line-height:1.6;color:var(--muted2)}
+.news-item:last-child{border:none}
+
+/* STANDINGS */
+.lg-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.lg-pill{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:var(--font-mono);font-size:9px;letter-spacing:.5px;padding:5px 10px;border-radius:12px;cursor:pointer;transition:all .2s}
+.lg-pill:hover{border-color:var(--cyan);color:var(--cyan)}
+.lg-pill.on{background:rgba(0,212,255,.1);border-color:var(--cyan);color:var(--cyan)}
+.pts-v{font-weight:600;font-family:var(--font-mono);color:var(--cyan)}
+.gd-pos{color:var(--green)}.gd-neg{color:var(--red)}
+
+/* ABOUT */
+.about-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.a-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:20px}
+.a-card h3{font-family:var(--font-head);font-size:16px;letter-spacing:2px;color:var(--cyan);margin-bottom:10px}
+.a-card p,.a-card li{font-size:13px;color:var(--muted2);line-height:1.7}
+.a-card ul{padding-left:16px}.a-card li{margin-bottom:3px}
+
+/* SPINNER */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:700px){
+  .pred-grid{grid-template-columns:1fr}.vs-mid{display:none}
+  .res-area{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading">
+  <div class="load-logo">SPI<em>538</em></div>
+  <div class="load-bar-wrap"><div class="load-bar"></div></div>
+  <div class="load-txt" id="load-txt">LOADING MODEL DATA…</div>
+</div>
+
+<div class="app" id="app">
+<header>
+  <div class="logo">SPI<em>538</em></div>
+  <div class="logo-sub">Football Intelligence · 2025–26 · 22 Leagues</div>
+  <nav>
+    <button class="nb on" onclick="showTab('rankings',this)">
+      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>Rankings
+    </button>
+    <button class="nb" onclick="showTab('predictor',this)">
+      <svg viewBox="0 0 24 24"><path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zM3 21h18v-2H3v2zM12 3L2 9h20l-10-6z"/></svg>Predictor
+    </button>
+    <button class="nb" onclick="showTab('standings',this)">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h10v2H4z"/></svg>Standings
+    </button>
+    <button class="nb" onclick="showTab('about',this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>Method
+    </button>
+  </nav>
+  <div class="hdr-right">
+    <div class="live-badge"><span class="live-dot"></span>LIVE DATA</div>
+  </div>
+</header>
+<div class="main">
+
+<!-- RANKINGS -->
+<div id="tab-rankings" class="tab on">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-lbl">Total Teams</div><div class="kpi-val">396</div><div class="kpi-sub">22 leagues</div></div>
+    <div class="kpi org"><div class="kpi-lbl">Matches</div><div class="kpi-val">6,179</div><div class="kpi-sub">2025–26 season</div></div>
+    <div class="kpi yel"><div class="kpi-lbl">#1 Ranked</div><div class="kpi-val" id="kpi-top" style="font-size:18px;padding-top:4px">—</div><div class="kpi-sub" id="kpi-top-s">SPI —</div></div>
+    <div class="kpi grn"><div class="kpi-lbl">Best Attack</div><div class="kpi-val" id="kpi-off" style="font-size:18px;padding-top:4px">—</div><div class="kpi-sub" id="kpi-off-s">OFF —</div></div>
+    <div class="kpi"><div class="kpi-lbl">Best Defense</div><div class="kpi-val" id="kpi-def" style="font-size:18px;padding-top:4px">—</div><div class="kpi-sub" id="kpi-def-s">DEF —</div></div>
+    <div class="kpi pur"><div class="kpi-lbl">Biggest Value Gap</div><div class="kpi-val" id="kpi-gap" style="font-size:18px;padding-top:4px">—</div><div class="kpi-sub" id="kpi-gap-s">Model vs Market</div></div>
+  </div>
+  <div class="ctrl-bar">
+    <input class="inp" id="r-search" placeholder="Search team…" oninput="renderRankings()" style="width:200px">
+    <select class="sel" id="r-league" onchange="renderRankings()"><option value="">All Leagues</option></select>
+    <select class="sel" id="r-sort" onchange="renderRankings()">
+      <option value="spi">Sort: SPI</option>
+      <option value="off">Sort: Offensive</option>
+      <option value="def">Sort: Defensive (best)</option>
+      <option value="market_spi">Sort: Market SPI</option>
+      <option value="gap">Sort: Value Gap</option>
+    </select>
+    <span style="font-family:var(--font-mono);font-size:10px;color:var(--muted)" id="r-count"></span>
+  </div>
+  <div class="tbl-wrap" style="max-height:calc(100vh - 280px)">
+    <table>
+      <thead><tr>
+        <th style="width:40px">#</th><th>Team</th><th>League</th>
+        <th class="r" title="Soccer Power Index">SPI</th>
+        <th class="r" title="Expected goals scored vs avg team">OFF</th>
+        <th class="r" title="Expected goals conceded vs avg team">DEF</th>
+        <th class="r" title="Market-implied SPI from avg season odds">Mkt SPI</th>
+        <th class="r" title="Model SPI minus Market SPI">Gap</th>
+        <th class="r">W</th><th class="r">D</th><th class="r">L</th>
+        <th class="r">GF</th><th class="r">GA</th><th>Form</th>
+      </tr></thead>
+      <tbody id="r-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PREDICTOR -->
+<div id="tab-predictor" class="tab">
+  <div class="sec-hdr">Match Predictor <em>Weighted Poisson · CLV · Asian Handicap · Over/Under · Live Odds</em></div>
+  <div class="pred-grid">
+    <div class="team-card">
+      <h3>Home Team</h3>
+      <select class="sel" id="p-home" style="width:100%;margin-bottom:10px" onchange="updateTeamPreviews()"></select>
+      <div class="venue-row">
+        <button class="vbtn on" id="vb-home" onclick="setVenue('home')">🏠 Home Ground</button>
+        <button class="vbtn" id="vb-neutral" onclick="setVenue('neutral')">⚖️ Neutral</button>
+      </div>
+      <div class="team-info-box" id="p-home-info">Select a team…</div>
+    </div>
+    <div class="vs-mid"><div class="vs-txt">VS</div></div>
+    <div class="team-card">
+      <h3>Away Team</h3>
+      <select class="sel" id="p-away" style="width:100%;margin-bottom:10px" onchange="updateTeamPreviews()"></select>
+      <div style="height:42px"></div>
+      <div class="team-info-box" id="p-away-info">Select a team…</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-bottom:24px;display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap">
+    <button class="btn-primary" onclick="runPredictor()">⚡ Generate Prediction</button>
+    <button class="btn" onclick="fetchLiveOdds()" id="odds-btn">📡 Fetch Live Odds + News</button>
+  </div>
+  <div id="pred-results"></div>
+</div>
+
+<!-- STANDINGS -->
+<div id="tab-standings" class="tab">
+  <div class="sec-hdr">League Standings <em>Full 2025–26 season</em></div>
+  <div class="lg-pills" id="stand-pills"></div>
+  <div class="tbl-wrap" id="stand-tbl" style="max-height:calc(100vh - 220px)"></div>
+</div>
+
+<!-- ABOUT -->
+<div id="tab-about" class="tab">
+  <div class="sec-hdr">Methodology</div>
+  <div class="about-grid">
+    <div class="a-card"><h3>Weighted Poisson Model</h3><p>Maximum-likelihood Poisson regression per league. Matches weighted by recency using exponential decay (half-life 60 days) — last month counts ~4× more than 4 months ago. Home advantage estimated per league from data.</p></div>
+    <div class="a-card"><h3>SPI Ratings</h3><p>Inspired by FiveThirtyEight's Soccer Power Index (Nate Silver, 2009).</p><ul><li><b>OFF</b>: expected goals vs avg team, neutral field</li><li><b>DEF</b>: expected goals conceded vs avg team</li><li><b>SPI</b>: % of available points (W=3,D=1,L=0) vs avg opponent</li></ul></div>
+    <div class="a-card"><h3>Market SPI + Gap</h3><p>Derived from season-average market odds (de-vigged). Converted to SPI-equivalent. <b>Gap = Model − Market</b> highlights potential inefficiencies where our model disagrees with collective market wisdom.</p></div>
+    <div class="a-card"><h3>Match Predictor</h3><p>Given two teams' weighted attack/defense params + home advantage: builds a full Poisson score matrix with ~9% diagonal draw inflation. Outputs 1X2, Asian Handicap lines, Over/Under, and projected score.</p></div>
+    <div class="a-card"><h3>Closing Line Value (CLV)</h3><p>CLV = Model probability − Market probability. Positive CLV means the model sees more value than the market. Historically, sustained positive CLV is associated with long-run profitability.</p></div>
+    <div class="a-card"><h3>Data + Limits</h3><ul><li>Source: football-data.co.uk 2025–26</li><li>6,179 matches, 22 leagues</li><li>Scoreline-only (no xG)</li><li>No cross-league calibration</li><li>Live odds via web search</li><li>Early season = high uncertainty</li></ul></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// GLOBALS
+// ══════════════════════════════════════
+let MODEL = null;
+let TEAM_MAP = {};
+let venueMode = 'home';
+
+// ══════════════════════════════════════
+// LOAD DATA ASYNC (GitHub Pages compatible)
+// ══════════════════════════════════════
+async function loadData() {
+  const txt = document.getElementById('load-txt');
+  txt.textContent = 'FETCHING MODEL DATA…';
+  try {
+    const resp = await fetch('./model_data.json');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    txt.textContent = 'PARSING 6,179 MATCHES…';
+    MODEL = await resp.json();
+    txt.textContent = 'BUILDING RATINGS…';
+    MODEL.spi.forEach(d => { TEAM_MAP[d.Team] = d; });
+    await new Promise(r => setTimeout(r, 300));
+    init();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').classList.add('ready');
+  } catch (err) {
+    document.getElementById('load-txt').textContent = 'ERROR: ' + err.message;
+    document.getElementById('load-txt').style.color = '#ff4757';
+  }
+}
+
+// ══════════════════════════════════════
+// TABS
+// ══════════════════════════════════════
+function showTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + name).classList.add('on');
+  if (btn) btn.classList.add('on');
+}
+
+// ══════════════════════════════════════
+// POISSON MATH
+// ══════════════════════════════════════
+function pPMF(k, lam) {
+  if (lam <= 0) return k === 0 ? 1 : 0;
+  let logp = k * Math.log(lam) - lam;
+  for (let i = 2; i <= k; i++) logp -= Math.log(i);
+  return Math.exp(logp);
+}
+function buildMatrix(lam1, lam2, maxG = 8, di = 1.09) {
+  const g = []; let tot = 0;
+  for (let i = 0; i <= maxG; i++) {
+    g[i] = [];
+    for (let j = 0; j <= maxG; j++) {
+      let v = pPMF(i, Math.max(lam1, 0.01)) * pPMF(j, Math.max(lam2, 0.01));
+      if (i === j) v *= di;
+      g[i][j] = v; tot += v;
+    }
+  }
+  for (let i = 0; i <= maxG; i++) for (let j = 0; j <= maxG; j++) g[i][j] /= tot;
+  return g;
+}
+function matrixProbs(g, maxG = 8) {
+  let pH = 0, pD = 0, pA = 0;
+  for (let i = 0; i <= maxG; i++) for (let j = 0; j <= maxG; j++) {
+    if (i > j) pH += g[i][j]; else if (i === j) pD += g[i][j]; else pA += g[i][j];
+  }
+  return { pH, pD, pA };
+}
+function ahProb(g, line, maxG = 8) {
+  let p = 0;
+  for (let i = 0; i <= maxG; i++) for (let j = 0; j <= maxG; j++) {
+    const m = (i - j) + line;
+    if (m > 0) p += g[i][j]; else if (m === 0) p += g[i][j] * 0.5;
+  }
+  return p;
+}
+function bestAHLine(g) {
+  const lines = [-2.5,-2,-1.75,-1.5,-1.25,-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.5];
+  let best = 0, bestDiff = Infinity;
+  for (const l of lines) { const d = Math.abs(ahProb(g, l) - 0.5); if (d < bestDiff) { bestDiff = d; best = l; } }
+  return { line: best, prob: ahProb(g, best) };
+}
+function ouProb(g, line, maxG = 8) {
+  let p = 0;
+  for (let i = 0; i <= maxG; i++) for (let j = 0; j <= maxG; j++) {
+    const t = i + j;
+    if (t > line) p += g[i][j]; else if (t === line) p += g[i][j] * 0.5;
+  }
+  return p;
+}
+function toOdds(p) { return p > 0.001 ? (1 / p).toFixed(2) : '—'; }
+
+// ══════════════════════════════════════
+// COLOURS
+// ══════════════════════════════════════
+function spiColor(s) {
+  if (s >= 75) return '#00d4ff'; if (s >= 60) return '#00e676';
+  if (s >= 45) return '#ffd32a'; return '#ff4757';
+}
+function gapColor(g) { return g > 3 ? '#00e676' : g < -3 ? '#ff4757' : '#7b87a8'; }
+function clvCls(v) { return v > 0 ? 'clv-pos' : v < 0 ? 'clv-neg' : 'clv-neu'; }
+function clvSign(v) { return (v > 0 ? '+' : '') + (v * 100).toFixed(1) + '%'; }
+
+// ══════════════════════════════════════
+// RANKINGS
+// ══════════════════════════════════════
+function renderRankings() {
+  const q = document.getElementById('r-search').value.toLowerCase();
+  const lf = document.getElementById('r-league').value;
+  const sc = document.getElementById('r-sort').value;
+  let data = MODEL.spi.map(d => ({ ...d, gap: d.market_spi != null ? +(d.spi - d.market_spi).toFixed(1) : null }))
+    .filter(d => (!q || d.Team.toLowerCase().includes(q)) && (!lf || d.League === lf));
+  if (sc === 'off') data.sort((a, b) => b.off - a.off);
+  else if (sc === 'def') data.sort((a, b) => a.def - b.def);
+  else if (sc === 'market_spi') data.sort((a, b) => (b.market_spi || 0) - (a.market_spi || 0));
+  else if (sc === 'gap') data.sort((a, b) => (b.gap || 0) - (a.gap || 0));
+  else data.sort((a, b) => b.spi - a.spi);
+  document.getElementById('r-count').textContent = data.length + ' teams';
+  document.getElementById('r-body').innerHTML = data.slice(0, 300).map((d, i) => {
+    const rk = i + 1, rc = rk===1?'rk1':rk===2?'rk2':rk===3?'rk3':'';
+    const col = spiColor(d.spi), bar = Math.min(d.spi * 1.4, 140);
+    const gapStr = d.gap != null ? `<span style="color:${gapColor(d.gap)}">${d.gap>0?'+':''}${d.gap}</span>` : '<span style="color:var(--muted)">—</span>';
+    const mktStr = d.market_spi != null ? `<span class="mkt-v">${d.market_spi}</span>` : '<span style="color:var(--muted)">—</span>';
+    const formStr = d.form_str ? d.form_str.split('').map(c=>`<span class="fd ${c}"></span>`).join('') : '';
+    return `<tr><td><span class="rk ${rc}">${rk}</span></td><td><span class="tn">${d.Team}</span></td><td><span class="ltag">${d.League}</span></td>
+      <td class="r"><div class="spi-bar-wrap"><span class="spi-num" style="color:${col}">${d.spi}</span><div class="spi-bar" style="width:${bar}px;background:linear-gradient(90deg,${col}88,${col})"></div></div></td>
+      <td class="r"><span class="off-v">${d.off.toFixed(2)}</span></td><td class="r"><span class="def-v">${d.def.toFixed(2)}</span></td>
+      <td class="r">${mktStr}</td><td class="r">${gapStr}</td>
+      <td class="r">${d.W??'—'}</td><td class="r">${d.D??'—'}</td><td class="r">${d.L??'—'}</td>
+      <td class="r">${d.GF??'—'}</td><td class="r">${d.GA??'—'}</td>
+      <td><div class="form-str">${formStr}</div></td></tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+// PREDICTOR
+// ══════════════════════════════════════
+function setVenue(mode) {
+  venueMode = mode;
+  document.getElementById('vb-home').classList.toggle('on', mode === 'home');
+  document.getElementById('vb-neutral').classList.toggle('on', mode === 'neutral');
+}
+function teamInfoHTML(t) {
+  if (!t) return 'Select a team…';
+  const gap = t.market_spi != null ? (t.spi - t.market_spi).toFixed(1) : '—';
+  const gapCol = t.market_spi != null ? gapColor(+gap) : 'var(--muted)';
+  const form = t.form_str ? t.form_str.split('').map(c=>`<span class="fd ${c}" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:2px"></span>`).join('') : '';
+  return `<b style="color:var(--text)">${t.Team}</b> · <span style="color:var(--cyan)">${t.League}</span><br>
+SPI <b style="color:${spiColor(t.spi)}">${t.spi}</b> &nbsp; OFF <span style="color:var(--green)">${t.off}</span> &nbsp; DEF <span style="color:var(--red)">${t.def}</span><br>
+Mkt SPI <span style="color:var(--purple)">${t.market_spi??'—'}</span> &nbsp; Gap <span style="color:${gapCol}">${+gap>0?'+':''}${gap}</span><br>
+Form: ${form}`;
+}
+function updateTeamPreviews() {
+  const h = TEAM_MAP[document.getElementById('p-home').value];
+  const a = TEAM_MAP[document.getElementById('p-away').value];
+  document.getElementById('p-home-info').innerHTML = teamInfoHTML(h);
+  document.getElementById('p-away-info').innerHTML = teamInfoHTML(a);
+}
+
+function runPredictor() {
+  const hn = document.getElementById('p-home').value;
+  const an = document.getElementById('p-away').value;
+  const h = TEAM_MAP[hn], a = TEAM_MAP[an];
+  if (!h || !a) return;
+  const ha = venueMode === 'home' ? (MODEL.home_adv[h.League] || 0.2) : 0;
+  const lam1 = h.off * Math.exp(ha) / a.def;
+  const lam2 = a.off / h.def;
+  const g = buildMatrix(lam1, lam2);
+  const { pH, pD, pA } = matrixProbs(g);
+  const ah = bestAHLine(g);
+  const ahLines = [-1.5,-1,-0.5,0,0.5,1,1.5].map(l=>({line:l,pHome:ahProb(g,l),pAway:1-ahProb(g,l)}));
+  const ou25=ouProb(g,2.5),ou15=ouProb(g,1.5),ou35=ouProb(g,3.5),ou45=ouProb(g,4.5);
+
+  // CLV vs market
+  const clvH = h.market_win != null ? pH - h.market_win : null;
+  const clvA = a.market_win != null ? pA - a.market_win : null;
+  const mktDraw = h.market_draw != null && a.market_draw != null ? (h.market_draw+a.market_draw)/2 : null;
+  const clvD = mktDraw != null ? pD - mktDraw : null;
+
+  // Matrix HTML
+  const mx = 5;
+  let matHTML = `<div class="matrix-grid" style="grid-template-columns:36px 28px repeat(${mx+1},1fr)">
+    <div class="mc mc-hdr"></div><div class="mc mc-hdr" style="color:var(--orange);font-size:9px">${an.split(' ')[0]}→</div>`;
+  for (let j=0;j<=mx;j++) matHTML+=`<div class="mc mc-hdr">${j}</div>`;
+  for (let i=0;i<=mx;i++) {
+    matHTML+=`<div class="mc mc-hdr" style="color:var(--cyan);font-size:9px">${i}</div>`;
+    matHTML+=`<div class="mc mc-hdr" style="font-size:8px;color:var(--muted)">${hn.split(' ')[0]}↓</div>`;
+    for (let j=0;j<=mx;j++) {
+      const p=g[i][j]*100, alpha=Math.min(.85,p/5);
+      const bg=i>j?`rgba(0,212,255,${alpha})`:i===j?`rgba(255,211,42,${alpha})`:`rgba(255,107,43,${alpha})`;
+      matHTML+=`<div class="mc" style="background:${bg};${p>4?'font-weight:600':''}" title="${i}-${j}: ${p.toFixed(2)}%">${p.toFixed(1)}</div>`;
+    }
+  }
+  matHTML+='</div>';
+
+  function meter(prob, mktProb, label) {
+    if (mktProb==null) return '';
+    const clv=prob-mktProb, fill=Math.min(100,Math.abs(clv)*600);
+    const col=clv>0.03?'var(--green)':clv<-0.03?'var(--red)':'var(--yellow)';
+    return `<div style="margin-bottom:10px">
+      <div class="value-row"><span>${label}</span><span>Model ${(prob*100).toFixed(1)}% (${toOdds(prob)}) · Market ${(mktProb*100).toFixed(1)}% (${toOdds(mktProb)})</span></div>
+      <div class="value-meter"><div class="value-fill" style="width:${fill}%;background:${col}"></div></div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:${col}">CLV ${clv>0?'+':''}${(clv*100).toFixed(2)}%</div>
+    </div>`;
+  }
+
+  const maxClv=Math.max(...[clvH,clvA,clvD].filter(x=>x!=null).map(Math.abs));
+  const vClass=maxClv>0.07?'verdict-bet':maxClv>0.03?'verdict-edge':'verdict-pass';
+  const vTxt=maxClv>0.07?'POTENTIAL VALUE FOUND':maxClv>0.03?'MARGINAL EDGE':'NO CLEAR EDGE';
+
+  document.getElementById('pred-results').innerHTML = `
+  <div class="res-area">
+    <div class="panel">
+      <h4>Projected Score & Probabilities</h4>
+      <div class="proj-score"><span class="sc1">${lam1.toFixed(1)}</span><span class="dash"> – </span><span class="sc2">${lam2.toFixed(1)}</span></div>
+      <div style="text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:14px">
+        Home adv: ${ha.toFixed(3)} &nbsp;|&nbsp; ${venueMode.toUpperCase()} &nbsp;|&nbsp; xGoals: ${(lam1+lam2).toFixed(2)}
+      </div>
+      <div class="prob-trio">
+        <div class="prob-box h1"><div class="prob-out">${hn}</div><div class="prob-val">${(pH*100).toFixed(0)}%</div><div class="prob-clv ${clvCls(clvH)}">${clvH!=null?'CLV '+clvSign(clvH):'—'}</div></div>
+        <div class="prob-box dr"><div class="prob-out">Draw</div><div class="prob-val">${(pD*100).toFixed(0)}%</div><div class="prob-clv ${clvCls(clvD)}">${clvD!=null?'CLV '+clvSign(clvD):'—'}</div></div>
+        <div class="prob-box h2"><div class="prob-out">${an}</div><div class="prob-val">${(pA*100).toFixed(0)}%</div><div class="prob-clv ${clvCls(clvA)}">${clvA!=null?'CLV '+clvSign(clvA):'—'}</div></div>
+      </div>
+    </div>
+    <div class="panel"><h4>Score Probability Matrix (%)</h4>${matHTML}<div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--muted)"><span style="color:var(--cyan)">■</span> Home &nbsp;<span style="color:var(--yellow)">■</span> Draw &nbsp;<span style="color:var(--orange)">■</span> Away</div></div>
+    <div class="panel">
+      <h4>Asian Handicap Lines</h4>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:10px">Best line: <b style="color:var(--cyan)">${ah.line>0?'+':''}${ah.line}</b> (${(ah.prob*100).toFixed(1)}% home cover)</div>
+      <table style="width:100%;font-size:11px;font-family:var(--font-mono)">
+        <tr style="color:var(--muted);font-size:9px;letter-spacing:1px"><td>LINE</td><td style="text-align:right">HOME%</td><td style="text-align:right">H.ODDS</td><td style="text-align:right">AWAY%</td><td style="text-align:right">A.ODDS</td></tr>
+        ${ahLines.map(l=>`<tr style="border-top:1px solid var(--border);color:${Math.abs(l.line-ah.line)<.01?'var(--cyan)':'var(--text)'}">
+          <td>${l.line>0?'+':''}${l.line}</td><td style="text-align:right">${(l.pHome*100).toFixed(1)}%</td><td style="text-align:right">${toOdds(l.pHome)}</td><td style="text-align:right">${(l.pAway*100).toFixed(1)}%</td><td style="text-align:right">${toOdds(l.pAway)}</td>
+        </tr>`).join('')}
+      </table>
+    </div>
+    <div class="panel">
+      <h4>Over / Under Goals</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        ${[{l:1.5,p:ou15},{l:2.5,p:ou25},{l:3.5,p:ou35},{l:4.5,p:ou45}].map(o=>`
+        <div class="line-card"><div class="line-lbl">Over ${o.l}</div><div class="line-val" style="color:${o.p>.6?'var(--green)':o.p<.4?'var(--red)':'var(--text)'}">${(o.p*100).toFixed(1)}%</div><div class="line-sub">${toOdds(o.p)}</div></div>
+        <div class="line-card"><div class="line-lbl">Under ${o.l}</div><div class="line-val" style="color:${(1-o.p)>.6?'var(--green)':(1-o.p)<.4?'var(--red)':'var(--text)'}">${((1-o.p)*100).toFixed(1)}%</div><div class="line-sub">${toOdds(1-o.p)}</div></div>`).join('')}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">xGoals total: <b style="color:var(--text)">${(lam1+lam2).toFixed(2)}</b></div>
+    </div>
+    <div class="panel res-full">
+      <h4>CLV Analysis — Model vs Season Avg Market</h4>
+      ${meter(pH,h.market_win,'1 — '+hn+' Win')}
+      ${meter(pD,mktDraw,'X — Draw')}
+      ${meter(pA,a.market_win,'2 — '+an+' Win')}
+      <div class="value-verdict ${vClass}">${vTxt}</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:8px">⚠ Comparing model vs this season's average market. Click "Fetch Live Odds" for today's real prices.</div>
+    </div>
+    <div id="live-panel" class="panel res-full" style="display:none">
+      <h4>📡 Live Odds + News</h4><div id="live-content"></div>
+    </div>
+  </div>`;
+
+  window._ps = { hn, an, pH, pD, pA, lam1, lam2, g };
+}
+
+// ══════════════════════════════════════
+// LIVE ODDS + NEWS via Claude API
+// ══════════════════════════════════════
+async function fetchLiveOdds() {
+  const btn = document.getElementById('odds-btn');
+  if (!window._ps) { alert('Run a prediction first'); return; }
+  const { hn, an, pH, pD, pA } = window._ps;
+  btn.innerHTML = '<span class="spin"></span>Fetching…'; btn.disabled = true;
+  document.getElementById('live-panel').style.display = 'block';
+  document.getElementById('live-content').innerHTML = '<span class="spin"></span> Searching live odds and news…';
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1200,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        system:`You are a football betting analyst. Search for:
+1. Current betting odds for ${hn} vs ${an} — find 1X2 odds, Over/Under 2.5 goals, and Asian Handicap line from Bet365, Pinnacle, or Betfair.
+2. Recent news about ${hn} and ${an} — injuries, suspensions, lineup news, form.
+Respond ONLY with a valid JSON object (no markdown, no explanation):
+{"odds_found":bool,"h_odds":number|null,"d_odds":number|null,"a_odds":number|null,"ou25_over":number|null,"ou25_under":number|null,"ah_line":number|null,"ah_home_odds":number|null,"bookmaker":"string","home_news":["string"],"away_news":["string"],"summary":"string"}`,
+        messages:[{role:'user',content:`Find odds and news: ${hn} vs ${an}`}]
+      })
+    });
+    const data = await resp.json();
+    let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    txt = txt.replace(/```json|```/g,'').trim();
+    let p; try { p=JSON.parse(txt); } catch(e) { const m=txt.match(/\{[\s\S]*\}/); p=m?JSON.parse(m[0]):null; }
+    if (!p) throw new Error('Could not parse API response');
+
+    function lClv(modelP, odd) { return odd ? modelP - 1/odd : null; }
+    const lH=lClv(pH,p.h_odds), lD=lClv(pD,p.d_odds), lA=lClv(pA,p.a_odds);
+    const maxC=Math.max(...[lH,lD,lA].filter(x=>x!=null).map(Math.abs));
+    const vClass=maxC>.08?'verdict-bet':maxC>.04?'verdict-edge':'verdict-pass';
+    const vTxt=maxC>.08?'🟢 STRONG EDGE DETECTED':maxC>.04?'🟡 MARGINAL EDGE':'🔴 NO SIGNIFICANT EDGE';
+
+    function lRow(lbl,mP,odd,clv) {
+      if(!odd) return '';
+      const col=clv>.05?'var(--green)':clv<-.05?'var(--red)':'var(--yellow)';
+      return `<tr style="border-top:1px solid var(--border)">
+        <td style="padding:8px 0;font-family:var(--font-mono);font-size:11px">${lbl}</td>
+        <td style="text-align:right;font-family:var(--font-mono);font-size:11px">${(mP*100).toFixed(1)}%</td>
+        <td style="text-align:right;font-family:var(--font-mono);font-size:11px">${toOdds(mP)}</td>
+        <td style="text-align:right;font-family:var(--font-mono);font-size:11px">${odd.toFixed(2)}</td>
+        <td style="text-align:right;font-family:var(--font-mono);font-size:11px;color:${col}">${clv>0?'+':''}${(clv*100).toFixed(2)}%</td></tr>`;
+    }
+    const newsH=(items,name,col)=>items&&items.length?items.map(n=>`<div class="news-item"><span style="color:${col};font-family:var(--font-mono);font-size:9px;letter-spacing:1px">${name}</span><br>${n}</div>`).join(''):`<div class="news-item" style="color:var(--muted)">No news found</div>`;
+
+    document.getElementById('live-content').innerHTML = `
+      ${p.odds_found?`<div style="margin-bottom:16px">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:8px">SOURCE: ${p.bookmaker||'Web'}</div>
+        <table style="width:100%">
+          <tr style="color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:1px"><td>OUTCOME</td><td style="text-align:right">MODEL%</td><td style="text-align:right">FAIR ODDS</td><td style="text-align:right">LIVE ODDS</td><td style="text-align:right">LIVE CLV</td></tr>
+          ${lRow('1 — '+hn,pH,p.h_odds,lH)}${lRow('X — Draw',pD,p.d_odds,lD)}${lRow('2 — '+an,pA,p.a_odds,lA)}
+          ${p.ou25_over?lRow('Over 2.5',ouProb(window._ps.g,2.5),p.ou25_over,lClv(ouProb(window._ps.g,2.5),p.ou25_over)):''}
+        </table>
+        <div class="value-verdict ${vClass}" style="margin-top:10px">${vTxt}</div>
+      </div>`:'<div style="color:var(--muted);font-family:var(--font-mono);font-size:11px;margin-bottom:16px">⚠ No current odds found — match may not be listed yet</div>'}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+        <div><div style="font-family:var(--font-head);font-size:14px;letter-spacing:2px;color:var(--cyan);margin-bottom:8px">${hn} News</div>${newsH(p.home_news,hn,'var(--cyan)')}</div>
+        <div><div style="font-family:var(--font-head);font-size:14px;letter-spacing:2px;color:var(--orange);margin-bottom:8px">${an} News</div>${newsH(p.away_news,an,'var(--orange)')}</div>
+      </div>
+      ${p.summary?`<div style="background:var(--s2);border-radius:8px;padding:14px;font-size:13px;color:var(--muted2);line-height:1.6;border-left:3px solid var(--cyan)">
+        <div style="font-family:var(--font-head);font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:6px">ANALYST SUMMARY</div>${p.summary}</div>`:''}`;
+  } catch(err) {
+    document.getElementById('live-content').innerHTML=`<div style="color:var(--red);font-family:var(--font-mono);font-size:11px">Error: ${err.message}</div>`;
+  }
+  btn.innerHTML='📡 Fetch Live Odds + News'; btn.disabled=false;
+}
+
+// ══════════════════════════════════════
+// STANDINGS
+// ══════════════════════════════════════
+function renderStandings(league) {
+  const rows = MODEL.standings[league]; if(!rows) return;
+  const spiMap = {}; MODEL.spi.filter(d=>d.League===league).forEach(d=>{spiMap[d.Team]=d;});
+  let html=`<table><thead><tr><th style="width:36px">#</th><th>Team</th><th class="r">MP</th><th class="r">W</th><th class="r">D</th><th class="r">L</th><th class="r">GF</th><th class="r">GA</th><th class="r">GD</th><th class="r">Pts</th><th class="r">SPI</th><th class="r">Mkt SPI</th><th class="r">Gap</th></tr></thead><tbody>`;
+  rows.forEach((r,i)=>{
+    const rk=i+1,rc=rk===1?'rk1':rk===2?'rk2':rk===3?'rk3':'';
+    const sp=spiMap[r.t];
+    const spiS=sp?`<span style="color:${spiColor(sp.spi)};font-family:var(--font-mono)">${sp.spi}</span>`:'—';
+    const mktS=sp?.market_spi?`<span class="mkt-v">${sp.market_spi}</span>`:'—';
+    const gap=sp?.market_spi?(sp.spi-sp.market_spi).toFixed(1):null;
+    const gapS=gap!=null?`<span style="color:${gapColor(+gap)};font-family:var(--font-mono)">${+gap>0?'+':''}${gap}</span>`:'—';
+    html+=`<tr><td><span class="rk ${rc}">${rk}</span></td><td><span class="tn">${r.t}</span></td><td class="r">${r.mp}</td><td class="r">${r.w}</td><td class="r">${r.d}</td><td class="r">${r.l}</td><td class="r">${r.gf}</td><td class="r">${r.ga}</td><td class="r"><span class="${r.gd>=0?'gd-pos':'gd-neg'}">${r.gd>=0?'+':''}${r.gd}</span></td><td class="r"><span class="pts-v">${r.pts}</span></td><td class="r">${spiS}</td><td class="r">${mktS}</td><td class="r">${gapS}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('stand-tbl').innerHTML=html;
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+function init() {
+  const leagues=[...new Set(MODEL.spi.map(d=>d.League))].sort();
+  const lsel=document.getElementById('r-league');
+  leagues.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;lsel.appendChild(o);});
+
+  const teams=MODEL.spi.map(d=>d.Team).sort();
+  ['p-home','p-away'].forEach((id,idx)=>{
+    const s=document.getElementById(id);
+    teams.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;s.appendChild(o);});
+    if(idx===1&&teams.length>1) s.value=teams[1];
+  });
+  updateTeamPreviews();
+
+  const top=MODEL.spi[0];
+  const bestOff=[...MODEL.spi].sort((a,b)=>b.off-a.off)[0];
+  const bestDef=[...MODEL.spi].sort((a,b)=>a.def-b.def)[0];
+  const gapTeams=MODEL.spi.filter(d=>d.market_spi!=null).map(d=>({...d,gap:d.spi-d.market_spi})).sort((a,b)=>Math.abs(b.gap)-Math.abs(a.gap));
+  document.getElementById('kpi-top').textContent=top.Team;
+  document.getElementById('kpi-top-s').textContent=`SPI ${top.spi} · ${top.League}`;
+  document.getElementById('kpi-off').textContent=bestOff.Team;
+  document.getElementById('kpi-off-s').textContent=`OFF ${bestOff.off}`;
+  document.getElementById('kpi-def').textContent=bestDef.Team;
+  document.getElementById('kpi-def-s').textContent=`DEF ${bestDef.def}`;
+  if(gapTeams.length){const bg=gapTeams[0];document.getElementById('kpi-gap').textContent=bg.Team;document.getElementById('kpi-gap-s').textContent=`Gap ${bg.gap>0?'+':''}${bg.gap.toFixed(1)}`;}
+
+  const pills=document.getElementById('stand-pills');
+  leagues.forEach((l,i)=>{
+    const btn=document.createElement('button');
+    btn.className='lg-pill'+(i===0?' on':'');
+    btn.textContent=l;
+    btn.onclick=()=>{document.querySelectorAll('.lg-pill').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderStandings(l);};
+    pills.appendChild(btn);
+  });
+  renderStandings(leagues[0]);
+  renderRankings();
+}
+
+// Start loading
+loadData();
+</script>
+</body>
+</html>
