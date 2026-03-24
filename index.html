@@ -3,1237 +3,749 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bundesliga · Betting Intelligence</title>
+<title>Polymarket Edge Finder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0d0f11;
-  --surface: #14171a;
-  --surface2: #1c2026;
-  --surface3: #242830;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.12);
-  --text: #e8eaed;
-  --text2: #8b949e;
-  --text3: #484f58;
-  --accent: #f0c040;
-  --accent2: #3b82f6;
-  --green: #3fb950;
-  --red: #f85149;
-  --orange: #f0883e;
-  --purple: #a371f7;
-  --radius: 14px;
-  --radius-sm: 8px;
-  --mono: 'DM Mono', monospace;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --text2: #888;
+    --text3: #555;
+    --green: #00e676;
+    --green-dim: rgba(0,230,118,0.12);
+    --amber: #ffab40;
+    --amber-dim: rgba(255,171,64,0.12);
+    --red: #ff5252;
+    --red-dim: rgba(255,82,82,0.10);
+    --blue: #40c4ff;
+    --blue-dim: rgba(64,196,255,0.10);
+    --purple: #ce93d8;
+    --purple-dim: rgba(206,147,216,0.10);
+    --accent: #00e676;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
 
-/* GRID LAYOUT */
-.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* SIDEBAR */
-.sidebar{
-  background:var(--surface);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
-  position:sticky;top:0;height:100vh;overflow-y:auto;
-}
-.sidebar-header{
-  padding:20px;
-  border-bottom:1px solid var(--border);
-}
-.sidebar-logo{
-  display:flex;align-items:center;gap:10px;margin-bottom:4px;
-}
-.logo-badge{
-  width:32px;height:32px;background:var(--accent);border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:700;color:#000;
-}
-.sidebar-title{font-size:15px;font-weight:600}
-.sidebar-sub{font-size:11px;color:var(--text2);margin-top:2px}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
 
-.sidebar-section{padding:12px 16px 4px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+  }
+  .logo {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:0.5;transform:scale(0.8)}
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .last-upd {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+  }
+  .btn {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+  .btn-accent {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 600;
+  }
+  .btn-accent:hover { opacity: 0.85; color: #000; }
 
-.team-select-list{padding:0 8px 8px}
-.team-btn{
-  width:100%;display:flex;align-items:center;gap:10px;
-  padding:8px 10px;border-radius:var(--radius-sm);border:none;
-  background:transparent;cursor:pointer;transition:background .12s;
-  color:var(--text2);font-size:13px;font-weight:500;font-family:inherit;
-  text-align:left;
-}
-.team-btn:hover{background:var(--surface2);color:var(--text)}
-.team-btn.selected{background:rgba(240,192,64,.12);color:var(--accent)}
-.team-avatar-sm{
-  width:22px;height:22px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:8px;font-weight:800;flex-shrink:0;
-}
-.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)}
+  /* LAYOUT */
+  main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
-/* MAIN */
-.main{display:flex;flex-direction:column;min-height:100vh}
+  /* METRICS */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.2rem;
+  }
+  .metric-lbl {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+  }
+  .metric-val {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .metric-val.green { color: var(--green); }
 
-/* TOP BAR */
-.topbar{
-  position:sticky;top:0;z-index:50;
-  background:rgba(13,15,17,.9);backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border);
-  padding:0 28px;height:52px;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.topbar-matchup{font-size:14px;font-weight:600;letter-spacing:-.01em}
-.topbar-tabs{display:flex;gap:4px}
-.tab-btn{
-  padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;
-  border:none;cursor:pointer;background:transparent;color:var(--text2);
-  font-family:inherit;transition:all .12s;
-}
-.tab-btn:hover{background:var(--surface2);color:var(--text)}
-.tab-btn.active{background:var(--surface3);color:var(--accent)}
+  /* BANKROLL */
+  .bankroll-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .bankroll-bar label {
+    font-size: 12px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+  }
+  .bankroll-bar input[type=range] {
+    width: 150px;
+    accent-color: var(--accent);
+  }
+  .bval {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    min-width: 72px;
+  }
 
-/* TEAM SELECTOR BANNER */
-.selector-banner{
-  padding:24px 28px;
-  border-bottom:1px solid var(--border);
-  display:flex;gap:20px;align-items:center;flex-wrap:wrap;
-}
-.team-picker{
-  display:flex;flex-direction:column;gap:8px;
-}
-.team-picker-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
-.team-picker select{
-  background:var(--surface2);border:1px solid var(--border2);
-  border-radius:var(--radius-sm);padding:10px 14px;
-  color:var(--text);font-size:14px;font-weight:500;font-family:inherit;
-  cursor:pointer;outline:none;min-width:180px;
-}
-.team-picker select:focus{border-color:var(--accent)}
-.vs-label{font-size:20px;font-weight:700;color:var(--text3);align-self:flex-end;margin-bottom:10px}
-.analyze-btn{
-  background:var(--accent);color:#000;font-weight:700;font-size:13px;
-  padding:10px 20px;border-radius:var(--radius-sm);border:none;cursor:pointer;
-  align-self:flex-end;font-family:inherit;transition:opacity .12s;
-}
-.analyze-btn:hover{opacity:.85}
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+  }
+  .tab {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 16px;
+    cursor: pointer;
+    color: var(--text3);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    transition: color 0.15s;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.on { color: var(--accent); border-bottom-color: var(--accent); }
 
-/* CONTENT AREA */
-.content{flex:1;padding:24px 28px}
-.section{display:none}
-.section.active{display:block}
+  /* FILTERS */
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.1rem;
+  }
+  .pill-group { display: flex; gap: 4px; }
+  .pill {
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    cursor: pointer;
+    color: var(--text2);
+    background: transparent;
+    transition: all 0.15s;
+    font-family: var(--font-display);
+    font-weight: 500;
+  }
+  .pill:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+  .pill.on { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 600; }
+  select {
+    font-family: var(--font-display);
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text2);
+    cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--accent); }
 
-/* CARDS */
-.card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:20px;
-  margin-bottom:16px;
-}
-.card-title{
-  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--text2);margin-bottom:16px;
-  display:flex;align-items:center;gap:8px;
-}
-.card-title::after{content:'';flex:1;height:1px;background:var(--border)}
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.2rem;
+    margin-bottom: 8px;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--border2); }
+  .card.value-card { border-left: 3px solid var(--green); }
+  .card-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .card-main { flex: 1; min-width: 180px; }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .card-sub { font-size: 12px; color: var(--text3); margin-top: 3px; font-family: var(--font-mono); }
+  .tag-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+  }
+  .bg { background: var(--green-dim); color: var(--green); }
+  .ba { background: var(--amber-dim); color: var(--amber); }
+  .br { background: var(--red-dim); color: var(--red); }
+  .bb { background: var(--blue-dim); color: var(--blue); }
+  .bp { background: var(--purple-dim); color: var(--purple); }
+  .bgr { background: rgba(255,255,255,0.05); color: var(--text2); }
 
-/* MATCHUP HEADER */
-.matchup-header{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:20px;
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:24px;
-}
-.team-display{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1}
-.team-avatar-lg{
-  width:56px;height:56px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;font-weight:800;
-}
-.team-display-name{font-size:16px;font-weight:600;text-align:center}
-.team-display-pos{font-size:12px;color:var(--text2)}
-.vs-sep{font-family:var(--mono);font-size:28px;color:var(--text3);padding:0 20px}
+  .spill { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
+  .spill-v { font-size: 16px; font-weight: 700; color: var(--text); font-family: var(--font-mono); }
+  .spill-l { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
+  .bar-wrap { width: 60px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+  .bar-inner { height: 100%; border-radius: 2px; }
 
-/* GRID LAYOUTS */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  /* CROWD */
+  .crowd-bar-wrap { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+  .crowd-bar-outer { flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
 
-/* KPI BOX */
-.kpi{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:var(--radius-sm);padding:14px 16px;
-}
-.kpi-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
-.kpi-val{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);line-height:1}
-.kpi-sub{font-size:11px;color:var(--text2);margin-top:4px}
+  /* TRADERS */
+  .trader-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.1rem 1.2rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    transition: border-color 0.15s;
+  }
+  .trader-card:hover { border-color: var(--border2); }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; flex-shrink: 0;
+    font-family: var(--font-mono);
+  }
+  .trader-info { flex: 1; min-width: 140px; }
+  .trader-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .trader-meta { font-size: 12px; color: var(--text3); font-family: var(--font-mono); margin-top: 2px; }
+  .trader-stats { display: flex; gap: 18px; flex-wrap: wrap; }
+  .ts { display: flex; flex-direction: column; align-items: center; }
+  .ts-v { font-size: 15px; font-weight: 700; font-family: var(--font-mono); }
+  .ts-l { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
 
-/* COMPARE ROW */
-.compare-row{
-  display:grid;grid-template-columns:1fr auto 1fr;
-  align-items:center;gap:12px;padding:9px 0;
-  border-bottom:1px solid var(--border);
-}
-.compare-row:last-child{border-bottom:none}
-.compare-val{font-family:var(--mono);font-size:14px;font-weight:500}
-.compare-val.home{text-align:left}
-.compare-val.away{text-align:right}
-.compare-label{font-size:11px;color:var(--text2);text-align:center;min-width:120px}
-.compare-bar-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
-.compare-bar-wrap:last-child{border-bottom:none}
-.bar-track{height:6px;border-radius:3px;background:var(--surface3);overflow:hidden;position:relative}
-.bar-fill-r{height:100%;border-radius:3px;float:right}
-.bar-fill-l{height:100%;border-radius:3px}
+  /* MODEL */
+  .model-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .model-bar-outer { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; min-width: 80px; overflow: hidden; }
+  .model-bar-inner { height: 100%; border-radius: 3px; }
+  .model-pct { font-size: 13px; font-weight: 700; color: var(--text); min-width: 32px; font-family: var(--font-mono); }
+  .model-name { font-size: 13px; font-weight: 500; color: var(--text2); min-width: 200px; }
 
-/* PROBABILITY TABLE */
-.prob-table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
-.prob-table th{
-  padding:8px 10px;text-align:center;
-  font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--text3);border-bottom:1px solid var(--border);
-}
-.prob-table td{padding:7px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04)}
-.prob-table tr:last-child td{border-bottom:none}
-.prob-table tr:hover td{background:rgba(255,255,255,.03)}
-.heat-cell{border-radius:4px;font-weight:500}
+  /* INFO BOX */
+  .info-box {
+    background: rgba(0,230,118,0.04);
+    border: 1px solid rgba(0,230,118,0.15);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.2rem;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+  }
+  .info-box strong { color: var(--text); font-weight: 600; }
 
-/* AH TABLE */
-.ah-table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
-.ah-table th{padding:8px 10px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
-.ah-table td{padding:8px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04)}
-.ah-table tr:hover td{background:rgba(255,255,255,.03)}
-.highlight-row{background:rgba(240,192,64,.08) !important;color:var(--accent)}
-.value-pos{color:var(--green)}
-.value-neg{color:var(--red)}
-.value-neu{color:var(--text2)}
+  /* EMPTY */
+  .empty {
+    text-align: center; padding: 3rem 1rem;
+    font-size: 14px; color: var(--text3);
+    font-family: var(--font-mono);
+  }
 
-/* H2H TABLE */
-.h2h-table{width:100%;border-collapse:collapse;font-size:12px}
-.h2h-table th{padding:8px 12px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
-.h2h-table td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
-.h2h-table tr:hover td{background:rgba(255,255,255,.03)}
-.badge{display:inline-flex;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.04em}
-.badge-W{background:rgba(63,185,80,.15);color:var(--green)}
-.badge-D{background:rgba(139,148,158,.15);color:var(--text2)}
-.badge-L{background:rgba(248,81,73,.15);color:var(--red)}
-.badge-H{background:rgba(240,192,64,.15);color:var(--accent)}
-.badge-A{background:rgba(59,130,246,.15);color:var(--accent2)}
+  .section-hd {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    font-family: var(--font-mono);
+  }
 
-/* CLV */
-.clv-pos{color:var(--green)}
-.clv-neg{color:var(--red)}
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
 
-/* FORM DOTS */
-.form-row{display:flex;gap:4px}
-.fdot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
-.fdot-W{background:rgba(63,185,80,.2);color:var(--green)}
-.fdot-D{background:rgba(139,148,158,.2);color:var(--text2)}
-.fdot-L{background:rgba(248,81,73,.2);color:var(--red)}
-
-/* ODDS WIDGET */
-.odds-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
-.odds-label{font-size:11px;color:var(--text2);min-width:80px}
-.odd-box{
-  display:flex;flex-direction:column;align-items:center;
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:6px;padding:6px 12px;min-width:60px;
-}
-.odd-box.best{border-color:var(--accent);background:rgba(240,192,64,.08)}
-.odd-val{font-family:var(--mono);font-size:14px;font-weight:500}
-.odd-label{font-size:9px;color:var(--text3);margin-top:2px}
-
-/* PREDICTION BOX */
-.prediction-box{
-  display:flex;gap:12px;margin-top:12px;
-}
-.pred-item{
-  flex:1;background:var(--surface2);border:1px solid var(--border);
-  border-radius:var(--radius-sm);padding:14px;text-align:center;
-}
-.pred-item.highlight{border-color:var(--accent);background:rgba(240,192,64,.06)}
-.pred-label{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
-.pred-prob{font-family:var(--mono);font-size:24px;font-weight:500}
-.pred-odds{font-size:12px;color:var(--text2);margin-top:4px}
-.pred-val{font-size:11px;margin-top:4px;font-weight:600}
-
-/* KELLY */
-.kelly-box{
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:var(--radius-sm);padding:12px 16px;margin-top:8px;
-}
-.kelly-label{font-size:12px;color:var(--text2)}
-.kelly-val{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--accent)}
-
-/* PLACEHOLDER */
-.placeholder{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:80px 20px;text-align:center;color:var(--text3);
-}
-.placeholder-icon{font-size:48px;margin-bottom:16px}
-.placeholder-title{font-size:20px;font-weight:600;color:var(--text2);margin-bottom:8px}
-.placeholder-sub{font-size:14px;max-width:400px}
-
-/* TREND */
-.trend-grid{display:flex;flex-direction:column;gap:6px}
-.trend-item{
-  display:flex;align-items:center;gap:10px;
-  padding:8px 12px;background:var(--surface2);border-radius:6px;
-  font-size:12px;
-}
-.trend-key{color:var(--text2);min-width:160px}
-.trend-val{font-family:var(--mono);font-weight:500}
-
-/* SCROLLBAR */
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-
-/* RESPONSIVE */
-@media(max-width:900px){
-  .layout{grid-template-columns:1fr}
-  .sidebar{position:relative;height:auto}
-  .grid-4{grid-template-columns:repeat(2,1fr)}
-}
-
-.tag{display:inline-flex;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.04em}
-.tag-cl{background:rgba(59,130,246,.2);color:#60a5fa}
-.tag-el{background:rgba(240,136,62,.2);color:#f0883e}
-.tag-rel{background:rgba(248,81,73,.2);color:var(--red)}
-.tag-mid{background:rgba(139,148,158,.15);color:var(--text2)}
-
-.divider{height:1px;background:var(--border);margin:16px 0}
-.note{font-size:11px;color:var(--text3);font-style:italic;margin-top:8px}
+  @media (max-width: 640px) {
+    main { padding: 1rem; }
+    header { padding: 0 1rem; }
+    .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .metric-val { font-size: 20px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="layout">
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sidebar-header">
-    <div class="sidebar-logo">
-      <div class="logo-badge">BL</div>
-      <div>
-        <div class="sidebar-title">Bundesliga Scout</div>
-        <div class="sidebar-sub">25/26 · Betting Intelligence</div>
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Edge Finder
+  </div>
+  <div class="header-right">
+    <span class="last-upd" id="last-upd">—</span>
+    <button class="btn" onclick="refreshAll()">Refresh ↻</button>
+    <a href="https://polymarket.com" target="_blank" class="btn btn-accent">Open Polymarket</a>
+  </div>
+</header>
+
+<main>
+
+  <div class="bankroll-bar">
+    <label>Bankroll</label>
+    <input type="range" min="100" max="20000" step="100" value="1000" id="br-sl" oninput="setBR(this.value)">
+    <span class="bval" id="br-val">$1,000</span>
+    <label style="margin-left:8px">Kelly %</label>
+    <input type="range" min="5" max="100" step="5" value="25" id="kf-sl" oninput="setKF(this.value)">
+    <span class="bval" id="kf-val">25%</span>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-lbl">Value bets</div><div class="metric-val green" id="m-vb">0</div></div>
+    <div class="metric"><div class="metric-lbl">Avg edge</div><div class="metric-val" id="m-ev">—</div></div>
+    <div class="metric"><div class="metric-lbl">Total stake</div><div class="metric-val" id="m-stake">—</div></div>
+    <div class="metric"><div class="metric-lbl">Markets live</div><div class="metric-val" id="m-live">0</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" id="t-markets" onclick="sw('markets')">Markets</div>
+    <div class="tab" id="t-value" onclick="sw('value')">Value bets</div>
+    <div class="tab" id="t-crowd" onclick="sw('crowd')">Wisdom of crowds</div>
+    <div class="tab" id="t-traders" onclick="sw('traders')">Top traders</div>
+    <div class="tab" id="t-model" onclick="sw('model')">Our model</div>
+  </div>
+
+  <!-- MARKETS -->
+  <div id="p-markets">
+    <div class="filters">
+      <div class="pill-group" id="day-pills">
+        <div class="pill on" onclick="setDay(this,'all')">All</div>
+        <div class="pill" onclick="setDay(this,'today')">Today</div>
+        <div class="pill" onclick="setDay(this,'tomorrow')">Tomorrow</div>
+        <div class="pill" onclick="setDay(this,'week')">This week</div>
       </div>
-    </div>
-  </div>
-  <div class="sidebar-section">Teams</div>
-  <div class="team-select-list" id="sidebar-teams"></div>
-  <div class="sidebar-footer">Data: football-data.co.uk · Updated 22/03/2026</div>
-</aside>
-
-<!-- MAIN -->
-<main class="main">
-  <div class="topbar">
-    <div class="topbar-matchup" id="topbar-title">Select two teams to analyse</div>
-    <div class="topbar-tabs">
-      <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
-      <button class="tab-btn" onclick="showTab('matrix')">Score Matrix</button>
-      <button class="tab-btn" onclick="showTab('handicap')">Asian HC</button>
-      <button class="tab-btn" onclick="showTab('h2h')">H2H</button>
-      <button class="tab-btn" onclick="showTab('clv')">CLV / Odds</button>
-    </div>
-  </div>
-
-  <div class="selector-banner">
-    <div class="team-picker">
-      <div class="team-picker-label">Home Team</div>
-      <select id="sel-home" onchange="onTeamChange()">
-        <option value="">— Select Home —</option>
+      <select id="sport-f" onchange="updateLeagueFilter();renderMarkets()">
+        <option value="all">All sports</option>
+        <option value="soccer">Soccer</option>
+        <option value="basketball">Basketball</option>
+        <option value="tennis">Tennis</option>
+        <option value="americanfootball">American football</option>
+        <option value="baseball">Baseball</option>
+        <option value="rugby">Rugby</option>
+        <option value="cricket">Cricket</option>
+        <option value="mma">MMA</option>
+      </select>
+      <select id="league-f" onchange="renderMarkets()">
+        <option value="all">All leagues/cups</option>
+      </select>
+      <select id="mtype-f" onchange="renderMarkets()">
+        <option value="all">All market types</option>
+        <option value="winner">Match winner</option>
+        <option value="btts">Both teams to score</option>
+        <option value="ou">Over/under</option>
+        <option value="anytime">Anytime scorer</option>
+        <option value="handicap">Handicap</option>
+        <option value="tournament">Tournament winner</option>
+        <option value="first_goal">First goal scorer</option>
+      </select>
+      <select id="ev-f" onchange="renderMarkets()">
+        <option value="-99">All EV</option>
+        <option value="0">Positive EV</option>
+        <option value="3">+3% EV</option>
+        <option value="5">+5% EV</option>
+      </select>
+      <select id="sort-f" onchange="renderMarkets()">
+        <option value="ev">Sort: EV</option>
+        <option value="kelly">Sort: Kelly</option>
+        <option value="vol">Sort: Volume</option>
+        <option value="time">Sort: Kickoff</option>
       </select>
     </div>
-    <div class="vs-label">vs</div>
-    <div class="team-picker">
-      <div class="team-picker-label">Away Team</div>
-      <select id="sel-away" onchange="onTeamChange()">
-        <option value="">— Select Away —</option>
-      </select>
-    </div>
-    <button class="analyze-btn" onclick="runAnalysis()">⚡ Analyse</button>
+    <div id="markets-list"></div>
   </div>
 
-  <div class="content">
-    <!-- OVERVIEW -->
-    <div class="section active" id="tab-overview">
-      <div class="placeholder" id="placeholder">
-        <div class="placeholder-icon">⚽</div>
-        <div class="placeholder-title">Select two teams to begin</div>
-        <div class="placeholder-sub">Choose a home and away team, then click Analyse to generate the full betting intelligence report — Poisson model, Asian Handicap matrix, CLV analysis and more.</div>
-      </div>
-      <div id="overview-content" style="display:none"></div>
-    </div>
-
-    <!-- MATRIX -->
-    <div class="section" id="tab-matrix">
-      <div id="matrix-content"><div class="placeholder"><div class="placeholder-icon">📊</div><div class="placeholder-title">No match selected</div></div></div>
-    </div>
-
-    <!-- HANDICAP -->
-    <div class="section" id="tab-handicap">
-      <div id="handicap-content"><div class="placeholder"><div class="placeholder-icon">➕</div><div class="placeholder-title">No match selected</div></div></div>
-    </div>
-
-    <!-- H2H -->
-    <div class="section" id="tab-h2h">
-      <div id="h2h-content"><div class="placeholder"><div class="placeholder-icon">🔁</div><div class="placeholder-title">No match selected</div></div></div>
-    </div>
-
-    <!-- CLV -->
-    <div class="section" id="tab-clv">
-      <div id="clv-content"><div class="placeholder"><div class="placeholder-icon">📈</div><div class="placeholder-title">No match selected</div></div></div>
-    </div>
+  <!-- VALUE BETS -->
+  <div id="p-value" style="display:none">
+    <div id="value-list"></div>
   </div>
+
+  <!-- CROWD -->
+  <div id="p-crowd" style="display:none">
+    <div class="info-box">
+      <strong>Wisdom of crowds</strong> — Polymarket prices emerge from thousands of traders. When our model diverges significantly from market consensus, that gap is your potential edge. Big divergence + high volume = highest conviction bet.
+    </div>
+    <div id="crowd-list"></div>
+  </div>
+
+  <!-- TRADERS -->
+  <div id="p-traders" style="display:none">
+    <div class="info-box">
+      <strong>Top traders</strong> — highest-ROI traders on Polymarket sports markets over the last 90 days. Their current open positions are shown below. Aligning with these traders means following the sharpest money on the platform. Connect the live API to get real trader data.
+    </div>
+    <div id="traders-list"></div>
+  </div>
+
+  <!-- MODEL -->
+  <div id="p-model" style="display:none">
+    <div class="info-box">
+      <strong>Where do our probability estimates come from?</strong> A weighted blend of four publicly available, free data sources. No paid subscription required. Adjust weights in <code>config.js</code> (see README).
+    </div>
+    <div id="model-detail"></div>
+  </div>
+
 </main>
-</div>
 
 <script>
-// ─── DATA ─────────────────────────────────────────────────────────────────────
-const DATA = {"team_stats": {"Augsburg": {"team": "Augsburg", "P": 27, "W": 9, "D": 4, "L": 14, "GF": 33, "GA": 50, "GD": -17, "Pts": 31, "h_P": 14, "h_W": 6, "h_D": 3, "h_L": 5, "h_GF": 19, "h_GA": 24, "h_avg_gf": 1.357, "h_avg_ga": 1.714, "h_ov25": 7, "h_ov25_pct": 0.5, "h_btts": 7, "h_btts_pct": 0.5, "h_shots_pg": 12.5, "h_shots_t_pg": 4.6, "h_opp_shots_pg": 13.9, "h_opp_shots_t_pg": 4.4, "a_P": 13, "a_W": 3, "a_D": 1, "a_L": 9, "a_GF": 14, "a_GA": 26, "a_avg_gf": 1.077, "a_avg_ga": 2.0, "a_ov25": 9, "a_ov25_pct": 0.692, "a_btts": 8, "a_btts_pct": 0.615, "a_shots_pg": 13.1, "a_shots_t_pg": 4.2, "clv_h": 3.27, "clv_a": 2.94, "clv_ov_h": 1.43, "clv_ov_a": 1.7, "clv8_h": 0.02, "clv8_a": -0.39, "clv8_ov_h": 3.12, "clv8_ov_a": 2.21, "avg_ps_h": 2.95, "avg_ps_d": 3.505, "avg_pso_h": 1.91, "avg_psu_h": 2.037, "avg_ps_a": 4.26, "avg_pso_a": 1.67, "form": ["W", "W", "W", "L", "L", "L"], "form_h": ["D", "D", "W", "W", "W", "L"], "form_a": ["L", "W", "L", "W", "L", "L"], "att_h": 0.7723, "def_h": 1.2005, "att_a": 0.7542, "def_a": 1.1382, "recent": [{"date": "31/01/2026", "opp": "St Pauli", "venue": "H", "gf": 2, "ga": 1, "res": "W"}, {"date": "07/02/2026", "opp": "Mainz", "venue": "A", "gf": 0, "ga": 2, "res": "L"}, {"date": "15/02/2026", "opp": "Heidenheim", "venue": "H", "gf": 1, "ga": 0, "res": "W"}, {"date": "21/02/2026", "opp": "Wolfsburg", "venue": "A", "gf": 3, "ga": 2, "res": "W"}, {"date": "27/02/2026", "opp": "FC Koln", "venue": "H", "gf": 2, "ga": 0, "res": "W"}, {"date": "07/03/2026", "opp": "RB Leipzig", "venue": "A", "gf": 1, "ga": 2, "res": "L"}, {"date": "14/03/2026", "opp": "Dortmund", "venue": "A", "gf": 0, "ga": 2, "res": "L"}, {"date": "22/03/2026", "opp": "Stuttgart", "venue": "H", "gf": 2, "ga": 5, "res": "L"}]}, "Bayern Munich": {"team": "Bayern Munich", "P": 27, "W": 22, "D": 4, "L": 1, "GF": 97, "GA": 25, "GD": 72, "Pts": 70, "h_P": 14, "h_W": 12, "h_D": 1, "h_L": 1, "h_GF": 56, "h_GA": 13, "h_avg_gf": 4.0, "h_avg_ga": 0.929, "h_ov25": 14, "h_ov25_pct": 1.0, "h_btts": 9, "h_btts_pct": 0.643, "h_shots_pg": 21.1, "h_shots_t_pg": 9.1, "h_opp_shots_pg": 8.9, "h_opp_shots_t_pg": 2.5, "a_P": 13, "a_W": 10, "a_D": 3, "a_L": 0, "a_GF": 41, "a_GA": 12, "a_avg_gf": 3.154, "a_avg_ga": 0.923, "a_ov25": 12, "a_ov25_pct": 0.923, "a_btts": 8, "a_btts_pct": 0.615, "a_shots_pg": 16.8, "a_shots_t_pg": 8.2, "clv_h": 1.23, "clv_a": 2.14, "clv_ov_h": 4.2, "clv_ov_a": 1.68, "clv8_h": 0.9, "clv8_a": 5.52, "clv8_ov_h": 0, "clv8_ov_a": 2.26, "avg_ps_h": 1.11, "avg_ps_d": 12.083, "avg_pso_h": 0, "avg_psu_h": 0, "avg_ps_a": 1.347, "avg_pso_a": 1.36, "form": ["W", "W", "W", "W", "D", "W"], "form_h": ["W", "L", "W", "W", "W", "W"], "form_a": ["W", "W", "D", "W", "W", "D"], "att_h": 2.2763, "def_h": 0.6503, "att_a": 2.2086, "def_a": 0.5253, "recent": [{"date": "31/01/2026", "opp": "Hamburg", "venue": "A", "gf": 2, "ga": 2, "res": "D"}, {"date": "08/02/2026", "opp": "Hoffenheim", "venue": "H", "gf": 5, "ga": 1, "res": "W"}, {"date": "14/02/2026", "opp": "Werder Bremen", "venue": "A", "gf": 3, "ga": 0, "res": "W"}, {"date": "21/02/2026", "opp": "Ein Frankfurt", "venue": "H", "gf": 3, "ga": 2, "res": "W"}, {"date": "28/02/2026", "opp": "Dortmund", "venue": "A", "gf": 3, "ga": 2, "res": "W"}, {"date": "06/03/2026", "opp": "M'gladbach", "venue": "H", "gf": 4, "ga": 1, "res": "W"}, {"date": "14/03/2026", "opp": "Leverkusen", "venue": "A", "gf": 1, "ga": 1, "res": "D"}, {"date": "21/03/2026", "opp": "Union Berlin", "venue": "H", "gf": 4, "ga": 0, "res": "W"}]}, "Dortmund": {"team": "Dortmund", "P": 27, "W": 18, "D": 7, "L": 2, "GF": 58, "GA": 28, "GD": 30, "Pts": 61, "h_P": 14, "h_W": 11, "h_D": 2, "h_L": 1, "h_GF": 33, "h_GA": 13, "h_avg_gf": 2.357, "h_avg_ga": 0.929, "h_ov25": 8, "h_ov25_pct": 0.571, "h_btts": 6, "h_btts_pct": 0.429, "h_shots_pg": 14.9, "h_shots_t_pg": 5.6, "h_opp_shots_pg": 9.6, "h_opp_shots_t_pg": 3.3, "a_P": 13, "a_W": 7, "a_D": 5, "a_L": 1, "a_GF": 25, "a_GA": 15, "a_avg_gf": 1.923, "a_avg_ga": 1.154, "a_ov25": 8, "a_ov25_pct": 0.615, "a_btts": 9, "a_btts_pct": 0.692, "a_shots_pg": 12.1, "a_shots_t_pg": 4.2, "clv_h": 0.68, "clv_a": 3.92, "clv_ov_h": 0.43, "clv_ov_a": 0.84, "clv8_h": -2.4, "clv8_a": 2.65, "clv8_ov_h": -1.33, "clv8_ov_a": 1.0, "avg_ps_h": 1.44, "avg_ps_d": 5.18, "avg_pso_h": 1.48, "avg_psu_h": 2.74, "avg_ps_a": 2.145, "avg_pso_a": 1.645, "form": ["W", "D", "L", "W", "W", "W"], "form_h": ["W", "W", "W", "L", "W", "W"], "form_a": ["D", "D", "W", "W", "D", "W"], "att_h": 1.3414, "def_h": 0.6503, "att_a": 1.3467, "def_a": 0.6566, "recent": [{"date": "01/02/2026", "opp": "Heidenheim", "venue": "H", "gf": 3, "ga": 2, "res": "W"}, {"date": "07/02/2026", "opp": "Wolfsburg", "venue": "A", "gf": 2, "ga": 1, "res": "W"}, {"date": "13/02/2026", "opp": "Mainz", "venue": "H", "gf": 4, "ga": 0, "res": "W"}, {"date": "21/02/2026", "opp": "RB Leipzig", "venue": "A", "gf": 2, "ga": 2, "res": "D"}, {"date": "28/02/2026", "opp": "Bayern Munich", "venue": "H", "gf": 2, "ga": 3, "res": "L"}, {"date": "07/03/2026", "opp": "FC Koln", "venue": "A", "gf": 2, "ga": 1, "res": "W"}, {"date": "14/03/2026", "opp": "Augsburg", "venue": "H", "gf": 2, "ga": 0, "res": "W"}, {"date": "21/03/2026", "opp": "Hamburg", "venue": "H", "gf": 3, "ga": 2, "res": "W"}]}, "Ein Frankfurt": {"team": "Ein Frankfurt", "P": 27, "W": 10, "D": 8, "L": 9, "GF": 50, "GA": 51, "GD": -1, "Pts": 38, "h_P": 13, "h_W": 7, "h_D": 2, "h_L": 4, "h_GF": 23, "h_GA": 18, "h_avg_gf": 1.769, "h_avg_ga": 1.385, "h_ov25": 7, "h_ov25_pct": 0.538, "h_btts": 6, "h_btts_pct": 0.462, "h_shots_pg": 12.6, "h_shots_t_pg": 5.1, "h_opp_shots_pg": 10.1, "h_opp_shots_t_pg": 3.0, "a_P": 14, "a_W": 3, "a_D": 6, "a_L": 5, "a_GF": 27, "a_GA": 33, "a_avg_gf": 1.929, "a_avg_ga": 2.357, "a_ov25": 10, "a_ov25_pct": 0.714, "a_btts": 12, "a_btts_pct": 0.857, "a_shots_pg": 10.5, "a_shots_t_pg": 3.7, "clv_h": 5.39, "clv_a": 5.73, "clv_ov_h": 1.49, "clv_ov_a": 0.74, "clv8_h": 7.12, "clv8_a": 7.21, "clv8_ov_h": 1.28, "clv8_ov_a": 2.44, "avg_ps_h": 2.45, "avg_ps_d": 3.833, "avg_pso_h": 1.583, "avg_psu_h": 2.47, "avg_ps_a": 3.867, "avg_pso_a": 1.573, "form": ["W", "L", "W", "D", "W", "L"], "form_h": ["D", "L", "L", "W", "W", "W"], "form_a": ["L", "D", "D", "L", "D", "L"], "att_h": 1.0068, "def_h": 0.9696, "att_a": 1.3506, "def_a": 1.3414, "recent": [{"date": "31/01/2026", "opp": "Leverkusen", "venue": "H", "gf": 1, "ga": 3, "res": "L"}, {"date": "06/02/2026", "opp": "Union Berlin", "venue": "A", "gf": 1, "ga": 1, "res": "D"}, {"date": "14/02/2026", "opp": "M'gladbach", "venue": "H", "gf": 3, "ga": 0, "res": "W"}, {"date": "21/02/2026", "opp": "Bayern Munich", "venue": "A", "gf": 2, "ga": 3, "res": "L"}, {"date": "01/03/2026", "opp": "Freiburg", "venue": "H", "gf": 2, "ga": 0, "res": "W"}, {"date": "08/03/2026", "opp": "St Pauli", "venue": "A", "gf": 0, "ga": 0, "res": "D"}, {"date": "14/03/2026", "opp": "Heidenheim", "venue": "H", "gf": 1, "ga": 0, "res": "W"}, {"date": "22/03/2026", "opp": "Mainz", "venue": "A", "gf": 1, "ga": 2, "res": "L"}]}, "FC Koln": {"team": "FC Koln", "P": 27, "W": 6, "D": 8, "L": 13, "GF": 38, "GA": 47, "GD": -9, "Pts": 26, "h_P": 14, "h_W": 4, "h_D": 4, "h_L": 6, "h_GF": 25, "h_GA": 24, "h_avg_gf": 1.786, "h_avg_ga": 1.714, "h_ov25": 10, "h_ov25_pct": 0.714, "h_btts": 12, "h_btts_pct": 0.857, "h_shots_pg": 13.4, "h_shots_t_pg": 4.8, "h_opp_shots_pg": 12.7, "h_opp_shots_t_pg": 4.5, "a_P": 13, "a_W": 2, "a_D": 4, "a_L": 7, "a_GF": 13, "a_GA": 23, "a_avg_gf": 1.0, "a_avg_ga": 1.769, "a_ov25": 6, "a_ov25_pct": 0.462, "a_btts": 8, "a_btts_pct": 0.615, "a_shots_pg": 12.2, "a_shots_t_pg": 3.7, "clv_h": 1.88, "clv_a": 2.56, "clv_ov_h": 0.92, "clv_ov_a": 1.06, "clv8_h": 3.29, "clv8_a": 2.1, "clv8_ov_h": 1.01, "clv8_ov_a": 0.96, "avg_ps_h": 6.05, "avg_ps_d": 5.045, "avg_pso_h": 2.0, "avg_psu_h": 1.89, "avg_ps_a": 3.333, "avg_pso_a": 1.635, "form": ["L", "D", "L", "L", "D", "D"], "form_h": ["W", "W", "L", "D", "L", "D"], "form_a": ["L", "D", "L", "L", "L", "D"], "att_h": 1.0162, "def_h": 1.2005, "att_a": 0.7003, "def_a": 1.0068, "recent": [{"date": "30/01/2026", "opp": "Wolfsburg", "venue": "H", "gf": 1, "ga": 0, "res": "W"}, {"date": "08/02/2026", "opp": "RB Leipzig", "venue": "H", "gf": 1, "ga": 2, "res": "L"}, {"date": "14/02/2026", "opp": "Stuttgart", "venue": "A", "gf": 1, "ga": 3, "res": "L"}, {"date": "21/02/2026", "opp": "Hoffenheim", "venue": "H", "gf": 2, "ga": 2, "res": "D"}, {"date": "27/02/2026", "opp": "Augsburg", "venue": "A", "gf": 0, "ga": 2, "res": "L"}, {"date": "07/03/2026", "opp": "Dortmund", "venue": "H", "gf": 1, "ga": 2, "res": "L"}, {"date": "14/03/2026", "opp": "Hamburg", "venue": "A", "gf": 1, "ga": 1, "res": "D"}, {"date": "21/03/2026", "opp": "M'gladbach", "venue": "H", "gf": 3, "ga": 3, "res": "D"}]}, "Freiburg": {"team": "Freiburg", "P": 27, "W": 10, "D": 7, "L": 10, "GF": 39, "GA": 44, "GD": -5, "Pts": 37, "h_P": 13, "h_W": 7, "h_D": 4, "h_L": 2, "h_GF": 24, "h_GA": 16, "h_avg_gf": 1.846, "h_avg_ga": 1.231, "h_ov25": 9, "h_ov25_pct": 0.692, "h_btts": 10, "h_btts_pct": 0.769, "h_shots_pg": 14.6, "h_shots_t_pg": 5.5, "h_opp_shots_pg": 11.2, "h_opp_shots_t_pg": 3.5, "a_P": 14, "a_W": 3, "a_D": 3, "a_L": 8, "a_GF": 15, "a_GA": 28, "a_avg_gf": 1.071, "a_avg_ga": 2.0, "a_ov25": 8, "a_ov25_pct": 0.571, "a_btts": 6, "a_btts_pct": 0.429, "a_shots_pg": 11.0, "a_shots_t_pg": 3.3, "clv_h": 1.99, "clv_a": 1.87, "clv_ov_h": 1.42, "clv_ov_a": 2.23, "clv8_h": 4.57, "clv8_a": 1.41, "clv8_ov_h": 0.52, "clv8_ov_a": 2.34, "avg_ps_h": 2.503, "avg_ps_d": 3.687, "avg_pso_h": 1.897, "avg_psu_h": 1.997, "avg_ps_a": 3.127, "avg_pso_a": 1.8, "form": ["L", "W", "L", "D", "L", "W"], "form_h": ["W", "W", "W", "W", "D", "L"], "form_a": ["L", "D", "L", "L", "L", "W"], "att_h": 1.0506, "def_h": 0.8619, "att_a": 0.7503, "def_a": 1.1382, "recent": [{"date": "01/02/2026", "opp": "Stuttgart", "venue": "A", "gf": 0, "ga": 1, "res": "L"}, {"date": "07/02/2026", "opp": "Werder Bremen", "venue": "H", "gf": 1, "ga": 0, "res": "W"}, {"date": "14/02/2026", "opp": "Hoffenheim", "venue": "A", "gf": 0, "ga": 3, "res": "L"}, {"date": "22/02/2026", "opp": "M'gladbach", "venue": "H", "gf": 2, "ga": 1, "res": "W"}, {"date": "01/03/2026", "opp": "Ein Frankfurt", "venue": "A", "gf": 0, "ga": 2, "res": "L"}, {"date": "07/03/2026", "opp": "Leverkusen", "venue": "H", "gf": 3, "ga": 3, "res": "D"}, {"date": "15/03/2026", "opp": "Union Berlin", "venue": "H", "gf": 0, "ga": 1, "res": "L"}, {"date": "22/03/2026", "opp": "St Pauli", "venue": "A", "gf": 2, "ga": 1, "res": "W"}]}, "Hamburg": {"team": "Hamburg", "P": 27, "W": 7, "D": 9, "L": 11, "GF": 31, "GA": 40, "GD": -9, "Pts": 30, "h_P": 14, "h_W": 5, "h_D": 5, "h_L": 4, "h_GF": 20, "h_GA": 17, "h_avg_gf": 1.429, "h_avg_ga": 1.214, "h_ov25": 7, "h_ov25_pct": 0.5, "h_btts": 9, "h_btts_pct": 0.643, "h_shots_pg": 13.0, "h_shots_t_pg": 4.8, "h_opp_shots_pg": 12.3, "h_opp_shots_t_pg": 3.8, "a_P": 13, "a_W": 2, "a_D": 4, "a_L": 7, "a_GF": 11, "a_GA": 23, "a_avg_gf": 0.846, "a_avg_ga": 1.769, "a_ov25": 7, "a_ov25_pct": 0.538, "a_btts": 7, "a_btts_pct": 0.538, "a_shots_pg": 11.1, "a_shots_t_pg": 4.4, "clv_h": -0.04, "clv_a": -1.67, "clv_ov_h": 1.83, "clv_ov_a": 1.35, "clv8_h": 2.91, "clv8_a": 6.29, "clv8_ov_h": 0.3, "clv8_ov_a": 0.62, "avg_ps_h": 2.485, "avg_ps_d": 3.47, "avg_pso_h": 1.705, "avg_psu_h": 2.21, "avg_ps_a": 4.137, "avg_pso_a": 1.697, "form": ["D", "L", "L", "W", "D", "L"], "form_h": ["D", "D", "W", "L", "L", "D"], "form_a": ["L", "D", "W", "D", "W", "L"], "att_h": 0.813, "def_h": 0.8503, "att_a": 0.5926, "def_a": 1.0068, "recent": [{"date": "07/02/2026", "opp": "Heidenheim", "venue": "A", "gf": 2, "ga": 0, "res": "W"}, {"date": "14/02/2026", "opp": "Union Berlin", "venue": "H", "gf": 3, "ga": 2, "res": "W"}, {"date": "20/02/2026", "opp": "Mainz", "venue": "A", "gf": 1, "ga": 1, "res": "D"}, {"date": "01/03/2026", "opp": "RB Leipzig", "venue": "H", "gf": 1, "ga": 2, "res": "L"}, {"date": "04/03/2026", "opp": "Leverkusen", "venue": "H", "gf": 0, "ga": 1, "res": "L"}, {"date": "07/03/2026", "opp": "Wolfsburg", "venue": "A", "gf": 2, "ga": 1, "res": "W"}, {"date": "14/03/2026", "opp": "FC Koln", "venue": "H", "gf": 1, "ga": 1, "res": "D"}, {"date": "21/03/2026", "opp": "Dortmund", "venue": "A", "gf": 2, "ga": 3, "res": "L"}]}, "Heidenheim": {"team": "Heidenheim", "P": 27, "W": 3, "D": 6, "L": 18, "GF": 27, "GA": 61, "GD": -34, "Pts": 15, "h_P": 14, "h_W": 2, "h_D": 5, "h_L": 7, "h_GF": 18, "h_GA": 34, "h_avg_gf": 1.286, "h_avg_ga": 2.429, "h_ov25": 11, "h_ov25_pct": 0.786, "h_btts": 9, "h_btts_pct": 0.643, "h_shots_pg": 11.6, "h_shots_t_pg": 3.9, "h_opp_shots_pg": 15.0, "h_opp_shots_t_pg": 5.8, "a_P": 13, "a_W": 1, "a_D": 1, "a_L": 11, "a_GF": 9, "a_GA": 27, "a_avg_gf": 0.692, "a_avg_ga": 2.077, "a_ov25": 7, "a_ov25_pct": 0.538, "a_btts": 7, "a_btts_pct": 0.538, "a_shots_pg": 10.8, "a_shots_t_pg": 2.8, "clv_h": 6.67, "clv_a": 15.57, "clv_ov_h": 0.63, "clv_ov_a": 2.04, "clv8_h": 15.47, "clv8_a": 25.91, "clv8_ov_h": 0.52, "clv8_ov_a": 3.85, "avg_ps_h": 7.883, "avg_ps_d": 5.467, "avg_pso_h": 1.865, "avg_psu_h": 2.025, "avg_ps_a": 5.62, "avg_pso_a": 2.02, "form": ["L", "D", "L", "L", "L", "D"], "form_h": ["D", "L", "L", "D", "L", "D"], "form_a": ["L", "D", "L", "L", "L", "L"], "att_h": 0.7317, "def_h": 1.7007, "att_a": 0.4848, "def_a": 1.1819, "recent": [{"date": "01/02/2026", "opp": "Dortmund", "venue": "A", "gf": 2, "ga": 3, "res": "L"}, {"date": "07/02/2026", "opp": "Hamburg", "venue": "H", "gf": 0, "ga": 2, "res": "L"}, {"date": "15/02/2026", "opp": "Augsburg", "venue": "A", "gf": 0, "ga": 1, "res": "L"}, {"date": "22/02/2026", "opp": "Stuttgart", "venue": "H", "gf": 3, "ga": 3, "res": "D"}, {"date": "28/02/2026", "opp": "Werder Bremen", "venue": "A", "gf": 0, "ga": 2, "res": "L"}, {"date": "07/03/2026", "opp": "Hoffenheim", "venue": "H", "gf": 2, "ga": 4, "res": "L"}, {"date": "14/03/2026", "opp": "Ein Frankfurt", "venue": "A", "gf": 0, "ga": 1, "res": "L"}, {"date": "21/03/2026", "opp": "Leverkusen", "venue": "H", "gf": 3, "ga": 3, "res": "D"}]}, "Hoffenheim": {"team": "Hoffenheim", "P": 27, "W": 15, "D": 5, "L": 7, "GF": 54, "GA": 39, "GD": 15, "Pts": 50, "h_P": 13, "h_W": 8, "h_D": 1, "h_L": 4, "h_GF": 28, "h_GA": 15, "h_avg_gf": 2.154, "h_avg_ga": 1.154, "h_ov25": 9, "h_ov25_pct": 0.692, "h_btts": 8, "h_btts_pct": 0.615, "h_shots_pg": 16.1, "h_shots_t_pg": 6.1, "h_opp_shots_pg": 11.8, "h_opp_shots_t_pg": 4.2, "a_P": 14, "a_W": 7, "a_D": 4, "a_L": 3, "a_GF": 26, "a_GA": 24, "a_avg_gf": 1.857, "a_avg_ga": 1.714, "a_ov25": 9, "a_ov25_pct": 0.643, "a_btts": 9, "a_btts_pct": 0.643, "a_shots_pg": 11.8, "a_shots_t_pg": 4.4, "clv_h": 3.81, "clv_a": 0.36, "clv_ov_h": 1.11, "clv_ov_a": 0.57, "clv8_h": 2.39, "clv8_a": 5.78, "clv8_ov_h": 1.52, "clv8_ov_a": 0.33, "avg_ps_h": 1.78, "avg_ps_d": 4.113, "avg_pso_h": 1.557, "avg_psu_h": 2.53, "avg_ps_a": 4.3, "avg_pso_a": 1.505, "form": ["W", "D", "L", "W", "D", "L"], "form_h": ["W", "W", "W", "W", "L", "D"], "form_a": ["W", "W", "L", "D", "W", "L"], "att_h": 1.2257, "def_h": 0.808, "att_a": 1.3005, "def_a": 0.9756, "recent": [{"date": "31/01/2026", "opp": "Union Berlin", "venue": "H", "gf": 3, "ga": 1, "res": "W"}, {"date": "08/02/2026", "opp": "Bayern Munich", "venue": "A", "gf": 1, "ga": 5, "res": "L"}, {"date": "14/02/2026", "opp": "Freiburg", "venue": "H", "gf": 3, "ga": 0, "res": "W"}, {"date": "21/02/2026", "opp": "FC Koln", "venue": "A", "gf": 2, "ga": 2, "res": "D"}, {"date": "28/02/2026", "opp": "St Pauli", "venue": "H", "gf": 0, "ga": 1, "res": "L"}, {"date": "07/03/2026", "opp": "Heidenheim", "venue": "A", "gf": 4, "ga": 2, "res": "W"}, {"date": "14/03/2026", "opp": "Wolfsburg", "venue": "H", "gf": 1, "ga": 1, "res": "D"}, {"date": "20/03/2026", "opp": "RB Leipzig", "venue": "A", "gf": 0, "ga": 5, "res": "L"}]}, "Leverkusen": {"team": "Leverkusen", "P": 27, "W": 13, "D": 7, "L": 7, "GF": 52, "GA": 36, "GD": 16, "Pts": 46, "h_P": 13, "h_W": 7, "h_D": 3, "h_L": 3, "h_GF": 26, "h_GA": 12, "h_avg_gf": 2.0, "h_avg_ga": 0.923, "h_ov25": 6, "h_ov25_pct": 0.462, "h_btts": 7, "h_btts_pct": 0.538, "h_shots_pg": 15.9, "h_shots_t_pg": 5.6, "h_opp_shots_pg": 9.8, "h_opp_shots_t_pg": 3.7, "a_P": 14, "a_W": 6, "a_D": 4, "a_L": 4, "a_GF": 26, "a_GA": 24, "a_avg_gf": 1.857, "a_avg_ga": 1.714, "a_ov25": 9, "a_ov25_pct": 0.643, "a_btts": 9, "a_btts_pct": 0.643, "a_shots_pg": 12.4, "a_shots_t_pg": 3.8, "clv_h": 7.65, "clv_a": 9.02, "clv_ov_h": 0.84, "clv_ov_a": 1.2, "clv8_h": 9.94, "clv8_a": 4.06, "clv8_ov_h": 0.47, "clv8_ov_a": 1.31, "avg_ps_h": 2.053, "avg_ps_d": 4.223, "avg_pso_h": 1.54, "avg_psu_h": 2.56, "avg_ps_a": 3.33, "avg_pso_a": 1.55, "form": ["L", "D", "W", "D", "D", "D"], "form_h": ["W", "L", "W", "W", "D", "D"], "form_a": ["W", "D", "L", "W", "D", "D"], "att_h": 1.1382, "def_h": 0.6464, "att_a": 1.3005, "def_a": 0.9756, "recent": [{"date": "07/02/2026", "opp": "M'gladbach", "venue": "A", "gf": 1, "ga": 1, "res": "D"}, {"date": "14/02/2026", "opp": "St Pauli", "venue": "H", "gf": 4, "ga": 0, "res": "W"}, {"date": "21/02/2026", "opp": "Union Berlin", "venue": "A", "gf": 0, "ga": 1, "res": "L"}, {"date": "28/02/2026", "opp": "Mainz", "venue": "H", "gf": 1, "ga": 1, "res": "D"}, {"date": "04/03/2026", "opp": "Hamburg", "venue": "A", "gf": 1, "ga": 0, "res": "W"}, {"date": "07/03/2026", "opp": "Freiburg", "venue": "A", "gf": 3, "ga": 3, "res": "D"}, {"date": "14/03/2026", "opp": "Bayern Munich", "venue": "H", "gf": 1, "ga": 1, "res": "D"}, {"date": "21/03/2026", "opp": "Heidenheim", "venue": "A", "gf": 3, "ga": 3, "res": "D"}]}, "M'gladbach": {"team": "M'gladbach", "P": 27, "W": 7, "D": 8, "L": 12, "GF": 33, "GA": 46, "GD": -13, "Pts": 29, "h_P": 13, "h_W": 4, "h_D": 4, "h_L": 5, "h_GF": 16, "h_GA": 21, "h_avg_gf": 1.231, "h_avg_ga": 1.615, "h_ov25": 7, "h_ov25_pct": 0.538, "h_btts": 4, "h_btts_pct": 0.308, "h_shots_pg": 11.7, "h_shots_t_pg": 4.3, "h_opp_shots_pg": 14.4, "h_opp_shots_t_pg": 4.5, "a_P": 14, "a_W": 3, "a_D": 4, "a_L": 7, "a_GF": 17, "a_GA": 25, "a_avg_gf": 1.214, "a_avg_ga": 1.786, "a_ov25": 8, "a_ov25_pct": 0.571, "a_btts": 7, "a_btts_pct": 0.5, "a_shots_pg": 11.3, "a_shots_t_pg": 4.0, "clv_h": 4.09, "clv_a": 7.48, "clv_ov_h": 1.5, "clv_ov_a": 1.62, "clv8_h": 1.5, "clv8_a": 8.74, "clv8_ov_h": 1.99, "clv8_ov_a": 1.62, "avg_ps_h": 2.248, "avg_ps_d": 3.78, "avg_pso_h": 1.64, "avg_psu_h": 2.397, "avg_ps_a": 5.075, "avg_pso_a": 1.56, "form": ["L", "L", "W", "L", "W", "D"], "form_h": ["L", "W", "L", "D", "W", "W"], "form_a": ["D", "D", "L", "L", "L", "D"], "att_h": 0.7004, "def_h": 1.1312, "att_a": 0.8503, "def_a": 1.0162, "recent": [{"date": "31/01/2026", "opp": "Werder Bremen", "venue": "A", "gf": 1, "ga": 1, "res": "D"}, {"date": "07/02/2026", "opp": "Leverkusen", "venue": "H", "gf": 1, "ga": 1, "res": "D"}, {"date": "14/02/2026", "opp": "Ein Frankfurt", "venue": "A", "gf": 0, "ga": 3, "res": "L"}, {"date": "22/02/2026", "opp": "Freiburg", "venue": "A", "gf": 1, "ga": 2, "res": "L"}, {"date": "28/02/2026", "opp": "Union Berlin", "venue": "H", "gf": 1, "ga": 0, "res": "W"}, {"date": "06/03/2026", "opp": "Bayern Munich", "venue": "A", "gf": 1, "ga": 4, "res": "L"}, {"date": "13/03/2026", "opp": "St Pauli", "venue": "H", "gf": 2, "ga": 0, "res": "W"}, {"date": "21/03/2026", "opp": "FC Koln", "venue": "A", "gf": 3, "ga": 3, "res": "D"}]}, "Mainz": {"team": "Mainz", "P": 27, "W": 7, "D": 9, "L": 11, "GF": 33, "GA": 42, "GD": -9, "Pts": 30, "h_P": 14, "h_W": 4, "h_D": 5, "h_L": 5, "h_GF": 17, "h_GA": 17, "h_avg_gf": 1.214, "h_avg_ga": 1.214, "h_ov25": 5, "h_ov25_pct": 0.357, "h_btts": 8, "h_btts_pct": 0.571, "h_shots_pg": 13.3, "h_shots_t_pg": 4.0, "h_opp_shots_pg": 12.6, "h_opp_shots_t_pg": 4.0, "a_P": 13, "a_W": 3, "a_D": 4, "a_L": 6, "a_GF": 16, "a_GA": 25, "a_avg_gf": 1.231, "a_avg_ga": 1.923, "a_ov25": 9, "a_ov25_pct": 0.692, "a_btts": 8, "a_btts_pct": 0.615, "a_shots_pg": 9.4, "a_shots_t_pg": 3.4, "clv_h": 0.08, "clv_a": 2.9, "clv_ov_h": 1.96, "clv_ov_a": 1.54, "clv8_h": 2.24, "clv8_a": 14.26, "clv8_ov_h": 5.51, "clv8_ov_a": 2.09, "avg_ps_h": 2.143, "avg_ps_d": 3.573, "avg_pso_h": 1.953, "avg_psu_h": 1.963, "avg_ps_a": 11.02, "avg_pso_a": 2.145, "form": ["L", "D", "D", "D", "W", "W"], "form_h": ["W", "W", "W", "D", "D", "W"], "form_a": ["D", "L", "W", "L", "D", "W"], "att_h": 0.691, "def_h": 0.8503, "att_a": 0.8619, "def_a": 1.0944, "recent": [{"date": "31/01/2026", "opp": "RB Leipzig", "venue": "A", "gf": 2, "ga": 1, "res": "W"}, {"date": "07/02/2026", "opp": "Augsburg", "venue": "H", "gf": 2, "ga": 0, "res": "W"}, {"date": "13/02/2026", "opp": "Dortmund", "venue": "A", "gf": 0, "ga": 4, "res": "L"}, {"date": "20/02/2026", "opp": "Hamburg", "venue": "H", "gf": 1, "ga": 1, "res": "D"}, {"date": "28/02/2026", "opp": "Leverkusen", "venue": "A", "gf": 1, "ga": 1, "res": "D"}, {"date": "07/03/2026", "opp": "Stuttgart", "venue": "H", "gf": 2, "ga": 2, "res": "D"}, {"date": "15/03/2026", "opp": "Werder Bremen", "venue": "A", "gf": 2, "ga": 0, "res": "W"}, {"date": "22/03/2026", "opp": "Ein Frankfurt", "venue": "H", "gf": 2, "ga": 1, "res": "W"}]}, "RB Leipzig": {"team": "RB Leipzig", "P": 27, "W": 15, "D": 5, "L": 7, "GF": 53, "GA": 35, "GD": 18, "Pts": 50, "h_P": 14, "h_W": 9, "h_D": 2, "h_L": 3, "h_GF": 34, "h_GA": 18, "h_avg_gf": 2.429, "h_avg_ga": 1.286, "h_ov25": 11, "h_ov25_pct": 0.786, "h_btts": 9, "h_btts_pct": 0.643, "h_shots_pg": 16.9, "h_shots_t_pg": 7.0, "h_opp_shots_pg": 11.6, "h_opp_shots_t_pg": 4.3, "a_P": 13, "a_W": 6, "a_D": 3, "a_L": 4, "a_GF": 19, "a_GA": 17, "a_avg_gf": 1.462, "a_avg_ga": 1.308, "a_ov25": 7, "a_ov25_pct": 0.538, "a_btts": 6, "a_btts_pct": 0.462, "a_shots_pg": 14.5, "a_shots_t_pg": 4.5, "clv_h": 4.89, "clv_a": 4.98, "clv_ov_h": 1.15, "clv_ov_a": 1.11, "clv8_h": 0.83, "clv8_a": 3.15, "clv8_ov_h": 2.25, "clv8_ov_a": 0.97, "avg_ps_h": 1.915, "avg_ps_d": 4.04, "avg_pso_h": 1.585, "avg_psu_h": 2.455, "avg_ps_a": 2.37, "avg_pso_a": 1.623, "form": ["D", "D", "W", "W", "L", "W"], "form_h": ["L", "L", "D", "D", "W", "W"], "form_a": ["L", "W", "D", "W", "W", "L"], "att_h": 1.3821, "def_h": 0.9004, "att_a": 1.0235, "def_a": 0.7442, "recent": [{"date": "31/01/2026", "opp": "Mainz", "venue": "H", "gf": 1, "ga": 2, "res": "L"}, {"date": "08/02/2026", "opp": "FC Koln", "venue": "A", "gf": 2, "ga": 1, "res": "W"}, {"date": "15/02/2026", "opp": "Wolfsburg", "venue": "H", "gf": 2, "ga": 2, "res": "D"}, {"date": "21/02/2026", "opp": "Dortmund", "venue": "H", "gf": 2, "ga": 2, "res": "D"}, {"date": "01/03/2026", "opp": "Hamburg", "venue": "A", "gf": 2, "ga": 1, "res": "W"}, {"date": "07/03/2026", "opp": "Augsburg", "venue": "H", "gf": 2, "ga": 1, "res": "W"}, {"date": "15/03/2026", "opp": "Stuttgart", "venue": "A", "gf": 0, "ga": 1, "res": "L"}, {"date": "20/03/2026", "opp": "Hoffenheim", "venue": "H", "gf": 5, "ga": 0, "res": "W"}]}, "St Pauli": {"team": "St Pauli", "P": 27, "W": 6, "D": 6, "L": 15, "GF": 24, "GA": 44, "GD": -20, "Pts": 24, "h_P": 13, "h_W": 4, "h_D": 4, "h_L": 5, "h_GF": 14, "h_GA": 20, "h_avg_gf": 1.077, "h_avg_ga": 1.538, "h_ov25": 9, "h_ov25_pct": 0.692, "h_btts": 8, "h_btts_pct": 0.615, "h_shots_pg": 10.8, "h_shots_t_pg": 4.4, "h_opp_shots_pg": 10.8, "h_opp_shots_t_pg": 4.9, "a_P": 14, "a_W": 2, "a_D": 2, "a_L": 10, "a_GF": 10, "a_GA": 24, "a_avg_gf": 0.714, "a_avg_ga": 1.714, "a_ov25": 6, "a_ov25_pct": 0.429, "a_btts": 6, "a_btts_pct": 0.429, "a_shots_pg": 10.0, "a_shots_t_pg": 2.6, "clv_h": 3.29, "clv_a": 6.75, "clv_ov_h": 1.81, "clv_ov_a": 2.01, "clv8_h": 4.53, "clv8_a": 3.58, "clv8_ov_h": 1.92, "clv8_ov_a": 0.58, "avg_ps_h": 2.32, "avg_ps_d": 3.29, "avg_pso_h": 2.19, "avg_psu_h": 1.735, "avg_ps_a": 4.037, "avg_pso_a": 1.993, "form": ["L", "W", "W", "D", "L", "L"], "form_h": ["D", "D", "W", "W", "D", "L"], "form_a": ["L", "L", "L", "L", "W", "L"], "att_h": 0.6129, "def_h": 1.0774, "att_a": 0.5002, "def_a": 0.9756, "recent": [{"date": "31/01/2026", "opp": "Augsburg", "venue": "A", "gf": 1, "ga": 2, "res": "L"}, {"date": "07/02/2026", "opp": "Stuttgart", "venue": "H", "gf": 2, "ga": 1, "res": "W"}, {"date": "14/02/2026", "opp": "Leverkusen", "venue": "A", "gf": 0, "ga": 4, "res": "L"}, {"date": "22/02/2026", "opp": "Werder Bremen", "venue": "H", "gf": 2, "ga": 1, "res": "W"}, {"date": "28/02/2026", "opp": "Hoffenheim", "venue": "A", "gf": 1, "ga": 0, "res": "W"}, {"date": "08/03/2026", "opp": "Ein Frankfurt", "venue": "H", "gf": 0, "ga": 0, "res": "D"}, {"date": "13/03/2026", "opp": "M'gladbach", "venue": "A", "gf": 0, "ga": 2, "res": "L"}, {"date": "22/03/2026", "opp": "Freiburg", "venue": "H", "gf": 1, "ga": 2, "res": "L"}]}, "Stuttgart": {"team": "Stuttgart", "P": 27, "W": 16, "D": 5, "L": 6, "GF": 56, "GA": 36, "GD": 20, "Pts": 53, "h_P": 13, "h_W": 10, "h_D": 2, "h_L": 1, "h_GF": 22, "h_GA": 12, "h_avg_gf": 1.692, "h_avg_ga": 0.923, "h_ov25": 6, "h_ov25_pct": 0.462, "h_btts": 5, "h_btts_pct": 0.385, "h_shots_pg": 16.0, "h_shots_t_pg": 6.0, "h_opp_shots_pg": 11.8, "h_opp_shots_t_pg": 3.8, "a_P": 14, "a_W": 6, "a_D": 3, "a_L": 5, "a_GF": 34, "a_GA": 24, "a_avg_gf": 2.429, "a_avg_ga": 1.714, "a_ov25": 14, "a_ov25_pct": 1.0, "a_btts": 11, "a_btts_pct": 0.786, "a_shots_pg": 14.0, "a_shots_t_pg": 5.9, "clv_h": 1.31, "clv_a": 3.89, "clv_ov_h": 1.44, "clv_ov_a": 1.12, "clv8_h": -4.2, "clv8_a": 5.16, "clv8_ov_h": 2.75, "clv8_ov_a": 0.65, "avg_ps_h": 2.857, "avg_ps_d": 4.213, "avg_pso_h": 1.483, "avg_psu_h": 2.787, "avg_ps_a": 2.707, "avg_pso_a": 1.53, "form": ["W", "D", "W", "D", "W", "W"], "form_h": ["W", "D", "W", "W", "W", "W"], "form_a": ["W", "W", "L", "D", "D", "W"], "att_h": 0.9631, "def_h": 0.6464, "att_a": 1.7007, "def_a": 0.9756, "recent": [{"date": "01/02/2026", "opp": "Freiburg", "venue": "H", "gf": 1, "ga": 0, "res": "W"}, {"date": "07/02/2026", "opp": "St Pauli", "venue": "A", "gf": 1, "ga": 2, "res": "L"}, {"date": "14/02/2026", "opp": "FC Koln", "venue": "H", "gf": 3, "ga": 1, "res": "W"}, {"date": "22/02/2026", "opp": "Heidenheim", "venue": "A", "gf": 3, "ga": 3, "res": "D"}, {"date": "01/03/2026", "opp": "Wolfsburg", "venue": "H", "gf": 4, "ga": 0, "res": "W"}, {"date": "07/03/2026", "opp": "Mainz", "venue": "A", "gf": 2, "ga": 2, "res": "D"}, {"date": "15/03/2026", "opp": "RB Leipzig", "venue": "H", "gf": 1, "ga": 0, "res": "W"}, {"date": "22/03/2026", "opp": "Augsburg", "venue": "A", "gf": 5, "ga": 2, "res": "W"}]}, "Union Berlin": {"team": "Union Berlin", "P": 27, "W": 8, "D": 7, "L": 12, "GF": 31, "GA": 46, "GD": -15, "Pts": 31, "h_P": 13, "h_W": 4, "h_D": 5, "h_L": 4, "h_GF": 18, "h_GA": 21, "h_avg_gf": 1.385, "h_avg_ga": 1.615, "h_ov25": 9, "h_ov25_pct": 0.692, "h_btts": 9, "h_btts_pct": 0.692, "h_shots_pg": 11.8, "h_shots_t_pg": 3.6, "h_opp_shots_pg": 12.0, "h_opp_shots_t_pg": 4.1, "a_P": 14, "a_W": 4, "a_D": 2, "a_L": 8, "a_GF": 13, "a_GA": 25, "a_avg_gf": 0.929, "a_avg_ga": 1.786, "a_ov25": 6, "a_ov25_pct": 0.429, "a_btts": 6, "a_btts_pct": 0.429, "a_shots_pg": 12.1, "a_shots_t_pg": 3.3, "clv_h": 4.61, "clv_a": 3.18, "clv_ov_h": 1.63, "clv_ov_a": 2.47, "clv8_h": -2.54, "clv8_a": -7.74, "clv8_ov_h": 1.62, "clv8_ov_a": 2.55, "avg_ps_h": 4.952, "avg_ps_d": 4.485, "avg_pso_h": 1.9, "avg_psu_h": 2.145, "avg_ps_a": 2.86, "avg_pso_a": 2.145, "form": ["L", "W", "L", "L", "W", "L"], "form_h": ["W", "D", "L", "D", "W", "L"], "form_a": ["D", "L", "L", "L", "W", "L"], "att_h": 0.788, "def_h": 1.1312, "att_a": 0.6503, "def_a": 1.0162, "recent": [{"date": "31/01/2026", "opp": "Hoffenheim", "venue": "A", "gf": 1, "ga": 3, "res": "L"}, {"date": "06/02/2026", "opp": "Ein Frankfurt", "venue": "H", "gf": 1, "ga": 1, "res": "D"}, {"date": "14/02/2026", "opp": "Hamburg", "venue": "A", "gf": 2, "ga": 3, "res": "L"}, {"date": "21/02/2026", "opp": "Leverkusen", "venue": "H", "gf": 1, "ga": 0, "res": "W"}, {"date": "28/02/2026", "opp": "M'gladbach", "venue": "A", "gf": 0, "ga": 1, "res": "L"}, {"date": "08/03/2026", "opp": "Werder Bremen", "venue": "H", "gf": 1, "ga": 4, "res": "L"}, {"date": "15/03/2026", "opp": "Freiburg", "venue": "A", "gf": 1, "ga": 0, "res": "W"}, {"date": "21/03/2026", "opp": "Bayern Munich", "venue": "A", "gf": 0, "ga": 4, "res": "L"}]}, "Werder Bremen": {"team": "Werder Bremen", "P": 27, "W": 7, "D": 7, "L": 13, "GF": 30, "GA": 47, "GD": -17, "Pts": 28, "h_P": 13, "h_W": 4, "h_D": 4, "h_L": 5, "h_GF": 14, "h_GA": 23, "h_avg_gf": 1.077, "h_avg_ga": 1.769, "h_ov25": 6, "h_ov25_pct": 0.462, "h_btts": 5, "h_btts_pct": 0.385, "h_shots_pg": 15.8, "h_shots_t_pg": 4.4, "h_opp_shots_pg": 11.1, "h_opp_shots_t_pg": 3.9, "a_P": 14, "a_W": 3, "a_D": 3, "a_L": 8, "a_GF": 16, "a_GA": 24, "a_avg_gf": 1.143, "a_avg_ga": 1.714, "a_ov25": 8, "a_ov25_pct": 0.571, "a_btts": 6, "a_btts_pct": 0.429, "a_shots_pg": 11.2, "a_shots_t_pg": 3.9, "clv_h": 1.51, "clv_a": 7.74, "clv_ov_h": 1.79, "clv_ov_a": 0.33, "clv8_h": 0.0, "clv8_a": 5.12, "clv8_ov_h": 1.31, "clv8_ov_a": 0.02, "avg_ps_h": 2.575, "avg_ps_d": 3.79, "avg_pso_h": 1.55, "avg_psu_h": 2.53, "avg_ps_a": 4.7, "avg_pso_a": 1.657, "form": ["L", "L", "W", "W", "L", "W"], "form_h": ["D", "L", "D", "L", "W", "L"], "form_a": ["L", "L", "L", "L", "W", "W"], "att_h": 0.6129, "def_h": 1.239, "att_a": 0.8003, "def_a": 0.9756, "recent": [{"date": "31/01/2026", "opp": "M'gladbach", "venue": "H", "gf": 1, "ga": 1, "res": "D"}, {"date": "07/02/2026", "opp": "Freiburg", "venue": "A", "gf": 0, "ga": 1, "res": "L"}, {"date": "14/02/2026", "opp": "Bayern Munich", "venue": "H", "gf": 0, "ga": 3, "res": "L"}, {"date": "22/02/2026", "opp": "St Pauli", "venue": "A", "gf": 1, "ga": 2, "res": "L"}, {"date": "28/02/2026", "opp": "Heidenheim", "venue": "H", "gf": 2, "ga": 0, "res": "W"}, {"date": "08/03/2026", "opp": "Union Berlin", "venue": "A", "gf": 4, "ga": 1, "res": "W"}, {"date": "15/03/2026", "opp": "Mainz", "venue": "H", "gf": 0, "ga": 2, "res": "L"}, {"date": "21/03/2026", "opp": "Wolfsburg", "venue": "A", "gf": 1, "ga": 0, "res": "W"}]}, "Wolfsburg": {"team": "Wolfsburg", "P": 27, "W": 5, "D": 6, "L": 16, "GF": 35, "GA": 57, "GD": -22, "Pts": 21, "h_P": 14, "h_W": 2, "h_D": 3, "h_L": 9, "h_GF": 20, "h_GA": 29, "h_avg_gf": 1.429, "h_avg_ga": 2.071, "h_ov25": 10, "h_ov25_pct": 0.714, "h_btts": 11, "h_btts_pct": 0.786, "h_shots_pg": 12.9, "h_shots_t_pg": 4.6, "h_opp_shots_pg": 13.9, "h_opp_shots_t_pg": 5.1, "a_P": 13, "a_W": 3, "a_D": 3, "a_L": 7, "a_GF": 15, "a_GA": 28, "a_avg_gf": 1.154, "a_avg_ga": 2.154, "a_ov25": 8, "a_ov25_pct": 0.615, "a_btts": 9, "a_btts_pct": 0.692, "a_shots_pg": 9.7, "a_shots_t_pg": 3.2, "clv_h": 1.92, "clv_a": 5.13, "clv_ov_h": 0.74, "clv_ov_a": 1.43, "clv8_h": -2.15, "clv8_a": 0.14, "clv8_ov_h": 0.24, "clv8_ov_a": 1.61, "avg_ps_h": 2.14, "avg_ps_d": 3.583, "avg_pso_h": 1.89, "avg_psu_h": 2.003, "avg_ps_a": 8.773, "avg_pso_a": 1.56, "form": ["D", "L", "L", "L", "D", "L"], "form_h": ["W", "D", "L", "L", "L", "L"], "form_a": ["L", "L", "L", "D", "L", "D"], "att_h": 0.813, "def_h": 1.4506, "att_a": 0.808, "def_a": 1.2257, "recent": [{"date": "30/01/2026", "opp": "FC Koln", "venue": "A", "gf": 0, "ga": 1, "res": "L"}, {"date": "07/02/2026", "opp": "Dortmund", "venue": "H", "gf": 1, "ga": 2, "res": "L"}, {"date": "15/02/2026", "opp": "RB Leipzig", "venue": "A", "gf": 2, "ga": 2, "res": "D"}, {"date": "21/02/2026", "opp": "Augsburg", "venue": "H", "gf": 2, "ga": 3, "res": "L"}, {"date": "01/03/2026", "opp": "Stuttgart", "venue": "A", "gf": 0, "ga": 4, "res": "L"}, {"date": "07/03/2026", "opp": "Hamburg", "venue": "H", "gf": 1, "ga": 2, "res": "L"}, {"date": "14/03/2026", "opp": "Hoffenheim", "venue": "A", "gf": 1, "ga": 1, "res": "D"}, {"date": "21/03/2026", "opp": "Werder Bremen", "venue": "H", "gf": 0, "ga": 1, "res": "L"}]}}, "lgh": 1.7572, "lga": 1.428, "h2h": {"Bayern Munich|RB Leipzig": [{"date": "22/08/2025", "home": "Bayern Munich", "away": "RB Leipzig", "fthg": 6, "ftag": 0, "ftr": "H", "b365h": 1.22, "b365d": 7.0, "b365a": 9.0, "psh": 1.25, "psd": 7.24, "psa": 10.31, "ah": -2.0, "pahh": 1.93, "paha": 1.96, "pov": 1.32, "pun": 3.33, "total": 6}, {"date": "17/01/2026", "home": "RB Leipzig", "away": "Bayern Munich", "fthg": 1, "ftag": 5, "ftr": "A", "b365h": 5.0, "b365d": 4.75, "b365a": 1.55, "psh": 0, "psd": 0, "psa": 0, "ah": 1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 6}], "Ein Frankfurt|Werder Bremen": [{"date": "23/08/2025", "home": "Ein Frankfurt", "away": "Werder Bremen", "fthg": 4, "ftag": 1, "ftr": "H", "b365h": 1.7, "b365d": 4.1, "b365a": 4.5, "psh": 1.62, "psd": 4.52, "psa": 5.21, "ah": -0.75, "pahh": 1.89, "paha": 2.02, "pov": 1.57, "pun": 2.5, "total": 5}, {"date": "16/01/2026", "home": "Werder Bremen", "away": "Ein Frankfurt", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 2.7, "b365d": 3.5, "b365a": 2.5, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 6}], "Augsburg|Freiburg": [{"date": "23/08/2025", "home": "Freiburg", "away": "Augsburg", "fthg": 1, "ftag": 3, "ftr": "A", "b365h": 1.85, "b365d": 3.6, "b365a": 4.33, "psh": 1.96, "psd": 3.63, "psa": 4.11, "ah": -0.5, "pahh": 1.88, "paha": 2.03, "pov": 1.96, "pun": 1.93, "total": 4}, {"date": "18/01/2026", "home": "Augsburg", "away": "Freiburg", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 2.9, "b365d": 3.3, "b365a": 2.45, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Heidenheim|Wolfsburg": [{"date": "23/08/2025", "home": "Heidenheim", "away": "Wolfsburg", "fthg": 1, "ftag": 3, "ftr": "A", "b365h": 3.2, "b365d": 3.5, "b365a": 2.2, "psh": 2.84, "psd": 3.47, "psa": 2.58, "ah": 0.25, "pahh": 1.93, "paha": 1.97, "pov": 1.71, "pun": 2.23, "total": 4}, {"date": "17/01/2026", "home": "Wolfsburg", "away": "Heidenheim", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.67, "b365d": 4.0, "b365a": 5.0, "psh": 0, "psd": 0, "psa": 0, "ah": -0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Hoffenheim|Leverkusen": [{"date": "23/08/2025", "home": "Leverkusen", "away": "Hoffenheim", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 1.53, "b365d": 4.75, "b365a": 5.25, "psh": 1.76, "psd": 4.25, "psa": 4.41, "ah": -1.25, "pahh": 2.16, "paha": 1.76, "pov": 1.5, "pun": 2.68, "total": 3}, {"date": "17/01/2026", "home": "Hoffenheim", "away": "Leverkusen", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 2.4, "b365d": 3.8, "b365a": 2.7, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Stuttgart|Union Berlin": [{"date": "23/08/2025", "home": "Union Berlin", "away": "Stuttgart", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 3.4, "b365d": 3.7, "b365a": 2.05, "psh": 4.23, "psd": 3.87, "psa": 1.87, "ah": 0.25, "pahh": 2.11, "paha": 1.8, "pov": 1.7, "pun": 2.25, "total": 3}, {"date": "18/01/2026", "home": "Stuttgart", "away": "Union Berlin", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.65, "b365d": 3.9, "b365a": 5.25, "psh": 0, "psd": 0, "psa": 0, "ah": -0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Dortmund|St Pauli": [{"date": "23/08/2025", "home": "St Pauli", "away": "Dortmund", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 4.5, "b365d": 3.9, "b365a": 1.75, "psh": 4.13, "psd": 3.64, "psa": 1.95, "ah": 0.75, "pahh": 1.9, "paha": 2.0, "pov": 1.87, "pun": 2.02, "total": 6}, {"date": "17/01/2026", "home": "Dortmund", "away": "St Pauli", "fthg": 3, "ftag": 2, "ftr": "H", "b365h": 1.33, "b365d": 5.25, "b365a": 10.0, "psh": 0, "psd": 0, "psa": 0, "ah": -1.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "FC Koln|Mainz": [{"date": "24/08/2025", "home": "Mainz", "away": "FC Koln", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 1.9, "b365d": 3.7, "b365a": 4.0, "psh": 1.93, "psd": 3.73, "psa": 4.12, "ah": -0.5, "pahh": 1.93, "paha": 1.97, "pov": 1.85, "pun": 2.05, "total": 1}, {"date": "17/01/2026", "home": "FC Koln", "away": "Mainz", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 2.15, "b365d": 3.5, "b365a": 3.25, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Hamburg|M'gladbach": [{"date": "24/08/2025", "home": "M'gladbach", "away": "Hamburg", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 1.85, "b365d": 3.9, "b365a": 3.9, "psh": 1.88, "psd": 4.02, "psa": 4.03, "ah": -0.5, "pahh": 1.87, "paha": 2.04, "pov": 1.54, "pun": 2.58, "total": 0}, {"date": "17/01/2026", "home": "Hamburg", "away": "M'gladbach", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 2.45, "b365d": 3.5, "b365a": 2.8, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 0}], "Hamburg|St Pauli": [{"date": "29/08/2025", "home": "Hamburg", "away": "St Pauli", "fthg": 0, "ftag": 2, "ftr": "A", "b365h": 2.4, "b365d": 3.3, "b365a": 3.0, "psh": 2.49, "psd": 3.18, "psa": 3.2, "ah": -0.25, "pahh": 2.14, "paha": 1.81, "pov": 2.1, "pun": 1.81, "total": 2}, {"date": "23/01/2026", "home": "St Pauli", "away": "Hamburg", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 2.88, "b365d": 2.9, "b365a": 2.75, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 0}], "Ein Frankfurt|Hoffenheim": [{"date": "30/08/2025", "home": "Hoffenheim", "away": "Ein Frankfurt", "fthg": 1, "ftag": 3, "ftr": "A", "b365h": 2.88, "b365d": 3.75, "b365a": 2.25, "psh": 2.74, "psd": 3.81, "psa": 2.47, "ah": 0.25, "pahh": 1.88, "paha": 2.03, "pov": 1.5, "pun": 2.67, "total": 4}, {"date": "24/01/2026", "home": "Ein Frankfurt", "away": "Hoffenheim", "fthg": 1, "ftag": 3, "ftr": "A", "b365h": 2.8, "b365d": 3.75, "b365a": 2.3, "psh": 0, "psd": 0, "psa": 0, "ah": 0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Heidenheim|RB Leipzig": [{"date": "30/08/2025", "home": "RB Leipzig", "away": "Heidenheim", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.44, "b365d": 5.0, "b365a": 6.25, "psh": 1.48, "psd": 4.96, "psa": 6.28, "ah": -1.25, "pahh": 1.92, "paha": 1.99, "pov": 1.51, "pun": 2.66, "total": 2}, {"date": "24/01/2026", "home": "Heidenheim", "away": "RB Leipzig", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 5.0, "b365d": 4.5, "b365a": 1.57, "psh": 0, "psd": 0, "psa": 0, "ah": 1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "M'gladbach|Stuttgart": [{"date": "30/08/2025", "home": "Stuttgart", "away": "M'gladbach", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.6, "b365d": 4.5, "b365a": 4.75, "psh": 1.58, "psd": 4.81, "psa": 5.08, "ah": -1.0, "pahh": 1.99, "paha": 1.92, "pov": 1.42, "pun": 2.95, "total": 1}, {"date": "25/01/2026", "home": "M'gladbach", "away": "Stuttgart", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 3.0, "b365d": 3.75, "b365a": 2.2, "psh": 0, "psd": 0, "psa": 0, "ah": 0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Leverkusen|Werder Bremen": [{"date": "30/08/2025", "home": "Werder Bremen", "away": "Leverkusen", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 3.7, "b365d": 3.8, "b365a": 1.91, "psh": 3.59, "psd": 3.89, "psa": 2.0, "ah": 0.5, "pahh": 1.95, "paha": 1.95, "pov": 1.6, "pun": 2.44, "total": 6}, {"date": "24/01/2026", "home": "Leverkusen", "away": "Werder Bremen", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.62, "b365d": 4.2, "b365a": 5.25, "psh": 0, "psd": 0, "psa": 0, "ah": -1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Augsburg|Bayern Munich": [{"date": "30/08/2025", "home": "Augsburg", "away": "Bayern Munich", "fthg": 2, "ftag": 3, "ftr": "A", "b365h": 9.0, "b365d": 6.5, "b365a": 1.27, "psh": 9.65, "psd": 6.2, "psa": 1.29, "ah": 1.75, "pahh": 1.99, "paha": 1.9, "pov": 1.34, "pun": 3.24, "total": 5}, {"date": "24/01/2026", "home": "Bayern Munich", "away": "Augsburg", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 1.1, "b365d": 12.0, "b365a": 17.0, "psh": 0, "psd": 0, "psa": 0, "ah": -2.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Mainz|Wolfsburg": [{"date": "31/08/2025", "home": "Wolfsburg", "away": "Mainz", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.0, "b365d": 3.6, "b365a": 3.5, "psh": 2.13, "psd": 3.65, "psa": 3.51, "ah": -0.5, "pahh": 2.09, "paha": 1.83, "pov": 1.78, "pun": 2.13, "total": 2}, {"date": "24/01/2026", "home": "Mainz", "away": "Wolfsburg", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 2.3, "b365d": 3.5, "b365a": 3.0, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Dortmund|Union Berlin": [{"date": "31/08/2025", "home": "Dortmund", "away": "Union Berlin", "fthg": 3, "ftag": 0, "ftr": "H", "b365h": 1.4, "b365d": 5.25, "b365a": 6.5, "psh": 1.41, "psd": 5.29, "psa": 7.35, "ah": -1.25, "pahh": 1.88, "paha": 2.03, "pov": 1.54, "pun": 2.59, "total": 3}, {"date": "24/01/2026", "home": "Union Berlin", "away": "Dortmund", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 3.6, "b365d": 3.5, "b365a": 2.05, "psh": 0, "psd": 0, "psa": 0, "ah": 0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "FC Koln|Freiburg": [{"date": "31/08/2025", "home": "FC Koln", "away": "Freiburg", "fthg": 4, "ftag": 1, "ftr": "H", "b365h": 2.55, "b365d": 3.3, "b365a": 2.8, "psh": 2.6, "psd": 3.42, "psa": 2.86, "ah": 0.0, "pahh": 1.91, "paha": 2.0, "pov": 2.03, "pun": 1.87, "total": 5}, {"date": "25/01/2026", "home": "Freiburg", "away": "FC Koln", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.9, "b365d": 3.75, "b365a": 3.8, "psh": 0, "psd": 0, "psa": 0, "ah": -0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Ein Frankfurt|Leverkusen": [{"date": "12/09/2025", "home": "Leverkusen", "away": "Ein Frankfurt", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 2.1, "b365d": 3.8, "b365a": 3.2, "psh": 2.19, "psd": 3.8, "psa": 3.24, "ah": -0.25, "pahh": 1.89, "paha": 2.03, "pov": 1.44, "pun": 2.82, "total": 4}, {"date": "31/01/2026", "home": "Ein Frankfurt", "away": "Leverkusen", "fthg": 1, "ftag": 3, "ftr": "A", "b365h": 3.0, "b365d": 3.8, "b365a": 2.2, "psh": 0, "psd": 0, "psa": 0, "ah": 0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Freiburg|Stuttgart": [{"date": "13/09/2025", "home": "Freiburg", "away": "Stuttgart", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 2.9, "b365d": 3.6, "b365a": 2.35, "psh": 2.66, "psd": 3.5, "psa": 2.73, "ah": 0.25, "pahh": 1.83, "paha": 2.1, "pov": 1.61, "pun": 2.41, "total": 4}, {"date": "01/02/2026", "home": "Stuttgart", "away": "Freiburg", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.67, "b365d": 4.1, "b365a": 4.75, "psh": 0, "psd": 0, "psa": 0, "ah": -0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Dortmund|Heidenheim": [{"date": "13/09/2025", "home": "Heidenheim", "away": "Dortmund", "fthg": 0, "ftag": 2, "ftr": "A", "b365h": 5.5, "b365d": 4.5, "b365a": 1.55, "psh": 5.34, "psd": 4.54, "psa": 1.6, "ah": 1.0, "pahh": 2.01, "paha": 1.9, "pov": 1.48, "pun": 2.68, "total": 2}, {"date": "01/02/2026", "home": "Dortmund", "away": "Heidenheim", "fthg": 3, "ftag": 2, "ftr": "H", "b365h": 1.22, "b365d": 6.5, "b365a": 12.0, "psh": 0, "psd": 0, "psa": 0, "ah": -1.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "Mainz|RB Leipzig": [{"date": "13/09/2025", "home": "Mainz", "away": "RB Leipzig", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 2.55, "b365d": 3.6, "b365a": 2.63, "psh": 2.41, "psd": 3.79, "psa": 2.87, "ah": 0.0, "pahh": 1.93, "paha": 1.97, "pov": 1.63, "pun": 2.36, "total": 1}, {"date": "31/01/2026", "home": "RB Leipzig", "away": "Mainz", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 1.55, "b365d": 4.5, "b365a": 5.5, "psh": 0, "psd": 0, "psa": 0, "ah": -1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Hoffenheim|Union Berlin": [{"date": "13/09/2025", "home": "Union Berlin", "away": "Hoffenheim", "fthg": 2, "ftag": 4, "ftr": "A", "b365h": 2.6, "b365d": 3.4, "b365a": 2.7, "psh": 2.94, "psd": 3.42, "psa": 2.53, "ah": 0.0, "pahh": 1.94, "paha": 1.96, "pov": 1.92, "pun": 1.97, "total": 6}, {"date": "31/01/2026", "home": "Hoffenheim", "away": "Union Berlin", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 1.8, "b365d": 3.8, "b365a": 4.33, "psh": 0, "psd": 0, "psa": 0, "ah": -0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "FC Koln|Wolfsburg": [{"date": "13/09/2025", "home": "Wolfsburg", "away": "FC Koln", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 1.95, "b365d": 3.5, "b365a": 3.9, "psh": 1.97, "psd": 3.71, "psa": 3.97, "ah": -0.5, "pahh": 2.02, "paha": 1.89, "pov": 1.81, "pun": 2.08, "total": 6}, {"date": "30/01/2026", "home": "FC Koln", "away": "Wolfsburg", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.95, "b365d": 3.8, "b365a": 3.5, "psh": 0, "psd": 0, "psa": 0, "ah": -0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Bayern Munich|Hamburg": [{"date": "13/09/2025", "home": "Bayern Munich", "away": "Hamburg", "fthg": 5, "ftag": 0, "ftr": "H", "b365h": 1.06, "b365d": 12.0, "b365a": 26.0, "psh": 1.08, "psd": 16.5, "psa": 21.0, "ah": -3.0, "pahh": 1.96, "paha": 1.91, "pov": 1.32, "pun": 3.2, "total": 5}, {"date": "31/01/2026", "home": "Hamburg", "away": "Bayern Munich", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 8.0, "b365d": 6.5, "b365a": 1.29, "psh": 0, "psd": 0, "psa": 0, "ah": 1.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Augsburg|St Pauli": [{"date": "14/09/2025", "home": "St Pauli", "away": "Augsburg", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 2.2, "b365d": 3.4, "b365a": 3.3, "psh": 2.23, "psd": 3.32, "psa": 3.6, "ah": -0.25, "pahh": 1.92, "paha": 1.99, "pov": 2.15, "pun": 1.76, "total": 3}, {"date": "31/01/2026", "home": "Augsburg", "away": "St Pauli", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 2.0, "b365d": 3.3, "b365a": 4.1, "psh": 0, "psd": 0, "psa": 0, "ah": -0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "M'gladbach|Werder Bremen": [{"date": "14/09/2025", "home": "M'gladbach", "away": "Werder Bremen", "fthg": 0, "ftag": 4, "ftr": "A", "b365h": 1.95, "b365d": 3.9, "b365a": 3.4, "psh": 2.05, "psd": 4.08, "psa": 3.38, "ah": -0.5, "pahh": 2.01, "paha": 1.9, "pov": 1.5, "pun": 2.67, "total": 4}, {"date": "31/01/2026", "home": "Werder Bremen", "away": "M'gladbach", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.45, "b365d": 3.6, "b365a": 2.75, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "St Pauli|Stuttgart": [{"date": "19/09/2025", "home": "Stuttgart", "away": "St Pauli", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.75, "b365d": 4.1, "b365a": 4.2, "psh": 1.8, "psd": 4.09, "psa": 4.37, "ah": -0.75, "pahh": 2.01, "paha": 1.89, "pov": 1.74, "pun": 2.18, "total": 2}, {"date": "07/02/2026", "home": "St Pauli", "away": "Stuttgart", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 4.33, "b365d": 3.75, "b365a": 1.8, "psh": 0, "psd": 0, "psa": 0, "ah": 0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Augsburg|Mainz": [{"date": "20/09/2025", "home": "Augsburg", "away": "Mainz", "fthg": 1, "ftag": 4, "ftr": "A", "b365h": 2.7, "b365d": 3.4, "b365a": 2.6, "psh": 2.75, "psd": 3.42, "psa": 2.69, "ah": 0.0, "pahh": 2.01, "paha": 1.89, "pov": 1.92, "pun": 1.97, "total": 5}, {"date": "07/02/2026", "home": "Mainz", "away": "Augsburg", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 2.05, "b365d": 3.6, "b365a": 3.5, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Hamburg|Heidenheim": [{"date": "20/09/2025", "home": "Hamburg", "away": "Heidenheim", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 2.05, "b365d": 3.6, "b365a": 3.5, "psh": 1.88, "psd": 3.89, "psa": 4.18, "ah": -0.5, "pahh": 2.11, "paha": 1.82, "pov": 1.85, "pun": 2.04, "total": 3}, {"date": "07/02/2026", "home": "Heidenheim", "away": "Hamburg", "fthg": 0, "ftag": 2, "ftr": "A", "b365h": 2.88, "b365d": 3.5, "b365a": 2.45, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Bayern Munich|Hoffenheim": [{"date": "20/09/2025", "home": "Hoffenheim", "away": "Bayern Munich", "fthg": 1, "ftag": 4, "ftr": "A", "b365h": 7.0, "b365d": 6.0, "b365a": 1.33, "psh": 8.29, "psd": 6.37, "psa": 1.31, "ah": 1.5, "pahh": 2.04, "paha": 1.87, "pov": 1.32, "pun": 3.45, "total": 5}, {"date": "08/02/2026", "home": "Bayern Munich", "away": "Hoffenheim", "fthg": 5, "ftag": 1, "ftr": "H", "b365h": 1.29, "b365d": 7.0, "b365a": 7.5, "psh": 0, "psd": 0, "psa": 0, "ah": -1.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 6}], "Freiburg|Werder Bremen": [{"date": "20/09/2025", "home": "Werder Bremen", "away": "Freiburg", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 2.38, "b365d": 3.6, "b365a": 2.8, "psh": 2.51, "psd": 3.68, "psa": 2.79, "ah": -0.25, "pahh": 2.09, "paha": 1.83, "pov": 1.63, "pun": 2.36, "total": 3}, {"date": "07/02/2026", "home": "Freiburg", "away": "Werder Bremen", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.83, "b365d": 3.75, "b365a": 4.2, "psh": 0, "psd": 0, "psa": 0, "ah": -0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "FC Koln|RB Leipzig": [{"date": "20/09/2025", "home": "RB Leipzig", "away": "FC Koln", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 1.65, "b365d": 4.33, "b365a": 4.5, "psh": 1.95, "psd": 3.9, "psa": 3.84, "ah": -0.75, "pahh": 1.85, "paha": 2.06, "pov": 1.57, "pun": 2.5, "total": 4}, {"date": "08/02/2026", "home": "FC Koln", "away": "RB Leipzig", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 3.25, "b365d": 3.8, "b365a": 2.1, "psh": 0, "psd": 0, "psa": 0, "ah": 0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Ein Frankfurt|Union Berlin": [{"date": "21/09/2025", "home": "Ein Frankfurt", "away": "Union Berlin", "fthg": 3, "ftag": 4, "ftr": "A", "b365h": 1.57, "b365d": 4.33, "b365a": 5.5, "psh": 1.65, "psd": 4.38, "psa": 5.03, "ah": -1.0, "pahh": 1.96, "paha": 1.94, "pov": 1.63, "pun": 2.38, "total": 7}, {"date": "06/02/2026", "home": "Union Berlin", "away": "Ein Frankfurt", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.0, "b365d": 3.5, "b365a": 3.6, "psh": 0, "psd": 0, "psa": 0, "ah": -0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Leverkusen|M'gladbach": [{"date": "21/09/2025", "home": "Leverkusen", "away": "M'gladbach", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.57, "b365d": 5.0, "b365a": 4.5, "psh": 1.56, "psd": 4.48, "psa": 5.96, "ah": -1.0, "pahh": 1.93, "paha": 1.97, "pov": 1.48, "pun": 2.7, "total": 2}, {"date": "07/02/2026", "home": "M'gladbach", "away": "Leverkusen", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 3.5, "b365d": 3.75, "b365a": 2.0, "psh": 0, "psd": 0, "psa": 0, "ah": 0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Dortmund|Wolfsburg": [{"date": "21/09/2025", "home": "Dortmund", "away": "Wolfsburg", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.5, "b365d": 5.0, "b365a": 5.5, "psh": 1.59, "psd": 4.66, "psa": 5.27, "ah": -1.25, "pahh": 2.09, "paha": 1.83, "pov": 1.44, "pun": 2.84, "total": 1}, {"date": "07/02/2026", "home": "Wolfsburg", "away": "Dortmund", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 4.2, "b365d": 4.2, "b365a": 1.73, "psh": 0, "psd": 0, "psa": 0, "ah": 0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Bayern Munich|Werder Bremen": [{"date": "26/09/2025", "home": "Bayern Munich", "away": "Werder Bremen", "fthg": 4, "ftag": 0, "ftr": "H", "b365h": 1.09, "b365d": 11.0, "b365a": 21.0, "psh": 1.1, "psd": 12.0, "psa": 26.0, "ah": -2.75, "pahh": 1.88, "paha": 2.01, "pov": 0, "pun": 0, "total": 4}, {"date": "14/02/2026", "home": "Werder Bremen", "away": "Bayern Munich", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 8.0, "b365d": 6.0, "b365a": 1.3, "psh": 0, "psd": 0, "psa": 0, "ah": 1.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Augsburg|Heidenheim": [{"date": "27/09/2025", "home": "Heidenheim", "away": "Augsburg", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 2.7, "b365d": 3.5, "b365a": 2.5, "psh": 2.85, "psd": 3.56, "psa": 2.53, "ah": 0.0, "pahh": 2.06, "paha": 1.86, "pov": 1.75, "pun": 2.17, "total": 3}, {"date": "15/02/2026", "home": "Augsburg", "away": "Heidenheim", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.85, "b365d": 3.6, "b365a": 4.2, "psh": 0, "psd": 0, "psa": 0, "ah": -0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Dortmund|Mainz": [{"date": "27/09/2025", "home": "Mainz", "away": "Dortmund", "fthg": 0, "ftag": 2, "ftr": "A", "b365h": 3.2, "b365d": 3.7, "b365a": 2.1, "psh": 3.53, "psd": 3.83, "psa": 2.06, "ah": 0.25, "pahh": 2.04, "paha": 1.87, "pov": 1.63, "pun": 2.37, "total": 2}, {"date": "13/02/2026", "home": "Dortmund", "away": "Mainz", "fthg": 4, "ftag": 0, "ftr": "H", "b365h": 1.53, "b365d": 4.5, "b365a": 5.5, "psh": 0, "psd": 0, "psa": 0, "ah": -1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Leverkusen|St Pauli": [{"date": "27/09/2025", "home": "St Pauli", "away": "Leverkusen", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 3.1, "b365d": 3.6, "b365a": 2.2, "psh": 3.37, "psd": 3.54, "psa": 2.23, "ah": 0.25, "pahh": 1.96, "paha": 1.94, "pov": 1.91, "pun": 1.98, "total": 3}, {"date": "14/02/2026", "home": "Leverkusen", "away": "St Pauli", "fthg": 4, "ftag": 0, "ftr": "H", "b365h": 1.45, "b365d": 3.75, "b365a": 6.5, "psh": 0, "psd": 0, "psa": 0, "ah": -1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "RB Leipzig|Wolfsburg": [{"date": "27/09/2025", "home": "Wolfsburg", "away": "RB Leipzig", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 2.55, "b365d": 3.6, "b365a": 2.6, "psh": 2.63, "psd": 3.73, "psa": 2.63, "ah": 0.0, "pahh": 1.95, "paha": 1.95, "pov": 1.54, "pun": 2.59, "total": 1}, {"date": "15/02/2026", "home": "RB Leipzig", "away": "Wolfsburg", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 1.44, "b365d": 4.75, "b365a": 6.5, "psh": 0, "psd": 0, "psa": 0, "ah": -1.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Ein Frankfurt|M'gladbach": [{"date": "27/09/2025", "home": "M'gladbach", "away": "Ein Frankfurt", "fthg": 4, "ftag": 6, "ftr": "A", "b365h": 3.1, "b365d": 3.6, "b365a": 2.2, "psh": 3.08, "psd": 3.72, "psa": 2.3, "ah": 0.25, "pahh": 1.93, "paha": 1.97, "pov": 1.52, "pun": 2.56, "total": 10}, {"date": "14/02/2026", "home": "Ein Frankfurt", "away": "M'gladbach", "fthg": 3, "ftag": 0, "ftr": "H", "b365h": 1.95, "b365d": 3.5, "b365a": 4.0, "psh": 0, "psd": 0, "psa": 0, "ah": -0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Freiburg|Hoffenheim": [{"date": "28/09/2025", "home": "Freiburg", "away": "Hoffenheim", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.25, "b365d": 3.4, "b365a": 3.1, "psh": 2.36, "psd": 3.55, "psa": 3.1, "ah": -0.25, "pahh": 1.98, "paha": 1.93, "pov": 1.63, "pun": 2.36, "total": 2}, {"date": "14/02/2026", "home": "Hoffenheim", "away": "Freiburg", "fthg": 3, "ftag": 0, "ftr": "H", "b365h": 1.73, "b365d": 3.9, "b365a": 4.5, "psh": 0, "psd": 0, "psa": 0, "ah": -0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "FC Koln|Stuttgart": [{"date": "28/09/2025", "home": "FC Koln", "away": "Stuttgart", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 2.9, "b365d": 3.5, "b365a": 2.35, "psh": 2.61, "psd": 3.72, "psa": 2.66, "ah": 0.25, "pahh": 1.83, "paha": 2.09, "pov": 1.56, "pun": 2.53, "total": 3}, {"date": "14/02/2026", "home": "Stuttgart", "away": "FC Koln", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 1.45, "b365d": 4.75, "b365a": 6.5, "psh": 0, "psd": 0, "psa": 0, "ah": -1.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Hamburg|Union Berlin": [{"date": "28/09/2025", "home": "Union Berlin", "away": "Hamburg", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 1.95, "b365d": 3.4, "b365a": 4.0, "psh": 2.01, "psd": 3.61, "psa": 3.95, "ah": -0.5, "pahh": 2.0, "paha": 1.91, "pov": 1.79, "pun": 2.11, "total": 0}, {"date": "14/02/2026", "home": "Hamburg", "away": "Union Berlin", "fthg": 3, "ftag": 2, "ftr": "H", "b365h": 2.5, "b365d": 3.25, "b365a": 2.9, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "FC Koln|Hoffenheim": [{"date": "03/10/2025", "home": "Hoffenheim", "away": "FC Koln", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 1.91, "b365d": 3.7, "b365a": 3.75, "psh": 1.92, "psd": 3.95, "psa": 3.92, "ah": -0.5, "pahh": 1.93, "paha": 1.97, "pov": 1.57, "pun": 2.45, "total": 1}, {"date": "21/02/2026", "home": "FC Koln", "away": "Hoffenheim", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 3.3, "b365d": 3.8, "b365a": 2.05, "psh": 0, "psd": 0, "psa": 0, "ah": 0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Augsburg|Wolfsburg": [{"date": "04/10/2025", "home": "Augsburg", "away": "Wolfsburg", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 2.75, "b365d": 3.5, "b365a": 2.45, "psh": 2.64, "psd": 3.58, "psa": 2.71, "ah": 0.0, "pahh": 2.1, "paha": 1.82, "pov": 1.75, "pun": 2.17, "total": 4}, {"date": "21/02/2026", "home": "Wolfsburg", "away": "Augsburg", "fthg": 2, "ftag": 3, "ftr": "A", "b365h": 2.05, "b365d": 3.4, "b365a": 3.75, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "Dortmund|RB Leipzig": [{"date": "04/10/2025", "home": "Dortmund", "away": "RB Leipzig", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.7, "b365d": 4.5, "b365a": 4.2, "psh": 1.71, "psd": 4.63, "psa": 4.29, "ah": -0.75, "pahh": 1.88, "paha": 2.03, "pov": 1.37, "pun": 3.16, "total": 2}, {"date": "21/02/2026", "home": "RB Leipzig", "away": "Dortmund", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 2.15, "b365d": 3.8, "b365a": 3.1, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Leverkusen|Union Berlin": [{"date": "04/10/2025", "home": "Leverkusen", "away": "Union Berlin", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.7, "b365d": 4.0, "b365a": 4.75, "psh": 1.7, "psd": 4.09, "psa": 4.94, "ah": -0.75, "pahh": 1.92, "paha": 1.99, "pov": 1.81, "pun": 2.06, "total": 2}, {"date": "21/02/2026", "home": "Union Berlin", "away": "Leverkusen", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 3.0, "b365d": 3.3, "b365a": 2.38, "psh": 0, "psd": 0, "psa": 0, "ah": 0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "St Pauli|Werder Bremen": [{"date": "04/10/2025", "home": "Werder Bremen", "away": "St Pauli", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 2.35, "b365d": 3.7, "b365a": 2.88, "psh": 2.37, "psd": 3.61, "psa": 3.04, "ah": -0.25, "pahh": 2.12, "paha": 1.81, "pov": 1.77, "pun": 2.13, "total": 1}, {"date": "22/02/2026", "home": "St Pauli", "away": "Werder Bremen", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 2.75, "b365d": 3.1, "b365a": 2.75, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Bayern Munich|Ein Frankfurt": [{"date": "04/10/2025", "home": "Ein Frankfurt", "away": "Bayern Munich", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 6.25, "b365d": 5.25, "b365a": 1.42, "psh": 7.49, "psd": 5.65, "psa": 1.38, "ah": 1.5, "pahh": 1.79, "paha": 2.12, "pov": 1.32, "pun": 3.37, "total": 3}, {"date": "21/02/2026", "home": "Bayern Munich", "away": "Ein Frankfurt", "fthg": 3, "ftag": 2, "ftr": "H", "b365h": 1.14, "b365d": 9.5, "b365a": 13.0, "psh": 0, "psd": 0, "psa": 0, "ah": -2.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "Heidenheim|Stuttgart": [{"date": "05/10/2025", "home": "Stuttgart", "away": "Heidenheim", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.42, "b365d": 4.75, "b365a": 7.0, "psh": 1.41, "psd": 5.33, "psa": 7.49, "ah": -1.25, "pahh": 1.94, "paha": 1.96, "pov": 1.49, "pun": 2.67, "total": 1}, {"date": "22/02/2026", "home": "Heidenheim", "away": "Stuttgart", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 4.5, "b365d": 4.0, "b365a": 1.7, "psh": 0, "psd": 0, "psa": 0, "ah": 0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 6}], "Hamburg|Mainz": [{"date": "05/10/2025", "home": "Hamburg", "away": "Mainz", "fthg": 4, "ftag": 0, "ftr": "H", "b365h": 2.8, "b365d": 3.5, "b365a": 2.4, "psh": 3.21, "psd": 3.77, "psa": 2.21, "ah": 0.25, "pahh": 1.78, "paha": 2.14, "pov": 1.77, "pun": 2.14, "total": 4}, {"date": "20/02/2026", "home": "Mainz", "away": "Hamburg", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.1, "b365d": 3.4, "b365a": 3.5, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Freiburg|M'gladbach": [{"date": "05/10/2025", "home": "M'gladbach", "away": "Freiburg", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 2.25, "b365d": 3.6, "b365a": 3.0, "psh": 2.66, "psd": 3.4, "psa": 2.8, "ah": -0.25, "pahh": 2.05, "paha": 1.86, "pov": 1.8, "pun": 2.09, "total": 0}, {"date": "22/02/2026", "home": "Freiburg", "away": "M'gladbach", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.95, "b365d": 3.25, "b365a": 4.33, "psh": 0, "psd": 0, "psa": 0, "ah": -0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "M'gladbach|Union Berlin": [{"date": "17/10/2025", "home": "Union Berlin", "away": "M'gladbach", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 2.2, "b365d": 3.4, "b365a": 3.2, "psh": 2.25, "psd": 3.46, "psa": 3.39, "ah": -0.25, "pahh": 1.94, "paha": 1.96, "pov": 1.9, "pun": 1.99, "total": 4}, {"date": "28/02/2026", "home": "M'gladbach", "away": "Union Berlin", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 2.38, "b365d": 3.3, "b365a": 3.0, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Augsburg|FC Koln": [{"date": "18/10/2025", "home": "FC Koln", "away": "Augsburg", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.95, "b365d": 3.9, "b365a": 3.5, "psh": 1.92, "psd": 3.9, "psa": 3.98, "ah": -0.5, "pahh": 2.0, "paha": 1.9, "pov": 1.6, "pun": 2.42, "total": 2}, {"date": "27/02/2026", "home": "Augsburg", "away": "FC Koln", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 2.2, "b365d": 3.5, "b365a": 3.25, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Heidenheim|Werder Bremen": [{"date": "18/10/2025", "home": "Heidenheim", "away": "Werder Bremen", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 2.88, "b365d": 3.5, "b365a": 2.35, "psh": 3.08, "psd": 3.6, "psa": 2.35, "ah": 0.25, "pahh": 1.84, "paha": 2.08, "pov": 1.69, "pun": 2.26, "total": 4}, {"date": "28/02/2026", "home": "Werder Bremen", "away": "Heidenheim", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.75, "b365d": 4.0, "b365a": 4.33, "psh": 0, "psd": 0, "psa": 0, "ah": -0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Leverkusen|Mainz": [{"date": "18/10/2025", "home": "Mainz", "away": "Leverkusen", "fthg": 3, "ftag": 4, "ftr": "A", "b365h": 2.8, "b365d": 3.4, "b365a": 2.45, "psh": 2.69, "psd": 3.59, "psa": 2.65, "ah": 0.0, "pahh": 2.06, "paha": 1.85, "pov": 1.81, "pun": 2.08, "total": 7}, {"date": "28/02/2026", "home": "Leverkusen", "away": "Mainz", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.7, "b365d": 4.0, "b365a": 4.5, "psh": 0, "psd": 0, "psa": 0, "ah": -0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Hamburg|RB Leipzig": [{"date": "18/10/2025", "home": "RB Leipzig", "away": "Hamburg", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.44, "b365d": 4.75, "b365a": 6.5, "psh": 1.47, "psd": 5.28, "psa": 6.25, "ah": -1.25, "pahh": 1.88, "paha": 2.03, "pov": 1.36, "pun": 3.19, "total": 3}, {"date": "01/03/2026", "home": "Hamburg", "away": "RB Leipzig", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 3.3, "b365d": 3.5, "b365a": 2.15, "psh": 0, "psd": 0, "psa": 0, "ah": 0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Stuttgart|Wolfsburg": [{"date": "18/10/2025", "home": "Wolfsburg", "away": "Stuttgart", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 2.63, "b365d": 3.6, "b365a": 2.5, "psh": 2.89, "psd": 3.75, "psa": 2.41, "ah": 0.0, "pahh": 2.01, "paha": 1.89, "pov": 1.64, "pun": 2.34, "total": 3}, {"date": "01/03/2026", "home": "Stuttgart", "away": "Wolfsburg", "fthg": 4, "ftag": 0, "ftr": "H", "b365h": 1.5, "b365d": 4.75, "b365a": 5.25, "psh": 0, "psd": 0, "psa": 0, "ah": -1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Bayern Munich|Dortmund": [{"date": "18/10/2025", "home": "Bayern Munich", "away": "Dortmund", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.33, "b365d": 5.5, "b365a": 7.5, "psh": 1.36, "psd": 5.75, "psa": 8.25, "ah": -1.5, "pahh": 1.96, "paha": 1.94, "pov": 1.34, "pun": 3.32, "total": 3}, {"date": "28/02/2026", "home": "Dortmund", "away": "Bayern Munich", "fthg": 2, "ftag": 3, "ftr": "A", "b365h": 4.5, "b365d": 4.75, "b365a": 1.6, "psh": 0, "psd": 0, "psa": 0, "ah": 0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "Ein Frankfurt|Freiburg": [{"date": "19/10/2025", "home": "Freiburg", "away": "Ein Frankfurt", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 2.5, "b365d": 3.5, "b365a": 2.7, "psh": 2.56, "psd": 3.64, "psa": 2.76, "ah": 0.0, "pahh": 1.88, "paha": 2.02, "pov": 1.63, "pun": 2.38, "total": 4}, {"date": "01/03/2026", "home": "Ein Frankfurt", "away": "Freiburg", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 2.2, "b365d": 3.5, "b365a": 3.2, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Hoffenheim|St Pauli": [{"date": "19/10/2025", "home": "St Pauli", "away": "Hoffenheim", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 2.5, "b365d": 3.4, "b365a": 2.8, "psh": 2.57, "psd": 3.49, "psa": 2.84, "ah": 0.0, "pahh": 1.85, "paha": 2.06, "pov": 1.81, "pun": 2.07, "total": 3}, {"date": "28/02/2026", "home": "Hoffenheim", "away": "St Pauli", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 1.48, "b365d": 4.75, "b365a": 6.0, "psh": 0, "psd": 0, "psa": 0, "ah": -1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Union Berlin|Werder Bremen": [{"date": "24/10/2025", "home": "Werder Bremen", "away": "Union Berlin", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 2.25, "b365d": 3.6, "b365a": 2.9, "psh": 2.36, "psd": 3.59, "psa": 3.08, "ah": -0.25, "pahh": 2.03, "paha": 1.89, "pov": 1.7, "pun": 2.27, "total": 1}, {"date": "08/03/2026", "home": "Union Berlin", "away": "Werder Bremen", "fthg": 1, "ftag": 4, "ftr": "A", "b365h": 2.25, "b365d": 3.4, "b365a": 3.25, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "Augsburg|RB Leipzig": [{"date": "25/10/2025", "home": "Augsburg", "away": "RB Leipzig", "fthg": 0, "ftag": 6, "ftr": "A", "b365h": 3.2, "b365d": 3.9, "b365a": 2.05, "psh": 3.41, "psd": 3.81, "psa": 2.12, "ah": 0.5, "pahh": 1.84, "paha": 2.08, "pov": 1.46, "pun": 2.76, "total": 6}, {"date": "07/03/2026", "home": "RB Leipzig", "away": "Augsburg", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.42, "b365d": 5.0, "b365a": 6.5, "psh": 0, "psd": 0, "psa": 0, "ah": -1.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Ein Frankfurt|St Pauli": [{"date": "25/10/2025", "home": "Ein Frankfurt", "away": "St Pauli", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.67, "b365d": 4.2, "b365a": 4.5, "psh": 1.65, "psd": 4.43, "psa": 4.92, "ah": -0.75, "pahh": 1.94, "paha": 1.96, "pov": 1.6, "pun": 2.43, "total": 2}, {"date": "08/03/2026", "home": "St Pauli", "away": "Ein Frankfurt", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 2.63, "b365d": 3.4, "b365a": 2.6, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 0}], "Hamburg|Wolfsburg": [{"date": "25/10/2025", "home": "Hamburg", "away": "Wolfsburg", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 2.35, "b365d": 3.5, "b365a": 2.9, "psh": 2.21, "psd": 3.76, "psa": 3.24, "ah": -0.25, "pahh": 2.1, "paha": 1.83, "pov": 1.67, "pun": 2.3, "total": 1}, {"date": "07/03/2026", "home": "Wolfsburg", "away": "Hamburg", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 2.3, "b365d": 3.5, "b365a": 3.0, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Heidenheim|Hoffenheim": [{"date": "25/10/2025", "home": "Hoffenheim", "away": "Heidenheim", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 1.57, "b365d": 4.5, "b365a": 5.25, "psh": 1.6, "psd": 4.5, "psa": 5.32, "ah": -1.0, "pahh": 1.98, "paha": 1.93, "pov": 1.53, "pun": 2.62, "total": 4}, {"date": "07/03/2026", "home": "Heidenheim", "away": "Hoffenheim", "fthg": 2, "ftag": 4, "ftr": "A", "b365h": 5.0, "b365d": 4.5, "b365a": 1.57, "psh": 0, "psd": 0, "psa": 0, "ah": 1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 6}], "Bayern Munich|M'gladbach": [{"date": "25/10/2025", "home": "M'gladbach", "away": "Bayern Munich", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 10.0, "b365d": 6.5, "b365a": 1.22, "psh": 10.65, "psd": 7.0, "psa": 1.24, "ah": 2.0, "pahh": 1.95, "paha": 1.93, "pov": 0, "pun": 0, "total": 3}, {"date": "06/03/2026", "home": "Bayern Munich", "away": "M'gladbach", "fthg": 4, "ftag": 1, "ftr": "H", "b365h": 1.2, "b365d": 8.5, "b365a": 9.5, "psh": 0, "psd": 0, "psa": 0, "ah": -2.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "Dortmund|FC Koln": [{"date": "25/10/2025", "home": "Dortmund", "away": "FC Koln", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.44, "b365d": 5.25, "b365a": 6.5, "psh": 1.39, "psd": 5.38, "psa": 7.8, "ah": -1.25, "pahh": 1.9, "paha": 2.01, "pov": 1.42, "pun": 2.91, "total": 1}, {"date": "07/03/2026", "home": "FC Koln", "away": "Dortmund", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 4.1, "b365d": 4.0, "b365a": 1.75, "psh": 0, "psd": 0, "psa": 0, "ah": 0.75, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Freiburg|Leverkusen": [{"date": "26/10/2025", "home": "Leverkusen", "away": "Freiburg", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.83, "b365d": 3.9, "b365a": 4.0, "psh": 2.02, "psd": 3.59, "psa": 3.91, "ah": -0.5, "pahh": 1.85, "paha": 2.06, "pov": 1.77, "pun": 2.12, "total": 2}, {"date": "07/03/2026", "home": "Freiburg", "away": "Leverkusen", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 2.9, "b365d": 3.3, "b365a": 2.4, "psh": 0, "psd": 0, "psa": 0, "ah": 0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 6}], "Mainz|Stuttgart": [{"date": "26/10/2025", "home": "Stuttgart", "away": "Mainz", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.75, "b365d": 4.0, "b365a": 4.33, "psh": 2.16, "psd": 3.63, "psa": 3.44, "ah": -0.75, "pahh": 2.03, "paha": 1.88, "pov": 1.6, "pun": 2.43, "total": 3}, {"date": "07/03/2026", "home": "Mainz", "away": "Stuttgart", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 3.2, "b365d": 3.6, "b365a": 2.15, "psh": 0, "psd": 0, "psa": 0, "ah": 0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "Augsburg|Dortmund": [{"date": "31/10/2025", "home": "Augsburg", "away": "Dortmund", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 5.0, "b365d": 4.5, "b365a": 1.57, "psh": 5.34, "psd": 4.42, "psa": 1.6, "ah": 1.0, "pahh": 1.92, "paha": 1.99, "pov": 1.52, "pun": 2.62, "total": 1}, {"date": "14/03/2026", "home": "Dortmund", "away": "Augsburg", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.42, "b365d": 4.75, "b365a": 7.0, "psh": 0, "psd": 0, "psa": 0, "ah": -1.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Ein Frankfurt|Heidenheim": [{"date": "01/11/2025", "home": "Heidenheim", "away": "Ein Frankfurt", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 3.6, "b365d": 4.0, "b365a": 1.9, "psh": 3.88, "psd": 4.14, "psa": 1.88, "ah": 0.5, "pahh": 1.99, "paha": 1.91, "pov": 1.5, "pun": 2.62, "total": 2}, {"date": "14/03/2026", "home": "Ein Frankfurt", "away": "Heidenheim", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.53, "b365d": 4.5, "b365a": 5.5, "psh": 0, "psd": 0, "psa": 0, "ah": -1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Mainz|Werder Bremen": [{"date": "01/11/2025", "home": "Mainz", "away": "Werder Bremen", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.95, "b365d": 3.9, "b365a": 3.5, "psh": 1.83, "psd": 4.02, "psa": 4.27, "ah": -0.5, "pahh": 2.03, "paha": 1.88, "pov": 1.58, "pun": 2.48, "total": 2}, {"date": "15/03/2026", "home": "Werder Bremen", "away": "Mainz", "fthg": 0, "ftag": 2, "ftr": "A", "b365h": 2.2, "b365d": 3.5, "b365a": 3.2, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "RB Leipzig|Stuttgart": [{"date": "01/11/2025", "home": "RB Leipzig", "away": "Stuttgart", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 1.95, "b365d": 3.9, "b365a": 3.5, "psh": 2.04, "psd": 3.89, "psa": 3.55, "ah": -0.5, "pahh": 2.03, "paha": 1.88, "pov": 1.43, "pun": 2.89, "total": 4}, {"date": "15/03/2026", "home": "Stuttgart", "away": "RB Leipzig", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 2.3, "b365d": 3.9, "b365a": 2.7, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "M'gladbach|St Pauli": [{"date": "01/11/2025", "home": "St Pauli", "away": "M'gladbach", "fthg": 0, "ftag": 4, "ftr": "A", "b365h": 2.15, "b365d": 3.5, "b365a": 3.3, "psh": 2.35, "psd": 3.49, "psa": 3.17, "ah": -0.25, "pahh": 1.91, "paha": 2.0, "pov": 1.92, "pun": 1.97, "total": 4}, {"date": "13/03/2026", "home": "M'gladbach", "away": "St Pauli", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.91, "b365d": 3.4, "b365a": 4.2, "psh": 0, "psd": 0, "psa": 0, "ah": -0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Freiburg|Union Berlin": [{"date": "01/11/2025", "home": "Union Berlin", "away": "Freiburg", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 2.5, "b365d": 3.3, "b365a": 2.75, "psh": 2.72, "psd": 3.21, "psa": 2.87, "ah": 0.0, "pahh": 1.88, "paha": 2.03, "pov": 2.18, "pun": 1.74, "total": 0}, {"date": "15/03/2026", "home": "Freiburg", "away": "Union Berlin", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 2.15, "b365d": 3.3, "b365a": 3.5, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Bayern Munich|Leverkusen": [{"date": "01/11/2025", "home": "Bayern Munich", "away": "Leverkusen", "fthg": 3, "ftag": 0, "ftr": "H", "b365h": 1.22, "b365d": 7.0, "b365a": 9.5, "psh": 1.21, "psd": 7.57, "psa": 12.27, "ah": -2.0, "pahh": 1.97, "paha": 1.92, "pov": 0, "pun": 0, "total": 3}, {"date": "14/03/2026", "home": "Leverkusen", "away": "Bayern Munich", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 5.25, "b365d": 4.33, "b365a": 1.55, "psh": 0, "psd": 0, "psa": 0, "ah": 1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "FC Koln|Hamburg": [{"date": "02/11/2025", "home": "FC Koln", "away": "Hamburg", "fthg": 4, "ftag": 1, "ftr": "H", "b365h": 2.1, "b365d": 3.7, "b365a": 3.2, "psh": 2.49, "psd": 3.64, "psa": 2.84, "ah": -0.25, "pahh": 1.91, "paha": 2.0, "pov": 1.63, "pun": 2.36, "total": 5}, {"date": "14/03/2026", "home": "Hamburg", "away": "FC Koln", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.1, "b365d": 3.6, "b365a": 3.25, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Hoffenheim|Wolfsburg": [{"date": "02/11/2025", "home": "Wolfsburg", "away": "Hoffenheim", "fthg": 2, "ftag": 3, "ftr": "A", "b365h": 2.75, "b365d": 3.9, "b365a": 2.3, "psh": 2.79, "psd": 3.77, "psa": 2.47, "ah": 0.25, "pahh": 1.78, "paha": 2.14, "pov": 1.57, "pun": 2.5, "total": 5}, {"date": "14/03/2026", "home": "Hoffenheim", "away": "Wolfsburg", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.44, "b365d": 4.75, "b365a": 6.5, "psh": 0, "psd": 0, "psa": 0, "ah": -1.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Werder Bremen|Wolfsburg": [{"date": "07/11/2025", "home": "Werder Bremen", "away": "Wolfsburg", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 2.15, "b365d": 3.6, "b365a": 3.1, "psh": 2.2, "psd": 3.76, "psa": 3.26, "ah": -0.25, "pahh": 1.96, "paha": 1.96, "pov": 1.58, "pun": 2.52, "total": 3}, {"date": "21/03/2026", "home": "Wolfsburg", "away": "Werder Bremen", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 2.35, "b365d": 3.6, "b365a": 2.8, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}], "Dortmund|Hamburg": [{"date": "08/11/2025", "home": "Hamburg", "away": "Dortmund", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 4.33, "b365d": 4.2, "b365a": 1.7, "psh": 4.1, "psd": 3.9, "psa": 1.89, "ah": 0.75, "pahh": 2.0, "paha": 1.91, "pov": 1.53, "pun": 2.6, "total": 2}, {"date": "21/03/2026", "home": "Dortmund", "away": "Hamburg", "fthg": 3, "ftag": 2, "ftr": "H", "b365h": 1.4, "b365d": 5.0, "b365a": 7.0, "psh": 0, "psd": 0, "psa": 0, "ah": -1.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "Hoffenheim|RB Leipzig": [{"date": "08/11/2025", "home": "Hoffenheim", "away": "RB Leipzig", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 2.6, "b365d": 3.9, "b365a": 2.4, "psh": 2.79, "psd": 3.95, "psa": 2.4, "ah": 0.0, "pahh": 2.07, "paha": 1.85, "pov": 1.4, "pun": 3.01, "total": 4}, {"date": "20/03/2026", "home": "RB Leipzig", "away": "Hoffenheim", "fthg": 5, "ftag": 0, "ftr": "H", "b365h": 1.91, "b365d": 4.0, "b365a": 3.5, "psh": 0, "psd": 0, "psa": 0, "ah": -0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 5}], "Heidenheim|Leverkusen": [{"date": "08/11/2025", "home": "Leverkusen", "away": "Heidenheim", "fthg": 6, "ftag": 0, "ftr": "H", "b365h": 1.4, "b365d": 5.0, "b365a": 6.5, "psh": 1.4, "psd": 5.23, "psa": 7.71, "ah": -1.25, "pahh": 1.88, "paha": 2.04, "pov": 1.53, "pun": 2.56, "total": 6}, {"date": "21/03/2026", "home": "Heidenheim", "away": "Leverkusen", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 5.25, "b365d": 4.5, "b365a": 1.57, "psh": 0, "psd": 0, "psa": 0, "ah": 1.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 6}], "Bayern Munich|Union Berlin": [{"date": "08/11/2025", "home": "Union Berlin", "away": "Bayern Munich", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 13.0, "b365d": 7.0, "b365a": 1.2, "psh": 13.0, "psd": 7.05, "psa": 1.22, "ah": 2.0, "pahh": 1.88, "paha": 2.0, "pov": 1.37, "pun": 3.08, "total": 4}, {"date": "21/03/2026", "home": "Bayern Munich", "away": "Union Berlin", "fthg": 4, "ftag": 0, "ftr": "H", "b365h": 1.17, "b365d": 8.0, "b365a": 13.0, "psh": 0, "psd": 0, "psa": 0, "ah": -2.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 4}], "FC Koln|M'gladbach": [{"date": "08/11/2025", "home": "M'gladbach", "away": "FC Koln", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 2.2, "b365d": 3.6, "b365a": 3.1, "psh": 2.07, "psd": 3.77, "psa": 3.57, "ah": -0.25, "pahh": 1.99, "paha": 1.92, "pov": 1.64, "pun": 2.34, "total": 4}, {"date": "21/03/2026", "home": "FC Koln", "away": "M'gladbach", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 2.25, "b365d": 3.5, "b365a": 3.1, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 6}], "Freiburg|St Pauli": [{"date": "09/11/2025", "home": "Freiburg", "away": "St Pauli", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.83, "b365d": 3.5, "b365a": 4.5, "psh": 1.78, "psd": 3.62, "psa": 5.17, "ah": -0.5, "pahh": 1.88, "paha": 2.04, "pov": 2.09, "pun": 1.8, "total": 3}, {"date": "22/03/2026", "home": "St Pauli", "away": "Freiburg", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 2.7, "b365d": 3.1, "b365a": 2.8, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Augsburg|Stuttgart": [{"date": "09/11/2025", "home": "Stuttgart", "away": "Augsburg", "fthg": 3, "ftag": 2, "ftr": "H", "b365h": 1.55, "b365d": 4.33, "b365a": 5.75, "psh": 1.53, "psd": 4.63, "psa": 6.08, "ah": -1.0, "pahh": 1.88, "paha": 2.03, "pov": 1.57, "pun": 2.5, "total": 5}, {"date": "22/03/2026", "home": "Augsburg", "away": "Stuttgart", "fthg": 2, "ftag": 5, "ftr": "A", "b365h": 3.5, "b365d": 3.8, "b365a": 2.0, "psh": 0, "psd": 0, "psa": 0, "ah": 0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 7}], "Ein Frankfurt|Mainz": [{"date": "09/11/2025", "home": "Ein Frankfurt", "away": "Mainz", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.83, "b365d": 4.0, "b365a": 3.9, "psh": 1.88, "psd": 3.94, "psa": 4.1, "ah": -0.5, "pahh": 1.88, "paha": 2.04, "pov": 1.57, "pun": 2.5, "total": 1}, {"date": "22/03/2026", "home": "Mainz", "away": "Ein Frankfurt", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 2.1, "b365d": 3.7, "b365a": 3.25, "psh": 0, "psd": 0, "psa": 0, "ah": -0.25, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 3}], "Hoffenheim|Mainz": [{"date": "21/11/2025", "home": "Mainz", "away": "Hoffenheim", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.6, "b365d": 3.6, "b365a": 2.7, "psh": 2.54, "psd": 3.56, "psa": 2.83, "ah": 0.0, "pahh": 1.91, "paha": 2.0, "pov": 1.68, "pun": 2.29, "total": 2}], "Augsburg|Hamburg": [{"date": "22/11/2025", "home": "Augsburg", "away": "Hamburg", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 2.35, "b365d": 3.5, "b365a": 2.9, "psh": 2.53, "psd": 3.46, "psa": 2.91, "ah": -0.25, "pahh": 2.09, "paha": 1.83, "pov": 1.72, "pun": 2.2, "total": 1}], "Bayern Munich|Freiburg": [{"date": "22/11/2025", "home": "Bayern Munich", "away": "Freiburg", "fthg": 6, "ftag": 2, "ftr": "H", "b365h": 1.17, "b365d": 8.0, "b365a": 13.0, "psh": 1.19, "psd": 7.8, "psa": 15.0, "ah": -2.0, "pahh": 1.86, "paha": 2.03, "pov": 1.36, "pun": 3.21, "total": 8}], "Dortmund|Stuttgart": [{"date": "22/11/2025", "home": "Dortmund", "away": "Stuttgart", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 1.75, "b365d": 4.0, "b365a": 4.33, "psh": 1.83, "psd": 3.93, "psa": 4.38, "ah": -0.75, "pahh": 2.02, "paha": 1.89, "pov": 1.55, "pun": 2.51, "total": 6}], "Heidenheim|M'gladbach": [{"date": "22/11/2025", "home": "Heidenheim", "away": "M'gladbach", "fthg": 0, "ftag": 3, "ftr": "A", "b365h": 3.2, "b365d": 3.6, "b365a": 2.15, "psh": 3.44, "psd": 3.74, "psa": 2.13, "ah": 0.25, "pahh": 1.96, "paha": 1.94, "pov": 1.68, "pun": 2.28, "total": 3}], "Leverkusen|Wolfsburg": [{"date": "22/11/2025", "home": "Wolfsburg", "away": "Leverkusen", "fthg": 1, "ftag": 3, "ftr": "A", "b365h": 3.5, "b365d": 3.75, "b365a": 2.0, "psh": 3.56, "psd": 3.92, "psa": 2.03, "ah": 0.5, "pahh": 1.88, "paha": 2.03, "pov": 1.63, "pun": 2.38, "total": 4}], "Ein Frankfurt|FC Koln": [{"date": "22/11/2025", "home": "FC Koln", "away": "Ein Frankfurt", "fthg": 3, "ftag": 4, "ftr": "A", "b365h": 3.0, "b365d": 3.75, "b365a": 2.2, "psh": 2.83, "psd": 3.67, "psa": 2.49, "ah": 0.25, "pahh": 1.94, "paha": 1.96, "pov": 1.52, "pun": 2.58, "total": 7}], "RB Leipzig|Werder Bremen": [{"date": "23/11/2025", "home": "RB Leipzig", "away": "Werder Bremen", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.45, "b365d": 5.0, "b365a": 6.0, "psh": 1.55, "psd": 4.82, "psa": 5.6, "ah": -1.25, "pahh": 1.89, "paha": 2.01, "pov": 1.34, "pun": 3.34, "total": 2}], "St Pauli|Union Berlin": [{"date": "23/11/2025", "home": "St Pauli", "away": "Union Berlin", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 2.45, "b365d": 3.3, "b365a": 2.9, "psh": 2.76, "psd": 3.04, "psa": 2.97, "ah": 0.0, "pahh": 1.81, "paha": 2.12, "pov": 2.19, "pun": 1.73, "total": 1}], "M'gladbach|RB Leipzig": [{"date": "28/11/2025", "home": "M'gladbach", "away": "RB Leipzig", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 2.88, "b365d": 3.7, "b365a": 2.3, "psh": 2.92, "psd": 3.84, "psa": 2.35, "ah": 0.25, "pahh": 1.88, "paha": 2.05, "pov": 1.46, "pun": 2.78, "total": 0}], "Bayern Munich|St Pauli": [{"date": "29/11/2025", "home": "Bayern Munich", "away": "St Pauli", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 1.1, "b365d": 10.0, "b365a": 21.0, "psh": 1.12, "psd": 11.0, "psa": 23.0, "ah": -2.5, "pahh": 1.82, "paha": 2.03, "pov": 0, "pun": 0, "total": 4}], "Augsburg|Hoffenheim": [{"date": "29/11/2025", "home": "Hoffenheim", "away": "Augsburg", "fthg": 3, "ftag": 0, "ftr": "H", "b365h": 1.67, "b365d": 4.33, "b365a": 4.5, "psh": 1.77, "psd": 4.13, "psa": 4.5, "ah": -0.75, "pahh": 1.85, "paha": 2.07, "pov": 1.55, "pun": 2.57, "total": 3}], "Heidenheim|Union Berlin": [{"date": "29/11/2025", "home": "Union Berlin", "away": "Heidenheim", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 1.67, "b365d": 4.0, "b365a": 5.0, "psh": 1.56, "psd": 4.09, "psa": 6.63, "ah": -0.75, "pahh": 1.86, "paha": 2.05, "pov": 1.95, "pun": 1.93, "total": 3}], "FC Koln|Werder Bremen": [{"date": "29/11/2025", "home": "Werder Bremen", "away": "FC Koln", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.25, "b365d": 3.8, "b365a": 2.9, "psh": 2.25, "psd": 3.83, "psa": 3.1, "ah": -0.25, "pahh": 2.01, "paha": 1.9, "pov": 1.56, "pun": 2.52, "total": 2}], "Dortmund|Leverkusen": [{"date": "29/11/2025", "home": "Leverkusen", "away": "Dortmund", "fthg": 1, "ftag": 2, "ftr": "A", "b365h": 2.55, "b365d": 3.6, "b365a": 2.63, "psh": 2.77, "psd": 3.61, "psa": 2.57, "ah": 0.0, "pahh": 1.9, "paha": 2.0, "pov": 1.6, "pun": 2.43, "total": 3}], "Hamburg|Stuttgart": [{"date": "30/11/2025", "home": "Hamburg", "away": "Stuttgart", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 3.0, "b365d": 3.75, "b365a": 2.2, "psh": 2.85, "psd": 3.55, "psa": 2.53, "ah": 0.25, "pahh": 1.97, "paha": 1.93, "pov": 1.56, "pun": 2.52, "total": 3}], "Ein Frankfurt|Wolfsburg": [{"date": "30/11/2025", "home": "Ein Frankfurt", "away": "Wolfsburg", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.73, "b365d": 4.2, "b365a": 4.2, "psh": 1.97, "psd": 3.98, "psa": 3.7, "ah": -0.75, "pahh": 1.95, "paha": 1.95, "pov": 1.51, "pun": 2.61, "total": 2}], "Freiburg|Mainz": [{"date": "30/11/2025", "home": "Freiburg", "away": "Mainz", "fthg": 4, "ftag": 0, "ftr": "H", "b365h": 1.91, "b365d": 3.4, "b365a": 4.2, "psh": 1.75, "psd": 3.8, "psa": 5.09, "ah": -0.5, "pahh": 1.93, "paha": 1.97, "pov": 2.02, "pun": 1.88, "total": 4}], "M'gladbach|Mainz": [{"date": "05/12/2025", "home": "Mainz", "away": "M'gladbach", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 2.55, "b365d": 3.4, "b365a": 2.63, "psh": 2.72, "psd": 3.48, "psa": 2.68, "ah": 0.0, "pahh": 1.96, "paha": 1.96, "pov": 1.76, "pun": 2.18, "total": 1}], "Augsburg|Leverkusen": [{"date": "06/12/2025", "home": "Augsburg", "away": "Leverkusen", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 3.7, "b365d": 4.0, "b365a": 1.9, "psh": 3.57, "psd": 3.48, "psa": 2.17, "ah": 0.5, "pahh": 1.97, "paha": 1.93, "pov": 1.64, "pun": 2.35, "total": 2}], "FC Koln|St Pauli": [{"date": "06/12/2025", "home": "FC Koln", "away": "St Pauli", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 1.95, "b365d": 3.6, "b365a": 3.8, "psh": 2.05, "psd": 3.56, "psa": 3.85, "ah": -0.5, "pahh": 2.0, "paha": 1.9, "pov": 1.94, "pun": 1.94, "total": 2}], "Freiburg|Heidenheim": [{"date": "06/12/2025", "home": "Heidenheim", "away": "Freiburg", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 3.9, "b365d": 3.6, "b365a": 1.91, "psh": 4.97, "psd": 3.68, "psa": 1.79, "ah": 0.5, "pahh": 1.94, "paha": 1.96, "pov": 1.93, "pun": 1.96, "total": 3}], "Bayern Munich|Stuttgart": [{"date": "06/12/2025", "home": "Stuttgart", "away": "Bayern Munich", "fthg": 0, "ftag": 5, "ftr": "A", "b365h": 5.75, "b365d": 5.0, "b365a": 1.45, "psh": 4.76, "psd": 4.71, "psa": 1.63, "ah": 1.25, "pahh": 1.9, "paha": 2.0, "pov": 1.36, "pun": 3.28, "total": 5}], "Union Berlin|Wolfsburg": [{"date": "06/12/2025", "home": "Wolfsburg", "away": "Union Berlin", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 2.15, "b365d": 3.4, "b365a": 3.5, "psh": 2.04, "psd": 3.51, "psa": 3.95, "ah": -0.25, "pahh": 1.88, "paha": 2.03, "pov": 1.96, "pun": 1.93, "total": 4}], "Ein Frankfurt|RB Leipzig": [{"date": "06/12/2025", "home": "RB Leipzig", "away": "Ein Frankfurt", "fthg": 6, "ftag": 0, "ftr": "H", "b365h": 1.73, "b365d": 4.2, "b365a": 4.2, "psh": 1.78, "psd": 4.1, "psa": 4.4, "ah": -0.75, "pahh": 2.01, "paha": 1.89, "pov": 1.46, "pun": 2.76, "total": 6}], "Hamburg|Werder Bremen": [{"date": "07/12/2025", "home": "Hamburg", "away": "Werder Bremen", "fthg": 3, "ftag": 2, "ftr": "H", "b365h": 2.25, "b365d": 3.5, "b365a": 3.0, "psh": 2.45, "psd": 3.51, "psa": 2.99, "ah": -0.25, "pahh": 2.06, "paha": 1.85, "pov": 1.73, "pun": 2.2, "total": 5}], "Dortmund|Hoffenheim": [{"date": "07/12/2025", "home": "Dortmund", "away": "Hoffenheim", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.62, "b365d": 4.5, "b365a": 4.75, "psh": 1.65, "psd": 4.55, "psa": 4.95, "ah": -1.0, "pahh": 2.03, "paha": 1.88, "pov": 1.5, "pun": 2.64, "total": 2}], "RB Leipzig|Union Berlin": [{"date": "12/12/2025", "home": "Union Berlin", "away": "RB Leipzig", "fthg": 3, "ftag": 1, "ftr": "H", "b365h": 3.2, "b365d": 3.5, "b365a": 2.2, "psh": 3.13, "psd": 3.51, "psa": 2.36, "ah": 0.25, "pahh": 1.93, "paha": 2.0, "pov": 2.01, "pun": 1.89, "total": 4}], "Augsburg|Ein Frankfurt": [{"date": "13/12/2025", "home": "Ein Frankfurt", "away": "Augsburg", "fthg": 1, "ftag": 0, "ftr": "H", "b365h": 1.7, "b365d": 4.2, "b365a": 4.33, "psh": 1.87, "psd": 3.82, "psa": 4.29, "ah": -0.75, "pahh": 1.92, "paha": 1.99, "pov": 1.61, "pun": 2.4, "total": 1}], "Hamburg|Hoffenheim": [{"date": "13/12/2025", "home": "Hoffenheim", "away": "Hamburg", "fthg": 4, "ftag": 1, "ftr": "H", "b365h": 1.7, "b365d": 4.33, "b365a": 4.2, "psh": 1.72, "psd": 4.16, "psa": 4.68, "ah": -0.75, "pahh": 1.91, "paha": 2.0, "pov": 1.52, "pun": 2.6, "total": 5}], "M'gladbach|Wolfsburg": [{"date": "13/12/2025", "home": "M'gladbach", "away": "Wolfsburg", "fthg": 1, "ftag": 3, "ftr": "A", "b365h": 1.95, "b365d": 3.8, "b365a": 3.6, "psh": 2.05, "psd": 3.8, "psa": 3.62, "ah": -0.5, "pahh": 1.99, "paha": 1.92, "pov": 1.61, "pun": 2.42, "total": 4}], "Heidenheim|St Pauli": [{"date": "13/12/2025", "home": "St Pauli", "away": "Heidenheim", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.95, "b365d": 3.4, "b365a": 4.0, "psh": 1.88, "psd": 3.54, "psa": 4.65, "ah": -0.5, "pahh": 1.99, "paha": 1.92, "pov": 2.19, "pun": 1.74, "total": 3}], "FC Koln|Leverkusen": [{"date": "13/12/2025", "home": "Leverkusen", "away": "FC Koln", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.55, "b365d": 4.33, "b365a": 5.25, "psh": 1.81, "psd": 4.3, "psa": 4.07, "ah": -1.0, "pahh": 1.93, "paha": 1.96, "pov": 1.54, "pun": 2.58, "total": 2}], "Dortmund|Freiburg": [{"date": "14/12/2025", "home": "Freiburg", "away": "Dortmund", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 3.25, "b365d": 3.5, "b365a": 2.15, "psh": 3.95, "psd": 3.59, "psa": 2.01, "ah": 0.25, "pahh": 1.99, "paha": 1.92, "pov": 1.82, "pun": 2.06, "total": 2}], "Bayern Munich|Mainz": [{"date": "14/12/2025", "home": "Bayern Munich", "away": "Mainz", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 1.09, "b365d": 11.0, "b365a": 21.0, "psh": 1.08, "psd": 14.25, "psa": 24.0, "ah": -2.75, "pahh": 2.01, "paha": 1.87, "pov": 0, "pun": 0, "total": 4}], "Stuttgart|Werder Bremen": [{"date": "14/12/2025", "home": "Werder Bremen", "away": "Stuttgart", "fthg": 0, "ftag": 4, "ftr": "A", "b365h": 2.9, "b365d": 3.8, "b365a": 2.25, "psh": 2.9, "psd": 3.75, "psa": 2.4, "ah": 0.25, "pahh": 1.88, "paha": 2.03, "pov": 1.54, "pun": 2.54, "total": 4}], "Dortmund|M'gladbach": [{"date": "19/12/2025", "home": "Dortmund", "away": "M'gladbach", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.55, "b365d": 4.5, "b365a": 5.5, "psh": 1.52, "psd": 4.72, "psa": 6.1, "ah": -1.0, "pahh": 1.93, "paha": 2.0, "pov": 1.52, "pun": 2.66, "total": 2}], "Augsburg|Werder Bremen": [{"date": "20/12/2025", "home": "Augsburg", "away": "Werder Bremen", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 2.25, "b365d": 3.5, "b365a": 3.1, "psh": 2.33, "psd": 3.53, "psa": 3.17, "ah": -0.25, "pahh": 1.98, "paha": 1.93, "pov": 1.8, "pun": 2.09, "total": 0}], "FC Koln|Union Berlin": [{"date": "20/12/2025", "home": "FC Koln", "away": "Union Berlin", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 2.3, "b365d": 3.3, "b365a": 3.1, "psh": 2.69, "psd": 3.27, "psa": 2.86, "ah": -0.25, "pahh": 2.05, "paha": 1.86, "pov": 2.0, "pun": 1.89, "total": 1}], "Ein Frankfurt|Hamburg": [{"date": "20/12/2025", "home": "Hamburg", "away": "Ein Frankfurt", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.6, "b365d": 3.6, "b365a": 2.55, "psh": 2.52, "psd": 3.43, "psa": 2.95, "ah": 0.0, "pahh": 2.0, "paha": 1.85, "pov": 1.68, "pun": 2.22, "total": 2}], "Hoffenheim|Stuttgart": [{"date": "20/12/2025", "home": "Stuttgart", "away": "Hoffenheim", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 2.0, "b365d": 3.8, "b365a": 3.4, "psh": 2.0, "psd": 3.92, "psa": 3.65, "ah": -0.5, "pahh": 2.08, "paha": 1.84, "pov": 1.51, "pun": 2.61, "total": 0}], "Freiburg|Wolfsburg": [{"date": "20/12/2025", "home": "Wolfsburg", "away": "Freiburg", "fthg": 3, "ftag": 4, "ftr": "A", "b365h": 2.5, "b365d": 3.6, "b365a": 2.75, "psh": 2.48, "psd": 3.49, "psa": 2.96, "ah": 0.0, "pahh": 1.88, "paha": 2.03, "pov": 1.85, "pun": 2.05, "total": 7}], "Leverkusen|RB Leipzig": [{"date": "20/12/2025", "home": "RB Leipzig", "away": "Leverkusen", "fthg": 1, "ftag": 3, "ftr": "A", "b365h": 2.1, "b365d": 3.8, "b365a": 3.2, "psh": 2.11, "psd": 3.92, "psa": 3.33, "ah": -0.25, "pahh": 1.88, "paha": 2.02, "pov": 1.55, "pun": 2.52, "total": 4}], "Mainz|St Pauli": [{"date": "21/12/2025", "home": "Mainz", "away": "St Pauli", "fthg": 0, "ftag": 0, "ftr": "D", "b365h": 1.95, "b365d": 3.4, "b365a": 4.1, "psh": 2.04, "psd": 3.39, "psa": 4.12, "ah": -0.5, "pahh": 1.98, "paha": 1.92, "pov": 2.18, "pun": 1.74, "total": 0}], "Bayern Munich|Heidenheim": [{"date": "21/12/2025", "home": "Heidenheim", "away": "Bayern Munich", "fthg": 0, "ftag": 4, "ftr": "A", "b365h": 13.0, "b365d": 9.5, "b365a": 1.14, "psh": 15.87, "psd": 9.2, "psa": 1.15, "ah": 2.5, "pahh": 1.88, "paha": 2.0, "pov": 0, "pun": 0, "total": 4}], "Dortmund|Ein Frankfurt": [{"date": "09/01/2026", "home": "Ein Frankfurt", "away": "Dortmund", "fthg": 3, "ftag": 3, "ftr": "D", "b365h": 3.6, "b365d": 3.8, "b365a": 1.95, "psh": 3.51, "psd": 3.7, "psa": 2.11, "ah": 0.5, "pahh": 1.88, "paha": 2.04, "pov": 1.63, "pun": 2.4, "total": 6}], "Freiburg|Hamburg": [{"date": "10/01/2026", "home": "Freiburg", "away": "Hamburg", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.8, "b365d": 3.6, "b365a": 4.5, "psh": 1.81, "psd": 3.67, "psa": 4.82, "ah": -0.75, "pahh": 2.05, "paha": 1.86, "pov": 1.85, "pun": 2.05, "total": 3}], "FC Koln|Heidenheim": [{"date": "10/01/2026", "home": "Heidenheim", "away": "FC Koln", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 2.9, "b365d": 3.5, "b365a": 2.38, "psh": 2.81, "psd": 3.52, "psa": 2.59, "ah": 0.25, "pahh": 1.83, "paha": 2.1, "pov": 1.8, "pun": 2.09, "total": 4}], "Mainz|Union Berlin": [{"date": "10/01/2026", "home": "Union Berlin", "away": "Mainz", "fthg": 2, "ftag": 2, "ftr": "D", "b365h": 2.15, "b365d": 3.25, "b365a": 3.7, "psh": 2.12, "psd": 3.29, "psa": 3.97, "ah": -0.25, "pahh": 1.83, "paha": 2.09, "pov": 2.27, "pun": 1.68, "total": 4}], "Leverkusen|Stuttgart": [{"date": "10/01/2026", "home": "Leverkusen", "away": "Stuttgart", "fthg": 1, "ftag": 4, "ftr": "A", "b365h": 1.95, "b365d": 4.1, "b365a": 3.4, "psh": 2.23, "psd": 3.75, "psa": 3.19, "ah": -0.5, "pahh": 1.96, "paha": 1.94, "pov": 1.49, "pun": 2.67, "total": 5}], "Augsburg|M'gladbach": [{"date": "11/01/2026", "home": "M'gladbach", "away": "Augsburg", "fthg": 4, "ftag": 0, "ftr": "H", "b365h": 1.85, "b365d": 3.8, "b365a": 4.0, "psh": 1.95, "psd": 3.71, "psa": 3.99, "ah": -0.5, "pahh": 1.93, "paha": 1.97, "pov": 1.85, "pun": 2.05, "total": 4}], "Bayern Munich|Wolfsburg": [{"date": "11/01/2026", "home": "Bayern Munich", "away": "Wolfsburg", "fthg": 8, "ftag": 1, "ftr": "H", "b365h": 1.11, "b365d": 11.0, "b365a": 17.0, "psh": 1.13, "psd": 11.0, "psa": 19.0, "ah": -2.75, "pahh": 1.96, "paha": 1.91, "pov": 0, "pun": 0, "total": 9}], "Ein Frankfurt|Stuttgart": [{"date": "13/01/2026", "home": "Stuttgart", "away": "Ein Frankfurt", "fthg": 3, "ftag": 2, "ftr": "H", "b365h": 1.73, "b365d": 4.2, "b365a": 4.2, "psh": 1.81, "psd": 4.01, "psa": 4.25, "ah": -0.75, "pahh": 2.05, "paha": 1.86, "pov": 1.58, "pun": 2.47, "total": 5}], "Dortmund|Werder Bremen": [{"date": "13/01/2026", "home": "Dortmund", "away": "Werder Bremen", "fthg": 3, "ftag": 0, "ftr": "H", "b365h": 1.4, "b365d": 5.0, "b365a": 7.0, "psh": 1.36, "psd": 5.64, "psa": 7.94, "ah": -1.5, "pahh": 1.99, "paha": 1.92, "pov": 1.44, "pun": 2.82, "total": 3}], "Heidenheim|Mainz": [{"date": "13/01/2026", "home": "Mainz", "away": "Heidenheim", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.75, "b365d": 3.8, "b365a": 4.33, "psh": 1.67, "psd": 3.85, "psa": 5.58, "ah": -0.75, "pahh": 1.86, "paha": 2.05, "pov": 1.92, "pun": 1.97, "total": 3}], "St Pauli|Wolfsburg": [{"date": "14/01/2026", "home": "Wolfsburg", "away": "St Pauli", "fthg": 2, "ftag": 1, "ftr": "H", "b365h": 1.91, "b365d": 3.7, "b365a": 3.8, "psh": 1.9, "psd": 3.75, "psa": 4.14, "ah": -0.5, "pahh": 1.91, "paha": 2.0, "pov": 1.86, "pun": 2.03, "total": 3}], "Bayern Munich|FC Koln": [{"date": "14/01/2026", "home": "FC Koln", "away": "Bayern Munich", "fthg": 1, "ftag": 3, "ftr": "A", "b365h": 10.5, "b365d": 7.5, "b365a": 1.22, "psh": 9.41, "psd": 6.82, "psa": 1.26, "ah": 2.0, "pahh": 1.81, "paha": 2.07, "pov": 0, "pun": 0, "total": 4}], "Hoffenheim|M'gladbach": [{"date": "14/01/2026", "home": "Hoffenheim", "away": "M'gladbach", "fthg": 5, "ftag": 1, "ftr": "H", "b365h": 1.85, "b365d": 3.9, "b365a": 3.8, "psh": 1.85, "psd": 4.05, "psa": 4.05, "ah": -0.5, "pahh": 1.85, "paha": 2.06, "pov": 1.6, "pun": 2.42, "total": 6}], "Freiburg|RB Leipzig": [{"date": "14/01/2026", "home": "RB Leipzig", "away": "Freiburg", "fthg": 2, "ftag": 0, "ftr": "H", "b365h": 1.7, "b365d": 4.0, "b365a": 4.5, "psh": 1.72, "psd": 4.16, "psa": 4.63, "ah": -0.75, "pahh": 1.93, "paha": 1.97, "pov": 1.62, "pun": 2.39, "total": 2}], "Augsburg|Union Berlin": [{"date": "15/01/2026", "home": "Augsburg", "away": "Union Berlin", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 2.6, "b365d": 3.2, "b365a": 2.8, "psh": 0, "psd": 0, "psa": 0, "ah": 0.0, "pahh": 1.86, "paha": 2.05, "pov": 2.29, "pun": 1.67, "total": 2}], "RB Leipzig|St Pauli": [{"date": "27/01/2026", "home": "St Pauli", "away": "RB Leipzig", "fthg": 1, "ftag": 1, "ftr": "D", "b365h": 4.5, "b365d": 3.5, "b365a": 1.8, "psh": 0, "psd": 0, "psa": 0, "ah": 0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Hoffenheim|Werder Bremen": [{"date": "27/01/2026", "home": "Werder Bremen", "away": "Hoffenheim", "fthg": 0, "ftag": 2, "ftr": "A", "b365h": 3.7, "b365d": 3.6, "b365a": 2.0, "psh": 0, "psd": 0, "psa": 0, "ah": 0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 2}], "Hamburg|Leverkusen": [{"date": "04/03/2026", "home": "Hamburg", "away": "Leverkusen", "fthg": 0, "ftag": 1, "ftr": "A", "b365h": 3.5, "b365d": 3.6, "b365a": 2.05, "psh": 0, "psd": 0, "psa": 0, "ah": 0.5, "pahh": 0, "paha": 0, "pov": 0, "pun": 0, "total": 1}]}, "teams": ["Augsburg", "Bayern Munich", "Dortmund", "Ein Frankfurt", "FC Koln", "Freiburg", "Hamburg", "Heidenheim", "Hoffenheim", "Leverkusen", "M'gladbach", "Mainz", "RB Leipzig", "St Pauli", "Stuttgart", "Union Berlin", "Werder Bremen", "Wolfsburg"]};
-const TS = DATA.team_stats;
-const TEAMS = DATA.teams;
-const LGH = DATA.lgh;
-const LGA = DATA.lga;
-
-// ─── TEAM COLORS ──────────────────────────────────────────────────────────────
-const TC = {
-  'Bayern Munich':'#dc052d','Dortmund':'#fde100','Stuttgart':'#e32219',
-  'RB Leipzig':'#dd0741','Hoffenheim':'#1661a5','Leverkusen':'#e32219',
-  'Ein Frankfurt':'#6c8ebf','Freiburg':'#cc0000','Union Berlin':'#d4111d',
-  'Augsburg':'#ba3733','Mainz':'#c8102e','Hamburg':'#004f9e',
-  "M'gladbach":'#1a9e3f','Werder Bremen':'#1d8a3a','FC Koln':'#ff0000',
-  'St Pauli':'#8b4513','Wolfsburg':'#65b32e','Heidenheim':'#2d2d2d'
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+// To connect the real Polymarket API, replace POLYMARKET_API_BASE and
+// implement fetchLiveMarkets() in config.js (see README.md)
+const CONFIG = {
+  POLYMARKET_API_BASE: 'https://gamma-api.polymarket.com', // public, no key needed
+  MODEL_WEIGHTS: { elo: 0.30, stats: 0.30, betfair: 0.25, crowd: 0.10, h2h: 0.05 },
+  KELLY_FRACTION: 0.25,
+  BANKROLL: 1000,
 };
-const TXT = {'Dortmund':'#000','Wolfsburg':'#000'};
-const tc = t => TC[t]||'#555';
-const tt = t => TXT[t]||'#fff';
-const ti = t => { const p=t.split(' '); return p.length===1?t.slice(0,2).toUpperCase():(p[0][0]+(p[1]?p[1][0]:'')).toUpperCase(); };
+
+// ─── SPORTS META ──────────────────────────────────────────────────────────────
+const SPORTS_META = {
+  soccer:{icon:'⚽',leagues:['UCL','EPL','La Liga','Serie A','Bundesliga','Ligue 1','FA Cup','Copa del Rey','Coppa Italia','MLS','World Cup Qualifiers','Europa League','Conference League','AFCON','Copa America']},
+  basketball:{icon:'🏀',leagues:['NBA','EuroLeague','NCAA','FIBA World Cup','NBA Playoffs']},
+  tennis:{icon:'🎾',leagues:['ATP Tour','WTA Tour','Roland Garros','Wimbledon','US Open','Australian Open']},
+  americanfootball:{icon:'🏈',leagues:['NFL','NFL Playoffs','Super Bowl','NCAA Football']},
+  baseball:{icon:'⚾',leagues:['MLB','MLB Playoffs','World Series']},
+  rugby:{icon:'🏉',leagues:['Six Nations','Rugby World Cup','Premiership','Super Rugby']},
+  cricket:{icon:'🏏',leagues:['IPL','The Ashes','ICC World Cup','Test Series']},
+  mma:{icon:'🥊',leagues:['UFC','Bellator','ONE Championship']}
+};
+
+// ─── SAMPLE DATA (replace with live API call) ─────────────────────────────────
+const RAW = [
+  {id:1,sport:'soccer',league:'UCL',match:'Real Madrid vs Arsenal',market:'Real Madrid to win',mtype:'winner',ourP:0.57,mktP:0.52,vol:2100000,day:'today',ko:'20:45'},
+  {id:2,sport:'soccer',league:'UCL',match:'Real Madrid vs Arsenal',market:'Both teams to score',mtype:'btts',ourP:0.68,mktP:0.60,vol:890000,day:'today',ko:'20:45'},
+  {id:3,sport:'soccer',league:'UCL',match:'Real Madrid vs Arsenal',market:'Over 2.5 goals',mtype:'ou',ourP:0.61,mktP:0.57,vol:760000,day:'today',ko:'20:45'},
+  {id:4,sport:'soccer',league:'EPL',match:'Man City vs Liverpool',market:'Man City to win',mtype:'winner',ourP:0.44,mktP:0.41,vol:890000,day:'today',ko:'12:30'},
+  {id:5,sport:'soccer',league:'EPL',match:'Man City vs Liverpool',market:'Liverpool to win',mtype:'winner',ourP:0.37,mktP:0.40,vol:890000,day:'today',ko:'12:30'},
+  {id:6,sport:'soccer',league:'La Liga',match:'Barcelona vs Atletico',market:'Barcelona to win',mtype:'winner',ourP:0.52,mktP:0.48,vol:1400000,day:'tomorrow',ko:'16:00'},
+  {id:7,sport:'soccer',league:'La Liga',match:'Barcelona vs Atletico',market:'Handicap: Atletico +1',mtype:'handicap',ourP:0.55,mktP:0.50,vol:340000,day:'tomorrow',ko:'16:00'},
+  {id:8,sport:'soccer',league:'Bundesliga',match:'Bayern vs Dortmund',market:'Bayern to win',mtype:'winner',ourP:0.60,mktP:0.55,vol:670000,day:'tomorrow',ko:'17:30'},
+  {id:9,sport:'soccer',league:'FA Cup',match:'Man Utd vs Tottenham',market:'Man Utd to win',mtype:'winner',ourP:0.40,mktP:0.43,vol:430000,day:'week',ko:'Sat 15:00'},
+  {id:10,sport:'soccer',league:'FA Cup',match:'Man Utd vs Tottenham',market:'Both teams to score',mtype:'btts',ourP:0.72,mktP:0.65,vol:280000,day:'week',ko:'Sat 15:00'},
+  {id:11,sport:'soccer',league:'Europa League',match:'Roma vs Ajax',market:'Roma to win',mtype:'winner',ourP:0.38,mktP:0.35,vol:310000,day:'week',ko:'Thu 21:00'},
+  {id:12,sport:'soccer',league:'Copa del Rey',match:'Real Sociedad vs Sevilla',market:'Draw',mtype:'winner',ourP:0.28,mktP:0.24,vol:190000,day:'week',ko:'Wed 21:00'},
+  {id:13,sport:'basketball',league:'NBA',match:'Lakers vs Celtics',market:'Celtics to win',mtype:'winner',ourP:0.61,mktP:0.56,vol:3200000,day:'today',ko:'20:00'},
+  {id:14,sport:'basketball',league:'NBA',match:'Lakers vs Celtics',market:'Over 221.5 points',mtype:'ou',ourP:0.54,mktP:0.50,vol:1100000,day:'today',ko:'20:00'},
+  {id:15,sport:'basketball',league:'EuroLeague',match:'Real Madrid vs CSKA',market:'Real Madrid to win',mtype:'winner',ourP:0.58,mktP:0.53,vol:240000,day:'tomorrow',ko:'21:00'},
+  {id:16,sport:'tennis',league:'ATP Tour',match:'Djokovic vs Alcaraz',market:'Alcaraz to win',mtype:'winner',ourP:0.48,mktP:0.44,vol:980000,day:'today',ko:'14:00'},
+  {id:17,sport:'tennis',league:'Roland Garros',match:'Sinner vs Zverev',market:'Sinner to win',mtype:'winner',ourP:0.55,mktP:0.58,vol:560000,day:'tomorrow',ko:'13:00'},
+  {id:18,sport:'americanfootball',league:'NFL Playoffs',match:'Chiefs vs Bills',market:'Chiefs to win',mtype:'winner',ourP:0.53,mktP:0.49,vol:4500000,day:'week',ko:'Sun 18:30'},
+  {id:19,sport:'americanfootball',league:'Super Bowl',match:'Super Bowl winner',market:'Chiefs to win Super Bowl',mtype:'tournament',ourP:0.26,mktP:0.30,vol:8900000,day:'week',ko:'Feb 9'},
+  {id:20,sport:'baseball',league:'MLB',match:'Yankees vs Red Sox',market:'Yankees to win',mtype:'winner',ourP:0.56,mktP:0.51,vol:620000,day:'today',ko:'19:05'},
+  {id:21,sport:'rugby',league:'Six Nations',match:'England vs France',market:'France to win',mtype:'winner',ourP:0.47,mktP:0.44,vol:380000,day:'week',ko:'Sat 16:45'},
+  {id:22,sport:'cricket',league:'IPL',match:'Mumbai Indians vs CSK',market:'CSK to win',mtype:'winner',ourP:0.42,mktP:0.45,vol:1700000,day:'today',ko:'19:30'},
+  {id:23,sport:'mma',league:'UFC',match:'Poirier vs Holloway 4',market:'Holloway to win',mtype:'winner',ourP:0.52,mktP:0.46,vol:2300000,day:'week',ko:'Sat 03:00'},
+  {id:24,sport:'soccer',league:'Serie A',match:'Inter vs AC Milan',market:'Inter to win',mtype:'winner',ourP:0.46,mktP:0.43,vol:540000,day:'week',ko:'Sun 20:45'},
+  {id:25,sport:'soccer',league:'MLS',match:'LAFC vs Inter Miami',market:'LAFC to win',mtype:'winner',ourP:0.44,mktP:0.40,vol:210000,day:'week',ko:'Sat 22:00'},
+  {id:26,sport:'soccer',league:'UCL',match:'PSG vs Bayern',market:'Anytime scorer: Mbappe',mtype:'anytime',ourP:0.45,mktP:0.40,vol:670000,day:'week',ko:'Wed 21:00'},
+  {id:27,sport:'soccer',league:'UCL',match:'PSG vs Bayern',market:'First goal scorer: Kane',mtype:'first_goal',ourP:0.18,mktP:0.15,vol:290000,day:'week',ko:'Wed 21:00'},
+  {id:28,sport:'basketball',league:'NBA Playoffs',match:'Conference Final winner',market:'Celtics to win East',mtype:'tournament',ourP:0.38,mktP:0.42,vol:5600000,day:'week',ko:'May'},
+  {id:29,sport:'soccer',league:'World Cup Qualifiers',match:'Portugal vs Denmark',market:'Portugal to win',mtype:'winner',ourP:0.50,mktP:0.52,vol:420000,day:'tomorrow',ko:'20:45'},
+  {id:30,sport:'tennis',league:'Wimbledon',match:'Wimbledon winner',market:'Alcaraz to win',mtype:'tournament',ourP:0.28,mktP:0.32,vol:1200000,day:'week',ko:'Jul'}
+];
+
+const TRADERS = [
+  {id:1,name:'SharpBettor_X',init:'SB',bg:'rgba(64,196,255,0.15)',tc:'#40c4ff',roi:34.2,profit:87400,bets:312,acc:61,sport:'Multi-sport',open:['Real Madrid win (UCL)','Celtics (NBA)','Holloway (UFC)']},
+  {id:2,name:'ValueHunter99',init:'VH',bg:'rgba(0,230,118,0.15)',tc:'#00e676',roi:28.7,profit:63200,bets:198,acc:58,sport:'Soccer',open:['Bayern (Bundesliga)','BTTS (EPL)','Alcaraz (ATP)']},
+  {id:3,name:'KellyMaster',init:'KM',bg:'rgba(206,147,216,0.15)',tc:'#ce93d8',roi:22.1,profit:44800,bets:445,acc:55,sport:'Basketball/NFL',open:['Chiefs -3.5','Over 221.5 NBA','Celtics East']},
+  {id:4,name:'OddsArb_Pro',init:'OA',bg:'rgba(255,171,64,0.15)',tc:'#ffab40',roi:19.8,profit:38100,bets:701,acc:54,sport:'Tennis',open:['Djokovic AO','Sinner RG','Zverev SF']},
+  {id:5,name:'SmartMoney_Z',init:'SM',bg:'rgba(255,82,82,0.15)',tc:'#ff5252',roi:17.3,profit:29600,bets:263,acc:53,sport:'Soccer/MMA',open:['Inter (Serie A)','Holloway UFC','Barcelona La Liga']}
+];
+
+const MODELS = [
+  {name:'Elo rating system',pct:30,col:'#00e676',desc:'Form-adjusted team/player strength recalculated after every game. Free data: clubelo.com, tennis-abstract.com'},
+  {name:'Statistical model (xG / Opta)',pct:30,col:'#40c4ff',desc:'Shot quality, possession, press metrics from public match data. Free sources: FBref.com, understat.com'},
+  {name:'Betfair exchange consensus',pct:25,col:'#ce93d8',desc:'Most liquid sports exchange globally. Their implied probabilities are the best single external anchor for calibration.'},
+  {name:'Polymarket crowd wisdom',pct:10,col:'#ffab40',desc:'The crowd is smart but slower to update. Used as a sanity check, not the primary signal.'},
+  {name:'Head-to-head + venue',pct:5,col:'#ff5252',desc:'Historical H2H record, home/away splits, rest/travel disadvantage adjustments.'}
+];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
-let homeTeam = '', awayTeam = '';
-let currentTab = 'overview';
-let computed = null;
+let bankroll = 1000, kellyFrac = 0.25, dayFilter = 'all';
 
-// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
-function buildSidebar() {
-  const ul = document.getElementById('sidebar-teams');
-  ul.innerHTML = TEAMS.map(t => {
-    const s = TS[t];
-    const pos = DATA.league_table ? DATA.league_table.indexOf(t)+1 : '';
-    return `<button class="team-btn" onclick="sidebarSelectTeam('${t}')" id="sb-${t.replace(/[' ]/g,'_')}">
-      <div class="team-avatar-sm" style="background:${tc(t)};color:${tt(t)}">${ti(t)}</div>
-      <span>${t}</span>
-    </button>`;
-  }).join('');
+// ─── MATH ────────────────────────────────────────────────────────────────────
+function calcEV(p, mp) { const b = (1/mp)-1; return (p*b)-(1-p); }
+function calcKelly(p, mp) { const b=(1/mp)-1,q=1-p; return Math.max(0,(b*p-q)/b); }
+function enrich(m) {
+  const e=calcEV(m.ourP,m.mktP), rk=calcKelly(m.ourP,m.mktP), st=rk*kellyFrac*bankroll;
+  return {...m, ev:e, stake:st, odds:(1/m.mktP).toFixed(2)};
 }
+function evClass(e){return e>=0.05?'bg':e>=0.01?'ba':'br'}
+function evCol(e){return e>=0.05?'#00e676':e>=0.01?'#ffab40':'#ff5252'}
+function volFmt(v){return v>=1000000?'$'+(v/1e6).toFixed(1)+'M':'$'+(v/1000).toFixed(0)+'K'}
+function icon(s){return SPORTS_META[s]?SPORTS_META[s].icon:''}
 
-function sidebarSelectTeam(t) {
-  const sh = document.getElementById('sel-home');
-  const sa = document.getElementById('sel-away');
-  if (!sh.value) { sh.value = t; }
-  else if (!sa.value) { sa.value = t; }
-  else { sh.value = t; sa.value = ''; }
-  onTeamChange();
-}
-
-// ─── SELECTS ──────────────────────────────────────────────────────────────────
-function buildSelects() {
-  const opts = TEAMS.map(t => `<option value="${t}">${t}</option>`).join('');
-  document.getElementById('sel-home').innerHTML = '<option value="">— Select Home —</option>' + opts;
-  document.getElementById('sel-away').innerHTML = '<option value="">— Select Away —</option>' + opts;
-}
-
-function onTeamChange() {
-  homeTeam = document.getElementById('sel-home').value;
-  awayTeam = document.getElementById('sel-away').value;
-  document.querySelectorAll('.team-btn').forEach(b=>b.classList.remove('selected'));
-  if(homeTeam) document.getElementById('sb-'+homeTeam.replace(/[' ]/g,'_'))?.classList.add('selected');
-  if(awayTeam) document.getElementById('sb-'+awayTeam.replace(/[' ]/g,'_'))?.classList.add('selected');
-  if(homeTeam && awayTeam && homeTeam !== awayTeam) runAnalysis();
-}
-
-// ─── TABS ─────────────────────────────────────────────────────────────────────
-function showTab(id) {
-  currentTab = id;
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  event.target.classList.add('active');
-}
-
-// ─── MATH ─────────────────────────────────────────────────────────────────────
-function poisson(lambda, k) {
-  let r = Math.exp(-lambda);
-  for(let i=1;i<=k;i++) r *= lambda/i;
-  return r;
-}
-
-function buildMatrix(lambdaH, lambdaA, maxGoals=6) {
-  const mat = [];
-  for(let i=0;i<=maxGoals;i++){
-    const row=[];
-    for(let j=0;j<=maxGoals;j++) row.push(poisson(lambdaH,i)*poisson(lambdaA,j));
-    mat.push(row);
-  }
-  return mat;
-}
-
-function matrixProbs(mat, max=6) {
-  let pH=0,pD=0,pA=0;
-  for(let i=0;i<=max;i++) for(let j=0;j<=max;j++) {
-    const v=mat[i][j];
-    if(i>j) pH+=v; else if(i===j) pD+=v; else pA+=v;
-  }
-  // Normalise to 1 (truncation correction)
-  const total=pH+pD+pA;
-  return {pH:pH/total, pD:pD/total, pA:pA/total};
-}
-
-function overUnderProbs(mat, line, max=6) {
-  let over=0, under=0;
-  for(let i=0;i<=max;i++) for(let j=0;j<=max;j++) {
-    const g=i+j, v=mat[i][j];
-    if(g>line) over+=v; else under+=v;
-  }
-  const t=over+under; return {over:over/t, under:under/t};
-}
-
-function bttsProbs(mat, max=6) {
-  let yes=0,no=0;
-  for(let i=0;i<=max;i++) for(let j=0;j<=max;j++) {
-    const v=mat[i][j];
-    if(i>0&&j>0) yes+=v; else no+=v;
-  }
-  const t=yes+no; return {yes:yes/t, no:no/t};
-}
-
-function prob2odd(p) { return p>0 ? (1/p).toFixed(2) : '—'; }
-function pct(v) { return (v*100).toFixed(1)+'%'; }
-function fmt(v,d=2) { return v>0?v.toFixed(d):'—'; }
-
-// Asian Handicap probability
-function ahProb(mat, hcap, max=6) {
-  // hcap positive = home gives, negative = home receives
-  // Return prob of home covering
-  let win=0, push=0, lose=0;
-  for(let i=0;i<=max;i++) for(let j=0;j<=max;j++) {
-    const v=mat[i][j];
-    const diff=(i-j)+hcap;
-    if(diff>0) win+=v; else if(diff===0) push+=v; else lose+=v;
-  }
-  // quarter lines: half push/half outright
-  return {win,push,lose,total:win+push+lose};
-}
-
-function ahQuarterProb(mat, line, max=6) {
-  // Quarter lines split: 50% at floor, 50% at ceil
-  const f = Math.floor(line*2)/2;
-  const c = Math.ceil(line*2)/2;
-  if(f===c) return ahProb(mat,line,max);
-  const pF = ahProb(mat,f,max);
-  const pC = ahProb(mat,c,max);
-  const wF = pF.win/(pF.win+pF.push+pF.lose);
-  const wC = pC.win/(pC.win+pC.push+pC.lose);
-  // Quarter line: win full if both win, push half on push portion
-  const win = 0.5*(wF+wC);
-  // Rough approx for quarter lines
-  return {win: win, lose: 1-win};
-}
-
-// Kelly criterion
-function kelly(p, odd, f=0.25) {
-  const b = odd-1;
-  const k = (b*p-(1-p))/b;
-  return Math.max(0, k*f);
-}
-
-// ─── COMPUTE ──────────────────────────────────────────────────────────────────
-function compute(h, a) {
-  const hs = TS[h], as_ = TS[a];
-  if(!hs||!as_) return null;
-
-  // Expected goals: Poisson/Dixon-Coles model
-  const lambdaH = hs.att_h * as_.def_h * LGH;
-  const lambdaA = as_.att_a * hs.def_a * LGA;
-
-  const mat = buildMatrix(lambdaH, lambdaA);
-  const {pH,pD,pA} = matrixProbs(mat);
-  const ou25 = overUnderProbs(mat, 2.5);
-  const ou15 = overUnderProbs(mat, 1.5);
-  const ou35 = overUnderProbs(mat, 3.5);
-  const btts = bttsProbs(mat);
-
-  // Most likely scores
-  const scores=[];
-  for(let i=0;i<=6;i++) for(let j=0;j<=6;j++) scores.push({hg:i,ag:j,p:mat[i][j]});
-  scores.sort((a,b)=>b.p-a.p);
-
-  // AH lines
-  const ahLines = [-3,-2.75,-2.5,-2.25,-2,-1.75,-1.5,-1.25,-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3];
-  const ahData = ahLines.map(line => {
-    const pWin = ahQuarterProb(mat, line).win;
-    const pLose = 1-pWin;
-    const fairOddH = pWin>0?1/pWin:99;
-    const fairOddA = pLose>0?1/pLose:99;
-    return {line, pWin, pLose, fairOddH, fairOddA};
-  });
-
-  return {hs, as_, lambdaH, lambdaA, mat, pH, pD, pA, ou25, ou15, ou35, btts, scores, ahData};
-}
-
-// ─── H2H ──────────────────────────────────────────────────────────────────────
-function getH2H(h, a) {
-  const key1 = h+'|'+a, key2 = a+'|'+h;
-  return DATA.h2h[key1] || DATA.h2h[key2] || [];
-}
-
-// ─── RENDER ───────────────────────────────────────────────────────────────────
-function runAnalysis() {
-  homeTeam = document.getElementById('sel-home').value;
-  awayTeam = document.getElementById('sel-away').value;
-  if(!homeTeam||!awayTeam||homeTeam===awayTeam) return;
-
-  computed = compute(homeTeam, awayTeam);
-  if(!computed) return;
-
-  document.getElementById('topbar-title').textContent = homeTeam + ' vs ' + awayTeam;
-  renderOverview();
-  renderMatrix();
-  renderHandicap();
-  renderH2H();
-  renderCLV();
-}
-
-// ─── OVERVIEW ─────────────────────────────────────────────────────────────────
-function renderOverview() {
-  const c = computed;
-  const h = homeTeam, a = awayTeam;
-  const hs = c.hs, as_ = c.as_;
-  const pos = (t) => {
-    const table = TEAMS_SORTED ? TEAMS_SORTED.indexOf(t)+1 : '—';
-    return table;
-  };
-
-  document.getElementById('placeholder').style.display='none';
-  const el = document.getElementById('overview-content');
-  el.style.display='block';
-
-  // Zone tag
-  const zoneTag = (t) => {
-    const s = TS[t]; const pts = s.Pts;
-    const sorted = Object.values(TS).sort((a,b)=>b.Pts-a.Pts||b.GD-a.GD||b.GF-a.GF);
-    const pos = sorted.findIndex(x=>x.team===t)+1;
-    if(pos<=4) return '<span class="tag tag-cl">CL</span>';
-    if(pos===5) return '<span class="tag tag-el">EL</span>';
-    if(pos>=16) return '<span class="tag tag-rel">REL</span>';
-    return '<span class="tag tag-mid">'+pos+'th</span>';
-  };
-  const teamPos = (t) => {
-    const sorted = Object.values(TS).sort((a,b)=>b.Pts-a.Pts||b.GD-a.GD||b.GF-a.GF);
-    return sorted.findIndex(x=>x.team===t)+1;
-  };
-
-  const formDots = (form) => form.map(r=>`<div class="fdot fdot-${r}">${r}</div>`).join('');
-
-  const valueColor = (v) => v>2?'value-pos':v<-2?'value-neg':'value-neu';
-
-  el.innerHTML = `
-  <!-- MATCHUP HEADER -->
-  <div class="matchup-header">
-    <div class="team-display">
-      <div class="team-avatar-lg" style="background:${tc(h)};color:${tt(h)}">${ti(h)}</div>
-      <div class="team-display-name">${h}</div>
-      <div class="team-display-pos">${zoneTag(h)} <span style="font-size:12px;color:var(--text2)">${hs.Pts}pts · P${teamPos(h)}</span></div>
-      <div class="form-row">${formDots(hs.form_h)}</div>
-    </div>
-    <div class="vs-sep">VS</div>
-    <div class="team-display">
-      <div class="team-avatar-lg" style="background:${tc(a)};color:${tt(a)}">${ti(a)}</div>
-      <div class="team-display-name">${a}</div>
-      <div class="team-display-pos">${zoneTag(a)} <span style="font-size:12px;color:var(--text2)">${as_.Pts}pts · P${teamPos(a)}</span></div>
-      <div class="form-row">${formDots(as_.form_a)}</div>
-    </div>
-  </div>
-
-  <!-- PREDICTION -->
-  <div class="card">
-    <div class="card-title">⚡ Poisson Model Prediction</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:12px">
-      λ Home = <strong style="color:var(--accent)">${c.lambdaH.toFixed(3)}</strong> &nbsp;|&nbsp; 
-      λ Away = <strong style="color:var(--accent)">${c.lambdaA.toFixed(3)}</strong> &nbsp;|&nbsp;
-      Expected total = <strong style="color:var(--accent)">${(c.lambdaH+c.lambdaA).toFixed(3)}</strong>
-    </div>
-    <div class="prediction-box">
-      <div class="pred-item ${c.pH>c.pD&&c.pH>c.pA?'highlight':''}">
-        <div class="pred-label">Home Win</div>
-        <div class="pred-prob" style="color:${c.pH>c.pD&&c.pH>c.pA?'var(--accent)':'var(--text)'}">${pct(c.pH)}</div>
-        <div class="pred-odds">Fair: ${prob2odd(c.pH)}</div>
+// ─── RENDER: MARKET CARD ────────────────────────────────────────────────────
+function marketCard(m, isValue=false) {
+  const ep=(m.ev*100).toFixed(1), st=m.stake<1?'< $1':'$'+Math.round(m.stake);
+  const bw=Math.min(100,Math.max(0,(m.ev+0.05)*500));
+  const diff=Math.round((m.ourP-m.mktP)*100);
+  const diffLabel=(diff>0?'+':'')+diff+'% vs mkt';
+  const dayBadge=m.day==='today'
+    ?`<span class="badge bg">Today ${m.ko}</span>`
+    :m.day==='tomorrow'
+    ?`<span class="badge ba">Tomorrow ${m.ko}</span>`
+    :`<span class="badge bgr">${m.ko}</span>`;
+  return `<div class="card${isValue?' value-card':''}">
+    <div class="card-row">
+      <div class="card-main">
+        <div class="card-title">${icon(m.sport)} ${m.market}</div>
+        <div class="card-sub">${m.match} · ${m.league}</div>
+        <div class="tag-row">
+          ${dayBadge}
+          <span class="badge bb">${m.odds}x</span>
+          <span class="badge ${evClass(m.ev)}">${ep}% EV</span>
+          <span class="badge bgr">${volFmt(m.vol)}</span>
+          <span class="badge bp">${diffLabel}</span>
+        </div>
       </div>
-      <div class="pred-item ${c.pD>c.pH&&c.pD>c.pA?'highlight':''}">
-        <div class="pred-label">Draw</div>
-        <div class="pred-prob" style="color:${c.pD>c.pH&&c.pD>c.pA?'var(--accent)':'var(--text)'}">${pct(c.pD)}</div>
-        <div class="pred-odds">Fair: ${prob2odd(c.pD)}</div>
+      <div class="spill"><div class="spill-v">${Math.round(m.ourP*100)}%</div><div class="spill-l">our est.</div></div>
+      <div class="spill"><div class="spill-v">${Math.round(m.mktP*100)}%</div><div class="spill-l">market</div></div>
+      <div class="spill">
+        <div class="spill-v" style="color:${m.ev>=0.01?'#00e676':'#ff5252'}">${st}</div>
+        <div class="spill-l">Kelly bet</div>
+        <div class="bar-wrap"><div class="bar-inner" style="width:${bw}%;background:${evCol(m.ev)}"></div></div>
       </div>
-      <div class="pred-item ${c.pA>c.pH&&c.pA>c.pD?'highlight':''}">
-        <div class="pred-label">Away Win</div>
-        <div class="pred-prob" style="color:${c.pA>c.pH&&c.pA>c.pD?'var(--accent)':'var(--text)'}">${pct(c.pA)}</div>
-        <div class="pred-odds">Fair: ${prob2odd(c.pA)}</div>
-      </div>
-    </div>
-    <div class="prediction-box" style="margin-top:8px">
-      <div class="pred-item">
-        <div class="pred-label">Over 1.5</div>
-        <div class="pred-prob">${pct(c.ou15.over)}</div>
-        <div class="pred-odds">Fair: ${prob2odd(c.ou15.over)}</div>
-      </div>
-      <div class="pred-item ${c.ou25.over>0.5?'highlight':''}">
-        <div class="pred-label">Over 2.5</div>
-        <div class="pred-prob" style="color:${c.ou25.over>0.5?'var(--accent)':'var(--text)'}">${pct(c.ou25.over)}</div>
-        <div class="pred-odds">Fair: ${prob2odd(c.ou25.over)}</div>
-      </div>
-      <div class="pred-item">
-        <div class="pred-label">Over 3.5</div>
-        <div class="pred-prob">${pct(c.ou35.over)}</div>
-        <div class="pred-odds">Fair: ${prob2odd(c.ou35.over)}</div>
-      </div>
-      <div class="pred-item">
-        <div class="pred-label">BTTS Yes</div>
-        <div class="pred-prob">${pct(c.btts.yes)}</div>
-        <div class="pred-odds">Fair: ${prob2odd(c.btts.yes)}</div>
-      </div>
-    </div>
-    <div style="margin-top:14px">
-      <div class="card-title" style="margin-bottom:10px">🎯 Most Likely Scores</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${c.scores.slice(0,12).map(s=>`
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 12px;text-align:center;min-width:70px">
-            <div style="font-family:var(--mono);font-size:15px;font-weight:500">${s.hg}–${s.ag}</div>
-            <div style="font-size:10px;color:var(--text2)">${pct(s.p)}</div>
-          </div>`).join('')}
-      </div>
-    </div>
-  </div>
-
-  <!-- TEAM COMPARISON -->
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">📊 Season Stats (As Home)</div>
-      ${compareRow(hs.h_avg_gf, 'Avg Goals Scored', as_.a_avg_gf, false, 'var(--green)')}
-      ${compareRow(hs.h_avg_ga, 'Avg Goals Conceded', as_.a_avg_ga, true, 'var(--red)')}
-      ${compareRow(hs.h_ov25_pct, 'Over 2.5 %', as_.a_ov25_pct, false, 'var(--accent2)')}
-      ${compareRow(hs.h_btts_pct, 'BTTS %', as_.a_btts_pct, false, 'var(--purple)')}
-      ${compareRow(hs.h_shots_pg, 'Shots pg', as_.a_shots_pg, false, 'var(--orange)')}
-      ${compareRow(hs.h_shots_t_pg, 'Shots on Target pg', as_.a_shots_t_pg, false, 'var(--orange)')}
-    </div>
-    <div class="card">
-      <div class="card-title">⚡ Attack / Defence Rating</div>
-      ${compareRow(hs.att_h, 'Attack Strength (Home)', as_.att_a, false, 'var(--green)')}
-      ${compareRow(hs.def_h, 'Defence Rating (Home)', as_.def_a, true, 'var(--red)')}
-      <div class="divider"></div>
-      <div class="card-title">📋 Current Form (Last 6)</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
-        <div class="form-row">${formDots(hs.form_h.slice(-6))}</div>
-        <span style="font-size:11px;color:var(--text3)">home / away</span>
-        <div class="form-row">${formDots(as_.form_a.slice(-6))}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SEASON RECORD -->
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">🏠 ${h} — Home Record</div>
-      <div class="grid-4" style="grid-template-columns:repeat(4,1fr)">
-        ${kpiBox('Played', hs.h_P)}
-        ${kpiBox('W/D/L', hs.h_W+'/'+hs.h_D+'/'+hs.h_L)}
-        ${kpiBox('GF / GA', hs.h_GF+' / '+hs.h_GA)}
-        ${kpiBox('Pts', hs.Pts)}
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">✈️ ${a} — Away Record</div>
-      <div class="grid-4" style="grid-template-columns:repeat(4,1fr)">
-        ${kpiBox('Played', as_.a_P)}
-        ${kpiBox('W/D/L', as_.a_W+'/'+as_.a_D+'/'+as_.a_L)}
-        ${kpiBox('GF / GA', as_.a_GF+' / '+as_.a_GA)}
-        ${kpiBox('Pts', as_.Pts)}
-      </div>
-    </div>
-  </div>
-
-  <!-- RECENT MATCHES -->
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">🔄 ${h} Recent Matches</div>
-      ${recentTable(hs.recent)}
-    </div>
-    <div class="card">
-      <div class="card-title">🔄 ${a} Recent Matches</div>
-      ${recentTable(as_.recent)}
-    </div>
-  </div>
-  `;
-}
-
-function kpiBox(label, val) {
-  return `<div class="kpi"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div></div>`;
-}
-
-function compareRow(hVal, label, aVal, invertBetter, color) {
-  const h = parseFloat(hVal)||0, a = parseFloat(aVal)||0;
-  const max = Math.max(h,a,0.01);
-  const hBetter = invertBetter ? h<a : h>a;
-  const aBetter = invertBetter ? a<h : a>h;
-  return `<div class="compare-bar-wrap">
-    <div style="display:flex;flex-direction:column;align-items:flex-start">
-      <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:${hBetter?color:'var(--text)'}">${typeof hVal==='number'?(hVal%1===0?hVal:hVal.toFixed(3)):hVal}</span>
-      <div class="bar-track" style="width:100%;margin-top:4px"><div class="bar-fill-l" style="width:${(h/max*100).toFixed(0)}%;background:${color}40"></div></div>
-    </div>
-    <div style="font-size:11px;color:var(--text2);text-align:center;min-width:140px;padding:0 8px">${label}</div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end">
-      <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:${aBetter?color:'var(--text)'}">${typeof aVal==='number'?(aVal%1===0?aVal:aVal.toFixed(3)):aVal}</span>
-      <div class="bar-track" style="width:100%;margin-top:4px"><div class="bar-fill-r" style="width:${(a/max*100).toFixed(0)}%;background:${color}40"></div></div>
     </div>
   </div>`;
 }
 
-function recentTable(recent) {
-  if(!recent||!recent.length) return '<div style="color:var(--text3);font-size:12px">No data</div>';
-  return `<table class="h2h-table"><thead><tr>
-    <th>Date</th><th>Opp</th><th>V</th><th>Score</th><th>Res</th>
-  </tr></thead><tbody>${[...recent].reverse().map(m=>`<tr>
-    <td style="color:var(--text2)">${m.date}</td>
-    <td>${m.opp}</td>
-    <td><span class="badge badge-${m.venue}">${m.venue}</span></td>
-    <td style="font-family:var(--mono);font-weight:500">${m.gf}–${m.ga}</td>
-    <td><span class="badge badge-${m.res}">${m.res}</span></td>
-  </tr>`).join('')}</tbody></table>`;
+// ─── FILTER ──────────────────────────────────────────────────────────────────
+function getFiltered() {
+  const sp=document.getElementById('sport-f').value;
+  const lg=document.getElementById('league-f').value;
+  const mt=document.getElementById('mtype-f').value;
+  const me=parseFloat(document.getElementById('ev-f').value)/100;
+  const so=document.getElementById('sort-f').value;
+  let list=RAW.map(enrich);
+  if(dayFilter!=='all')list=list.filter(m=>m.day===dayFilter);
+  if(sp!=='all')list=list.filter(m=>m.sport===sp);
+  if(lg!=='all')list=list.filter(m=>m.league===lg);
+  if(mt!=='all')list=list.filter(m=>m.mtype===mt);
+  list=list.filter(m=>m.ev>=me);
+  if(so==='ev')list.sort((a,b)=>b.ev-a.ev);
+  else if(so==='kelly')list.sort((a,b)=>b.stake-a.stake);
+  else if(so==='vol')list.sort((a,b)=>b.vol-a.vol);
+  else list.sort((a,b)=>a.ko.localeCompare(b.ko));
+  return list;
 }
 
-// ─── SCORE MATRIX ──────────────────────────────────────────────────────────────
-function renderMatrix() {
-  const c = computed;
-  const el = document.getElementById('matrix-content');
-  const max6 = 6;
-
-  // Find max prob for heat scaling
-  let maxP = 0;
-  for(let i=0;i<=max6;i++) for(let j=0;j<=max6;j++) maxP=Math.max(maxP,c.mat[i][j]);
-
-  const heatColor = (p) => {
-    const t = p/maxP;
-    if(t>0.7) return `rgba(240,192,64,${0.15+t*0.4})`;
-    if(t>0.4) return `rgba(59,130,246,${0.1+t*0.25})`;
-    return `rgba(255,255,255,${t*0.06})`;
-  };
-
-  let header = '<th style="background:var(--surface3)">H \\ A</th>';
-  for(let j=0;j<=max6;j++) header += `<th>${j}</th>`;
-
-  let rows = '';
-  for(let i=0;i<=max6;i++){
-    rows += `<tr><th>${i}</th>`;
-    for(let j=0;j<=max6;j++){
-      const p = c.mat[i][j];
-      const bg = heatColor(p);
-      const textColor = p/maxP > 0.5 ? 'var(--accent)' : 'var(--text)';
-      rows += `<td class="heat-cell" style="background:${bg};color:${textColor}">${(p*100).toFixed(2)}%</td>`;
-    }
-    rows += '</tr>';
-  }
-
-  // Column sums (away goals dist)
-  let col_sums = '<tr><th style="color:var(--accent2)">Away %</th>';
-  for(let j=0;j<=max6;j++){
-    let s=0; for(let i=0;i<=max6;i++) s+=c.mat[i][j];
-    col_sums += `<td style="color:var(--accent2);font-weight:600">${(s*100).toFixed(1)}%</td>`;
-  }
-  col_sums += '</tr>';
-
-  // Row sums (home goals dist)
-  let row_sum_cells = '';
-  for(let i=0;i<=max6;i++){
-    let s=0; for(let j=0;j<=max6;j++) s+=c.mat[i][j];
-    row_sum_cells += `<td style="color:var(--green);font-weight:600">${(s*100).toFixed(1)}%</td>`;
-  }
-
-  el.innerHTML = `
-  <div class="card">
-    <div class="card-title">🔢 Score Probability Matrix (Poisson)</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:12px">
-      Home rows (${homeTeam}) · Away cols (${awayTeam}) · λH=${c.lambdaH.toFixed(3)} λA=${c.lambdaA.toFixed(3)}
-    </div>
-    <div style="overflow-x:auto">
-      <table class="prob-table">
-        <thead><tr>${header}<th style="color:var(--green)">Home %</th></tr></thead>
-        <tbody>${rows.replace(/<\/tr>/,(a)=>a.replace('</tr>',row_sum_cells+'</tr>'))}</tbody>
-        <tfoot>${col_sums}</tfoot>
-      </table>
-    </div>
-  </div>
-  <div class="grid-3" style="margin-top:16px">
-    <div class="card">
-      <div class="card-title">🏠 1X2 Probabilities</div>
-      ${statRow('Home Win', pct(c.pH), prob2odd(c.pH))}
-      ${statRow('Draw', pct(c.pD), prob2odd(c.pD))}
-      ${statRow('Away Win', pct(c.pA), prob2odd(c.pA))}
-    </div>
-    <div class="card">
-      <div class="card-title">⚽ Over / Under</div>
-      ${statRow('Over 1.5', pct(c.ou15.over), prob2odd(c.ou15.over))}
-      ${statRow('Under 1.5', pct(c.ou15.under), prob2odd(c.ou15.under))}
-      ${statRow('Over 2.5', pct(c.ou25.over), prob2odd(c.ou25.over))}
-      ${statRow('Under 2.5', pct(c.ou25.under), prob2odd(c.ou25.under))}
-      ${statRow('Over 3.5', pct(c.ou35.over), prob2odd(c.ou35.over))}
-      ${statRow('Under 3.5', pct(c.ou35.under), prob2odd(c.ou35.under))}
-    </div>
-    <div class="card">
-      <div class="card-title">🔴🔵 BTTS & Clean Sheets</div>
-      ${statRow('BTTS Yes', pct(c.btts.yes), prob2odd(c.btts.yes))}
-      ${statRow('BTTS No', pct(c.btts.no), prob2odd(c.btts.no))}
-      ${statRow('Home CS', pct(overUnderProbs(c.mat,-0.01,'away').under), '—')}
-    </div>
-  </div>
-  `;
+function updateLeagueFilter() {
+  const sp=document.getElementById('sport-f').value;
+  const sel=document.getElementById('league-f');
+  sel.innerHTML='<option value="all">All leagues/cups</option>';
+  let leagues=[];
+  if(sp==='all'){Object.values(SPORTS_META).forEach(v=>leagues.push(...v.leagues));}
+  else if(SPORTS_META[sp])leagues=SPORTS_META[sp].leagues;
+  leagues.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o)});
 }
 
-function statRow(label, prob, odd) {
-  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
-    <span style="font-size:12px;color:var(--text2)">${label}</span>
-    <div style="display:flex;gap:12px">
-      <span style="font-family:var(--mono);font-size:13px;font-weight:500">${prob}</span>
-      <span style="font-family:var(--mono);font-size:13px;color:var(--accent)">${odd}</span>
-    </div>
-  </div>`;
+// ─── RENDER TABS ─────────────────────────────────────────────────────────────
+function renderMarkets() {
+  updateLeagueFilter();
+  const list=getFiltered();
+  document.getElementById('markets-list').innerHTML=list.length
+    ?list.map(m=>marketCard(m)).join('')
+    :'<div class="empty">No markets match your filters</div>';
+  updateSummary();
 }
 
-function overUnderProbs(mat, line, side, max=6) {
-  // For clean sheet: side='away' means count away goals <1
-  if(side==='away') {
-    let p=0; for(let i=0;i<=max;i++) p+=mat[i][0];
-    const t=1; return {under:p};
-  }
-  return overUnderProbs(mat,line,max);
+function renderValue() {
+  const list=RAW.map(enrich).filter(m=>m.ev>0.01).sort((a,b)=>b.ev-a.ev);
+  document.getElementById('value-list').innerHTML=list.length
+    ?list.map(m=>marketCard(m,true)).join('')
+    :'<div class="empty">No positive EV bets found</div>';
 }
 
-// ─── ASIAN HANDICAP ───────────────────────────────────────────────────────────
-function renderHandicap() {
-  const c = computed;
-  const el = document.getElementById('handicap-content');
-
-  const lines = [-3,-2.75,-2.5,-2.25,-2,-1.75,-1.5,-1.25,-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3];
-
-  const ahRows = lines.map(line => {
-    const {win,push,lose} = ahProb(c.mat, line);
-    const total = win+push+lose;
-    const pWin = win/total, pPush = push/total, pLose = lose/total;
-    // Quarter lines: half bet returns on push
-    const fairH = pWin>0 ? 1/pWin : 99;
-    const fairA = pLose>0 ? 1/pLose : 99;
-    return {line, pWin, pPush, pLose, fairH, fairA};
-  });
-
-  // Find the AH line closest to fair 1.91/1.91 (scratch = home -line gives equal probability)
-  const scratch = ahRows.reduce((best,r)=>Math.abs(r.pWin-0.5)<Math.abs(best.pWin-0.5)?r:best, ahRows[0]);
-
-  const rows = ahRows.map(r => {
-    const isHighlighted = Math.abs(r.line-scratch.line)<0.01;
-    const lineStr = r.line > 0 ? `+${r.line}` : `${r.line}`;
-    return `<tr class="${isHighlighted?'highlight-row':''}">
-      <td><strong>${lineStr}</strong></td>
-      <td>${pct(r.pWin)}</td>
-      <td>${pct(r.pPush)}</td>
-      <td>${pct(r.pLose)}</td>
-      <td class="${r.fairH<2?'value-pos':'value-neg'}">${r.fairH.toFixed(3)}</td>
-      <td>${r.fairH.toFixed(3)}</td>
-      <td class="${r.fairA<2?'value-pos':'value-neg'}">${r.fairA.toFixed(3)}</td>
-    </tr>`;
-  }).join('');
-
-  el.innerHTML = `
-  <div class="card">
-    <div class="card-title">🎯 Asian Handicap Matrix — ${homeTeam} (Home)</div>
-    <p class="note" style="margin-bottom:12px">Line = handicap applied to home team. Positive = home concedes goals head start. Highlighted row = balanced line (~50/50).</p>
-    <div style="overflow-x:auto">
-      <table class="ah-table">
-        <thead>
-          <tr>
-            <th>Line (Home)</th>
-            <th>P(Home Wins AH)</th>
-            <th>P(Push)</th>
-            <th>P(Away Wins AH)</th>
-            <th>Fair Home Odd</th>
-            <th>Impl. Home Odd</th>
-            <th>Fair Away Odd</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="grid-2" style="margin-top:16px">
-    <div class="card">
-      <div class="card-title">📐 Over/Under Lines</div>
-      ${[1.5,2.0,2.5,3.0,3.5,4.0,4.5].map(line=>{
-        const {over,under}=overUnderProbsSimple(c.mat,line);
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:12px;color:var(--text2)">Ov ${line} / Un ${line}</span>
-          <div style="display:flex;gap:16px">
-            <span class="${over>0.5?'value-pos':''}"><span style="font-size:10px;color:var(--text3)">Ov </span><span style="font-family:var(--mono)">${pct(over)}</span> <span style="color:var(--accent);font-family:var(--mono)">${(1/over).toFixed(2)}</span></span>
-            <span class="${under>0.5?'value-pos':''}"><span style="font-size:10px;color:var(--text3)">Un </span><span style="font-family:var(--mono)">${pct(under)}</span> <span style="color:var(--accent);font-family:var(--mono)">${(1/under).toFixed(2)}</span></span>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-    <div class="card">
-      <div class="card-title">📊 Goal Distribution Curves</div>
-      <div style="margin-bottom:10px;font-size:11px;color:var(--text2)">Expected goals per team:</div>
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <div style="flex:1;background:var(--surface2);border-radius:6px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">λ ${homeTeam}</div>
-          <div style="font-family:var(--mono);font-size:22px;color:var(--accent)">${c.lambdaH.toFixed(3)}</div>
-        </div>
-        <div style="flex:1;background:var(--surface2);border-radius:6px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">λ ${awayTeam}</div>
-          <div style="font-family:var(--mono);font-size:22px;color:var(--accent)">${c.lambdaA.toFixed(3)}</div>
-        </div>
+function renderCrowd() {
+  const sorted=RAW.map(enrich).sort((a,b)=>Math.abs(b.ourP-b.mktP)-Math.abs(a.ourP-a.mktP)).slice(0,14);
+  let html='<div class="section-hd">Biggest divergence from Polymarket consensus</div>';
+  sorted.forEach(m=>{
+    const diff=((m.ourP-m.mktP)*100).toFixed(1);
+    const big=Math.abs(parseFloat(diff))>5;
+    html+=`<div class="card">
+      <div class="card-title" style="margin-bottom:8px">${icon(m.sport)} ${m.match} <span style="color:var(--text3);font-weight:400;font-size:13px">· ${m.market}</span></div>
+      <div class="crowd-bar-wrap">
+        <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono);min-width:80px">Our model</span>
+        <div class="crowd-bar-outer"><div style="width:${Math.round(m.ourP*100)}%;background:#00e676;height:100%;border-radius:4px"></div></div>
+        <span style="font-size:13px;font-weight:700;color:#00e676;font-family:var(--font-mono);min-width:36px;text-align:right">${Math.round(m.ourP*100)}%</span>
       </div>
-      ${[0,1,2,3,4,5].map(g=>{
-        const pH = poisson(c.lambdaH,g), pA = poisson(c.lambdaA,g);
-        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <span style="font-size:11px;color:var(--text3);min-width:16px">${g}</span>
-          <div style="flex:1;display:flex;align-items:center;gap:4px">
-            <div style="width:${(pH*200).toFixed(0)}px;height:8px;background:${tc(homeTeam)}50;border-radius:2px;min-width:2px"></div>
-            <span style="font-family:var(--mono);font-size:10px;color:var(--text2)">${pct(pH)}</span>
-          </div>
-          <div style="flex:1;display:flex;align-items:center;gap:4px;flex-direction:row-reverse">
-            <div style="width:${(pA*200).toFixed(0)}px;height:8px;background:${tc(awayTeam)}50;border-radius:2px;min-width:2px"></div>
-            <span style="font-family:var(--mono);font-size:10px;color:var(--text2)">${pct(pA)}</span>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>
-  `;
-}
-
-function overUnderProbsSimple(mat, line, max=6) {
-  let over=0, under=0;
-  for(let i=0;i<=max;i++) for(let j=0;j<=max;j++) {
-    const g=i+j, v=mat[i][j];
-    if(g>line) over+=v; else under+=v;
-  }
-  const t=over+under; return {over:over/t, under:under/t};
-}
-
-// ─── H2H ──────────────────────────────────────────────────────────────────────
-function renderH2H() {
-  const el = document.getElementById('h2h-content');
-  const matches = getH2H(homeTeam, awayTeam);
-
-  if(!matches.length) {
-    el.innerHTML = '<div class="placeholder"><div class="placeholder-icon">🔁</div><div class="placeholder-title">No H2H history found</div></div>';
-    return;
-  }
-
-  const sorted = [...matches].sort((a,b)=>b.date.localeCompare(a.date));
-
-  // Summary stats
-  let hWins=0,draws=0,aWins=0,totalGoals=0,ov25=0;
-  sorted.forEach(m=>{
-    if(m.home===homeTeam){
-      if(m.ftr==='H')hWins++; else if(m.ftr==='D')draws++; else aWins++;
-    } else {
-      if(m.ftr==='A')hWins++; else if(m.ftr==='D')draws++; else hWins--;
-    }
-    totalGoals+=m.total;
-    if(m.total>2.5)ov25++;
-  });
-
-  // Fix the H2H win calc
-  hWins=0;draws=0;aWins=0;
-  sorted.forEach(m=>{
-    const homeIsH = m.home===homeTeam;
-    if(m.ftr==='H') homeIsH?hWins++:aWins++;
-    else if(m.ftr==='A') homeIsH?aWins++:hWins++;
-    else draws++;
-  });
-
-  const n = sorted.length;
-  const avgGoals = totalGoals/n;
-
-  const rows = sorted.map(m=>{
-    const homeIsH = m.home===homeTeam;
-    const hg = homeIsH?m.fthg:m.ftag;
-    const ag = homeIsH?m.ftag:m.fthg;
-    const res = m.ftr==='D'?'D':(m.ftr==='H'&&homeIsH||m.ftr==='A'&&!homeIsH)?'W':'L';
-    const clvH = m.psh>0&&m.b365h>0 ? ((1/m.b365h-1/m.psh)/(1/m.psh)*100).toFixed(1) : '—';
-    const clvA = m.psa>0&&m.b365a>0 ? ((1/m.b365a-1/m.psa)/(1/m.psa)*100).toFixed(1) : '—';
-    const clvOv = m.pov>0&&m.pov<50 ? m.pov.toFixed(2) : '—';
-    return `<tr>
-      <td style="color:var(--text2)">${m.date}</td>
-      <td><strong>${m.home}</strong></td>
-      <td><strong>${m.away}</strong></td>
-      <td style="font-family:var(--mono);font-weight:600;font-size:14px">${hg}–${ag}</td>
-      <td>${m.total}</td>
-      <td><span class="badge badge-${res}">${res}</span></td>
-      <td style="font-family:var(--mono)">${m.b365h||'—'}</td>
-      <td style="font-family:var(--mono)">${m.b365d||'—'}</td>
-      <td style="font-family:var(--mono)">${m.b365a||'—'}</td>
-      <td style="font-family:var(--mono)">${m.psh||'—'}</td>
-      <td style="font-family:var(--mono)">${m.psa||'—'}</td>
-      <td style="font-family:var(--mono)">${m.ah!==0?m.ah:'±0'}</td>
-      <td style="font-family:var(--mono)">${m.pahh||'—'}</td>
-      <td style="font-family:var(--mono)">${m.paha||'—'}</td>
-      <td style="font-family:var(--mono)">${m.pov||'—'}</td>
-      <td style="font-family:var(--mono)">${m.pun||'—'}</td>
-    </tr>`;
-  }).join('');
-
-  el.innerHTML = `
-  <div class="grid-4" style="margin-bottom:16px">
-    ${kpiBox(homeTeam+' Wins', hWins)}
-    ${kpiBox('Draws', draws)}
-    ${kpiBox(awayTeam+' Wins', aWins)}
-    ${kpiBox('Avg Goals', avgGoals.toFixed(2))}
-    ${kpiBox('Over 2.5', ov25+'/'+n+' ('+pct(ov25/n)+')')}
-    ${kpiBox('Total Matches', n)}
-  </div>
-  <div class="card">
-    <div class="card-title">📋 H2H Match History</div>
-    <div style="overflow-x:auto">
-      <table class="h2h-table">
-        <thead><tr>
-          <th>Date</th><th>Home</th><th>Away</th><th>Score</th><th>Total</th><th>Res</th>
-          <th>B365H</th><th>B365D</th><th>B365A</th>
-          <th>PS-H</th><th>PS-A</th>
-          <th>AH Line</th><th>AHH</th><th>AHA</th>
-          <th>P>2.5</th><th>P<2.5</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  </div>
-  `;
-}
-
-// ─── CLV / ODDS ────────────────────────────────────────────────────────────────
-function renderCLV() {
-  const c = computed;
-  const el = document.getElementById('clv-content');
-  const hs = c.hs, as_ = c.as_;
-
-  const clvBar = (val, label) => {
-    const color = val>0?'var(--green)':val<0?'var(--red)':'var(--text2)';
-    const sign = val>0?'+':'';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:12px;color:var(--text2)">${label}</span>
-      <span style="font-family:var(--mono);font-size:14px;font-weight:500;color:${color}">${sign}${val}%</span>
+      <div class="crowd-bar-wrap">
+        <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono);min-width:80px">Polymarket</span>
+        <div class="crowd-bar-outer"><div style="width:${Math.round(m.mktP*100)}%;background:#40c4ff;height:100%;border-radius:4px"></div></div>
+        <span style="font-size:13px;font-weight:700;color:#40c4ff;font-family:var(--font-mono);min-width:36px;text-align:right">${Math.round(m.mktP*100)}%</span>
+      </div>
+      <div class="tag-row" style="margin-top:8px">
+        <span class="badge ${parseFloat(diff)>0?'bg':parseFloat(diff)<0?'br':'bgr'}">${parseFloat(diff)>0?'+':''}${diff}% divergence</span>
+        <span class="badge bb">${m.league}</span>
+        ${big?'<span class="badge bp">High conviction</span>':''}
+      </div>
     </div>`;
-  };
+  });
+  document.getElementById('crowd-list').innerHTML=html;
+}
 
-  // Kelly suggestion
-  const pH = c.pH, pD = c.pD, pA = c.pA;
-  const fairH = 1/pH, fairA = 1/pA, fairD = 1/pD;
-  const fairOv = 1/c.ou25.over;
-  const k = (f, odd) => Math.max(0, kelly(f,odd)).toFixed(3);
-
-  el.innerHTML = `
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">📈 ${homeTeam} — CLV Profile</div>
-      ${clvBar(hs.clv_h, 'CLV as Home (Full Season)')}
-      ${clvBar(hs.clv8_h, 'CLV as Home (Last 8)')}
-      ${clvBar(hs.clv_ov_h, 'CLV Over 2.5 (Home)')}
-      ${clvBar(hs.clv8_ov_h, 'CLV Over 2.5 (Home, Last 8)')}
-      <div class="divider"></div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Average PS Closing Odds (Home matches, last 8)</div>
-      <div style="display:flex;gap:8px">
-        <div class="odd-box"><div class="odd-val">${hs.avg_ps_h||'—'}</div><div class="odd-label">Home Win</div></div>
-        <div class="odd-box"><div class="odd-val">${hs.avg_ps_d||'—'}</div><div class="odd-label">Draw</div></div>
-        <div class="odd-box"><div class="odd-val">${hs.avg_pso_h||'—'}</div><div class="odd-label">Over 2.5</div></div>
-        <div class="odd-box"><div class="odd-val">${hs.avg_psu_h||'—'}</div><div class="odd-label">Under 2.5</div></div>
+function renderTraders() {
+  let html='<div class="section-hd">Top 5 traders · 90-day ROI</div>';
+  TRADERS.forEach(t=>{
+    const pos=t.open.map(p=>`<span class="badge bgr" style="margin-bottom:4px">${p}</span>`).join(' ');
+    html+=`<div class="trader-card">
+      <div class="avatar" style="background:${t.bg};color:${t.tc}">${t.init}</div>
+      <div class="trader-info">
+        <div class="trader-name">${t.name}</div>
+        <div class="trader-meta">${t.sport} · ${t.bets} bets tracked</div>
+        <div class="tag-row" style="margin-top:6px">${pos}</div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-title">📈 ${awayTeam} — CLV Profile</div>
-      ${clvBar(as_.clv_a, 'CLV as Away (Full Season)')}
-      ${clvBar(as_.clv8_a, 'CLV as Away (Last 8)')}
-      ${clvBar(as_.clv_ov_a, 'CLV Over 2.5 (Away)')}
-      ${clvBar(as_.clv8_ov_a, 'CLV Over 2.5 (Away, Last 8)')}
-      <div class="divider"></div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Average PS Closing Odds (Away matches, last 8)</div>
-      <div style="display:flex;gap:8px">
-        <div class="odd-box"><div class="odd-val">${as_.avg_ps_a||'—'}</div><div class="odd-label">Away Win</div></div>
-        <div class="odd-box"><div class="odd-val">${as_.avg_pso_a||'—'}</div><div class="odd-label">Over 2.5</div></div>
+      <div class="trader-stats">
+        <div class="ts"><div class="ts-v" style="color:#00e676">+${t.roi}%</div><div class="ts-l">ROI</div></div>
+        <div class="ts"><div class="ts-v">$${(t.profit/1000).toFixed(0)}K</div><div class="ts-l">profit</div></div>
+        <div class="ts"><div class="ts-v">${t.acc}%</div><div class="ts-l">accuracy</div></div>
       </div>
-    </div>
-  </div>
+      <a href="https://polymarket.com" target="_blank" class="btn" style="font-size:12px">View on Polymarket →</a>
+    </div>`;
+  });
+  document.getElementById('traders-list').innerHTML=html;
+}
 
-  <div class="card">
-    <div class="card-title">⚖️ Fair Odds vs Model (Poisson)</div>
-    <p class="note" style="margin-bottom:12px">Fair odds derived from Poisson model. Compare with bookmaker lines to identify value.</p>
-    <div style="overflow-x:auto">
-      <table class="ah-table">
-        <thead><tr>
-          <th>Market</th>
-          <th>Model Prob</th>
-          <th>Fair Odd</th>
-          <th>Margin Odd (~5%)</th>
-          <th>Kelly (25% fraction)</th>
-          <th>Interpretation</th>
-        </tr></thead>
-        <tbody>
-          ${[
-            ['Home Win', pH, fairH],
-            ['Draw', pD, fairD],
-            ['Away Win', pA, fairA],
-            ['Over 1.5', c.ou15.over, 1/c.ou15.over],
-            ['Over 2.5', c.ou25.over, fairOv],
-            ['Under 2.5', c.ou25.under, 1/c.ou25.under],
-            ['Over 3.5', c.ou35.over, 1/c.ou35.over],
-            ['BTTS Yes', c.btts.yes, 1/c.btts.yes],
-            ['BTTS No', c.btts.no, 1/c.btts.no],
-          ].map(([label, prob, fair])=>{
-            const marginOdd = (fair*0.95).toFixed(3);
-            const k_val = kelly(prob, fair);
-            const kStr = k_val > 0 ? (k_val*100).toFixed(1)+'%' : '—';
-            const interp = prob>0.6?'<span style="color:var(--green)">Strong</span>':prob>0.45?'<span style="color:var(--accent)">Moderate</span>':'<span style="color:var(--text2)">Weak</span>';
-            return `<tr>
-              <td>${label}</td>
-              <td style="font-family:var(--mono)">${pct(prob)}</td>
-              <td style="font-family:var(--mono);color:var(--accent)">${fair.toFixed(3)}</td>
-              <td style="font-family:var(--mono);color:var(--text2)">${marginOdd}</td>
-              <td style="font-family:var(--mono);color:var(--green)">${kStr}</td>
-              <td>${interp}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>
-  </div>
+function renderModel() {
+  let html='<div class="section-hd">Model weight breakdown</div>';
+  MODELS.forEach(m=>{
+    html+=`<div class="card" style="margin-bottom:8px">
+      <div class="model-row">
+        <div class="model-bar-outer"><div class="model-bar-inner" style="width:${m.pct*3}%;background:${m.col}"></div></div>
+        <span class="model-pct">${m.pct}%</span>
+        <span class="model-name">${m.name}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text3);line-height:1.6;font-family:var(--font-mono)">${m.desc}</div>
+    </div>`;
+  });
+  html+=`<div class="divider"></div>
+  <div class="info-box" style="margin-bottom:1rem">
+    To plug in real data: set up a cron job to fetch Elo ratings and xG stats, store in <code>data/model.json</code>, and update <code>ourP</code> values via the <code>fetchModelData()</code> function in <code>model.js</code>. Full instructions in <code>README.md</code>.
+  </div>`;
+  document.getElementById('model-detail').innerHTML=html;
+}
 
-  <div class="card">
-    <div class="card-title">💡 CLV Explanation</div>
-    <div class="trend-grid">
-      <div class="trend-item"><span class="trend-key">CLV (Closing Line Value)</span><span class="trend-val" style="color:var(--text2)">% difference between opening and closing odds. Positive = bet moved favourably.</span></div>
-      <div class="trend-item"><span class="trend-key">PS = Pinnacle Sports</span><span class="trend-val" style="color:var(--text2)">Sharpest closing line in the market. Used as reference.</span></div>
-      <div class="trend-item"><span class="trend-key">Kelly Criterion (25%)</span><span class="trend-val" style="color:var(--text2)">Optimal stake fraction. Fractional Kelly (25%) for risk management.</span></div>
-      <div class="trend-item"><span class="trend-key">Attack Strength</span><span class="trend-val" style="color:var(--text2)">Team goals per match / League average. >1.0 = above average attack.</span></div>
-      <div class="trend-item"><span class="trend-key">Defence Rating</span><span class="trend-val" style="color:var(--text2)">Goals conceded per match / League average. <1.0 = above average defence.</span></div>
-    </div>
-  </div>
-  `;
+function updateSummary() {
+  const all=RAW.map(enrich);
+  const vb=all.filter(m=>m.ev>0.01);
+  document.getElementById('m-vb').textContent=vb.length;
+  document.getElementById('m-live').textContent=all.length;
+  if(vb.length){
+    const avg=vb.reduce((s,m)=>s+m.ev,0)/vb.length;
+    document.getElementById('m-ev').textContent='+'+(avg*100).toFixed(1)+'%';
+    document.getElementById('m-ev').style.color='#00e676';
+    document.getElementById('m-stake').textContent='$'+Math.round(vb.reduce((s,m)=>s+m.stake,0));
+    document.getElementById('m-stake').style.color='#00e676';
+  }
+  document.getElementById('last-upd').textContent='Updated '+new Date().toLocaleTimeString();
+}
+
+function setDay(el,v){
+  dayFilter=v;
+  document.querySelectorAll('#day-pills .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  renderMarkets();
+}
+function setBR(v){bankroll=parseInt(v);document.getElementById('br-val').textContent='$'+parseInt(v).toLocaleString();renderMarkets();renderValue();}
+function setKF(v){kellyFrac=parseInt(v)/100;document.getElementById('kf-val').textContent=v+'%';renderMarkets();renderValue();}
+
+function refreshAll(){
+  RAW.forEach(m=>{m.mktP=Math.max(0.05,Math.min(0.90,m.mktP+(Math.random()-0.5)*0.04))});
+  renderMarkets();renderValue();renderCrowd();
+}
+
+function sw(tab){
+  ['markets','value','crowd','traders','model'].forEach(t=>{
+    document.getElementById('p-'+t).style.display=t===tab?'':'none';
+    document.getElementById('t-'+t).className='tab'+(t===tab?' on':'');
+  });
+  if(tab==='value')renderValue();
+  if(tab==='crowd')renderCrowd();
+  if(tab==='traders')renderTraders();
+  if(tab==='model')renderModel();
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-buildSidebar();
-buildSelects();
+updateLeagueFilter();
+renderMarkets();
 </script>
 </body>
 </html>
