@@ -1,1213 +1,605 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Stream</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#000000">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="manifest.json">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-  <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0; padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    :root {
-      --bg:              #080808;
-      --surface-1:       rgba(18, 18, 18, 0.92);
-      --surface-3:       rgba(40, 40, 40, 0.60);
-      --surface-hover:   rgba(55, 55, 55, 0.55);
-      --border:          rgba(255, 255, 255, 0.07);
-      --border-active:   rgba(255, 255, 255, 0.14);
-
-      --label:           #ffffff;
-      --label-2:         rgba(255,255,255,0.55);
-      --label-3:         rgba(255,255,255,0.28);
-      --label-4:         rgba(255,255,255,0.12);
-
-      --accent:          #3B82F6;
-      --accent-glow:     rgba(59, 130, 246, 0.20);
-      --accent-text:     #60A5FA;
-      --live-dot:        #EF4444;
-
-      --font:            'DM Sans', -apple-system, sans-serif;
-      --mono:            'DM Mono', monospace;
-
-      --r-xs:  6px;
-      --r-sm:  10px;
-      --r-xl:  24px;
-      --r-full: 999px;
-
-      --blur-sm: saturate(160%) blur(12px);
-      --blur-md: saturate(180%) blur(24px);
-      --blur-lg: saturate(200%) blur(40px);
-
-      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-      --ease-out:    cubic-bezier(0, 0, 0.2, 1);
-    }
-
-    html { height: -webkit-fill-available; }
-
-    body {
-      background: var(--bg);
-      color: var(--label);
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-      overflow: hidden;
-      min-height: 100vh;
-      min-height: -webkit-fill-available;
-    }
-
-    /* ══════════════════════════════════════════
-       AMBIENT GLOW BACKGROUND
-    ══════════════════════════════════════════ */
-    #ambient {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    #ambient::before {
-      content: '';
-      position: absolute;
-      top: -30%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80vw;
-      height: 50vh;
-      background: radial-gradient(ellipse, rgba(59,130,246,0.06) 0%, transparent 70%);
-      filter: blur(40px);
-      animation: ambientPulse 8s ease-in-out infinite;
-    }
-
-    @keyframes ambientPulse {
-      0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
-      50%       { opacity: 1;   transform: translateX(-50%) scale(1.1); }
-    }
-
-    /* ══════════════════════════════════════════
-       TOPBAR
-    ══════════════════════════════════════════ */
-    #topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 200;
-      padding: 0 20px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--surface-1);
-      backdrop-filter: var(--blur-md);
-      -webkit-backdrop-filter: var(--blur-md);
-      border-bottom: 0.5px solid var(--border);
-      transition: transform 0.4s var(--ease-smooth);
-      will-change: transform;
-    }
-
-    #topbar.hidden { transform: translateY(-100%); }
-
-    /* Logo / Brand */
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      flex-shrink: 0;
-      user-select: none;
-    }
-
-    .brand-icon {
-      width: 28px; height: 28px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 12px rgba(59,130,246,0.35);
-      flex-shrink: 0;
-    }
-
-    .brand-icon svg { width: 15px; height: 15px; }
-
-    .brand-name {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: -0.4px;
-      color: var(--label);
-    }
-
-    /* Live indicator */
-    .live-badge {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 8px;
-      background: rgba(239,68,68,0.12);
-      border: 0.5px solid rgba(239,68,68,0.25);
-      border-radius: var(--r-full);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.6px;
-      color: #F87171;
-      font-family: var(--mono);
-      text-transform: uppercase;
-      flex-shrink: 0;
-    }
-
-    .live-dot {
-      width: 5px; height: 5px;
-      background: var(--live-dot);
-      border-radius: 50%;
-      animation: livePulse 1.4s ease-in-out infinite;
-      flex-shrink: 0;
-    }
-
-    @keyframes livePulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.5; transform: scale(0.75); }
-    }
-
-    /* Now playing */
-    #now-playing {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-
-    #now-playing-label {
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.4px;
-      color: var(--label-3);
-      text-transform: uppercase;
-      font-family: var(--mono);
-    }
-
-    #now-playing-name {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: -0.3px;
-      color: var(--label);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* Controls group */
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    /* Search */
-    .search-field {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .search-field input {
-      width: 148px;
-      padding: 7px 10px 7px 32px;
-      background: var(--surface-3);
-      border: 0.5px solid var(--border);
-      border-radius: var(--r-sm);
-      color: var(--label);
-      font-family: var(--font);
-      font-size: 13px;
-      font-weight: 400;
-      outline: none;
-      transition: width 0.25s var(--ease-smooth), background 0.15s, border-color 0.15s;
-      -webkit-appearance: none;
-    }
-
-    .search-field input:focus {
-      width: 190px;
-      background: var(--surface-3);
-      border-color: var(--border-active);
-    }
-
-    .search-field input::placeholder { color: var(--label-3); }
-
-    .search-icon {
-      position: absolute;
-      left: 9px;
-      width: 14px; height: 14px;
-      color: var(--label-3);
-      pointer-events: none;
-      flex-shrink: 0;
-    }
-
-    /* Icon buttons */
-    .icon-btn {
-      width: 34px; height: 34px;
-      display: flex; align-items: center; justify-content: center;
-      background: var(--surface-3);
-      border: 0.5px solid var(--border);
-      border-radius: var(--r-sm);
-      cursor: pointer;
-      color: var(--label-2);
-      transition: background 0.12s, color 0.12s, transform 0.1s var(--ease-spring), border-color 0.12s;
-      flex-shrink: 0;
-      user-select: none;
-    }
-
-    .icon-btn:hover  { background: var(--surface-hover); color: var(--label); border-color: var(--border-active); }
-    .icon-btn:active { transform: scale(0.91); }
-    .icon-btn svg    { width: 16px; height: 16px; }
-
-    .icon-btn.danger:hover { color: #F87171; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.08); }
-
-    /* ══════════════════════════════════════════
-       CHANNEL RAIL
-    ══════════════════════════════════════════ */
-    #rail-wrap {
-      position: fixed;
-      top: 56px;
-      left: 0; right: 0;
-      z-index: 190;
-      background: var(--surface-1);
-      backdrop-filter: var(--blur-sm);
-      -webkit-backdrop-filter: var(--blur-sm);
-      border-bottom: 0.5px solid var(--border);
-      transition: transform 0.4s var(--ease-smooth);
-      will-change: transform;
-    }
-
-    #rail-wrap.hidden { transform: translateY(-200%); }
-
-    #rail {
-      display: flex;
-      align-items: stretch;
-      gap: 6px;
-      padding: 10px 20px 14px;
-      overflow-x: auto;
-      overflow-y: hidden;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255,255,255,0.15) transparent;
-      -webkit-overflow-scrolling: touch;
-      touch-action: pan-x;
-    }
-
-    #rail::-webkit-scrollbar { height: 4px; }
-    #rail::-webkit-scrollbar-track { background: transparent; }
-    #rail::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 999px; }
-    #rail::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.30); }
-
-    /* Category group */
-    .cat-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      flex-shrink: 0;
-      justify-content: flex-end;
-      min-width: 0;
-    }
-
-    .cat-label {
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: 0.7px;
-      text-transform: uppercase;
-      color: var(--label-3);
-      font-family: var(--mono);
-      padding: 0 2px;
-      white-space: nowrap;
-      width: fit-content;
-    }
-
-    .cat-channels {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-    }
-
-    /* Channel pill */
-    .ch-pill {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: stretch;
-      flex-shrink: 0;
-    }
-
-    .ch-btn {
-      padding: 8px 14px;
-      background: var(--surface-3);
-      border: 0.5px solid var(--border);
-      border-radius: var(--r-sm);
-      color: var(--label-2);
-      font-family: var(--font);
-      font-size: 12.5px;
-      font-weight: 500;
-      letter-spacing: -0.2px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.14s, color 0.14s, border-color 0.14s, transform 0.12s var(--ease-spring), box-shadow 0.14s;
-      user-select: none;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .ch-btn::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
-      pointer-events: none;
-    }
-
-    .ch-btn:hover {
-      background: var(--surface-hover);
-      color: var(--label);
-      border-color: var(--border-active);
-    }
-
-    .ch-btn:active { transform: scale(0.94); }
-
-    .ch-btn.active {
-      background: var(--accent);
-      border-color: transparent;
-      color: #fff;
-      font-weight: 600;
-      box-shadow: 0 0 16px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.1);
-    }
-
-    .ch-btn.active::after {
-      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%);
-    }
-
-    /* Source selector */
-    .src-sel {
-      padding: 4px 24px 4px 8px;
-      background: var(--surface-3);
-      border: 0.5px solid var(--border);
-      border-radius: var(--r-xs);
-      color: var(--label-3);
-      font-family: var(--mono);
-      font-size: 10px;
-      cursor: pointer;
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' stroke='rgba(255,255,255,0.25)' stroke-width='1.3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 7px center;
-      transition: color 0.12s, border-color 0.12s, background-color 0.12s;
-    }
-
-    .src-sel:hover { color: var(--label-2); border-color: var(--border-active); background-color: var(--surface-hover); }
-
-    .divider {
-      width: 0.5px;
-      background: var(--border);
-      align-self: stretch;
-      margin: 0 4px;
-      flex-shrink: 0;
-    }
-
-    /* ══════════════════════════════════════════
-       PLAYER
-    ══════════════════════════════════════════ */
-    #stage {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      background: #000;
-      transition: padding-top 0.35s var(--ease-smooth);
-    }
-
-    #player {
-      width: 100%; height: 100%;
-      border: none; display: block;
-    }
-
-    /* ══════════════════════════════════════════
-       OVERLAYS
-    ══════════════════════════════════════════ */
-    .overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      z-index: 10;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.25s;
-    }
-
-    .overlay.show { opacity: 1; pointer-events: auto; }
-
-    .overlay-card {
-      background: var(--surface-1);
-      backdrop-filter: var(--blur-lg);
-      -webkit-backdrop-filter: var(--blur-lg);
-      border: 0.5px solid var(--border-active);
-      border-radius: var(--r-xl);
-      padding: 32px 40px;
-      text-align: center;
-      min-width: 220px;
-    }
-
-    .spinner {
-      width: 32px; height: 32px;
-      border: 2px solid var(--label-4);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      margin: 0 auto 16px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .overlay-title {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: -0.3px;
-      color: var(--label);
-      margin-bottom: 4px;
-    }
-
-    .overlay-sub {
-      font-size: 12px;
-      color: var(--label-3);
-      letter-spacing: -0.1px;
-      line-height: 1.5;
-    }
-
-    .error-icon {
-      font-size: 36px;
-      margin-bottom: 10px;
-      line-height: 1;
-    }
-
-    /* ══════════════════════════════════════════
-       TOAST
-    ══════════════════════════════════════════ */
-    #toast-stack {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column-reverse;
-      gap: 6px;
-      align-items: center;
-      pointer-events: none;
-    }
-
-    .toast {
-      background: var(--surface-1);
-      backdrop-filter: var(--blur-md);
-      -webkit-backdrop-filter: var(--blur-md);
-      border: 0.5px solid var(--border-active);
-      border-radius: var(--r-full);
-      padding: 8px 18px;
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: -0.2px;
-      color: var(--label);
-      white-space: nowrap;
-      max-width: 88vw;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      opacity: 0;
-      transform: translateY(10px) scale(0.95);
-      transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-spring);
-    }
-
-    .toast.show { opacity: 1; transform: translateY(0) scale(1); }
-
-    /* ══════════════════════════════════════════
-       FLOATING CONTROLS (mobile)
-    ══════════════════════════════════════════ */    #float-exit-fs {
-      display: none;
-      position: fixed;
-      top: max(14px, env(safe-area-inset-top));
-      right: 16px;
-      z-index: 300;
-      background: var(--surface-1);
-      backdrop-filter: var(--blur-md);
-      -webkit-backdrop-filter: var(--blur-md);
-      border: 0.5px solid var(--border-active);
-      border-radius: var(--r-full);
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--label-2);
-      cursor: pointer;
-      gap: 6px;
-      align-items: center;
-      transition: transform 0.2s var(--ease-spring);
-    }
-
-    #float-exit-fs.show { display: flex; }
-    #float-exit-fs:active { transform: scale(0.93); }
-
-    /* ══════════════════════════════════════════
-       KEYBOARD HINT
-    ══════════════════════════════════════════ */
-    #kb-hint {
-      position: fixed;
-      bottom: 28px;
-      right: 24px;
-      z-index: 150;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-    }
-
-    #kb-hint.show { opacity: 1; }
-
-    .kb-key {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3px 7px;
-      background: var(--surface-3);
-      border: 0.5px solid var(--border-active);
-      border-radius: 5px;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--label-3);
-      gap: 4px;
-    }
-
-    /* ══════════════════════════════════════════
-       RESPONSIVE
-    ══════════════════════════════════════════ */
-    @media (max-width: 768px) {
-      #topbar { padding: 0 12px; height: 52px; }
-      #rail-wrap { top: 52px; }
-      #rail { padding: 8px 12px 14px; }
-      .brand-name { display: none; }
-      .search-field input { width: 120px; }
-      .search-field input:focus { width: 150px; }
-      .live-badge { display: none; }
-      #kb-hint { display: none; }
-    }
-
-    @media (max-width: 480px) {
-      .controls .icon-btn:last-child { display: none; }
-    }
-
-    @media (display-mode: standalone) {
-      body    { padding-top: env(safe-area-inset-top); }
-      #topbar { padding-top: max(10px, env(safe-area-inset-top)); height: calc(56px + env(safe-area-inset-top)); }
-      #stage  { padding-bottom: env(safe-area-inset-bottom); }
-    }
-
-    /* ══════════════════════════════════════════
-       CHANNEL RIPPLE ANIMATION
-    ══════════════════════════════════════════ */
-    @keyframes ripple {
-      0%   { transform: scale(0); opacity: 0.25; }
-      100% { transform: scale(2.5); opacity: 0; }
-    }
-
-    .ch-btn .ripple-el {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.25);
-      width: 40px; height: 40px;
-      margin-left: -20px; margin-top: -20px;
-      pointer-events: none;
-      animation: ripple 0.5s ease-out forwards;
-    }
-
-    /* No channels state */
-    .empty-state {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--label-3);
-      padding: 4px 0;
-      white-space: nowrap;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPI Football Dashboard 2025–26</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #1a1d24;
+    --border: #252830;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --gold: #ffd700;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+  
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0d1117 0%, #111827 50%, #0a0c10 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; align-items: center; gap: 20px;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--accent); letter-spacing: 2px; line-height: 1; padding: 16px 0; }
+  .logo span { color: var(--accent2); }
+  .tagline { color: var(--muted); font-size: 11px; font-family: 'DM Mono', monospace; letter-spacing: 1px; border-left: 2px solid var(--border); padding-left: 16px; }
+  nav { margin-left: auto; display: flex; gap: 4px; }
+  .nav-btn {
+    background: none; border: none; color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 8px 14px; cursor: pointer; border-radius: 6px; transition: all .2s;
+  }
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active { color: var(--accent); background: rgba(0,229,255,.08); border: 1px solid rgba(0,229,255,.2); }
+
+  /* TABS */
+  .tab { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .tab.active { display: block; }
+
+  /* HERO STAT CARDS */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 20px; position: relative; overflow: hidden;
+  }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
+  .stat-card.orange::before { background: var(--accent2); }
+  .stat-card.gold::before { background: var(--gold); }
+  .stat-label { font-size: 10px; font-family: 'DM Mono', monospace; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--text); line-height: 1.1; margin-top: 4px; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* RANKINGS TABLE */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px;
+    color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .section-title span { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--muted); letter-spacing: 1px; font-weight: 400; }
+
+  .controls { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .search-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); padding: 9px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    width: 220px; outline: none; transition: border-color .2s;
+  }
+  .search-box:focus { border-color: var(--accent); }
+  .select-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); padding: 9px 14px; font-family: 'DM Mono', monospace; font-size: 11px;
+    outline: none; cursor: pointer; min-width: 160px;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--surface2); color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 12px;
+    text-align: left; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none;
+  }
+  thead th:hover { color: var(--accent); }
+  thead th.num { text-align: right; }
+  tbody tr { border-bottom: 1px solid rgba(37,40,48,.6); transition: background .15s; }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 10px 12px; }
+  td.num { text-align: right; font-family: 'DM Mono', monospace; font-size: 12px; }
+  .rank-num { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--muted); }
+  .rank-1 { color: var(--gold); }
+  .rank-2 { color: #c0c0c0; }
+  .rank-3 { color: #cd7f32; }
+  .team-name { font-weight: 600; }
+  .league-tag {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .5px;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+    padding: 2px 6px; border-radius: 4px;
+  }
+
+  /* SPI BAR */
+  .spi-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .spi-bar { height: 6px; border-radius: 3px; min-width: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .spi-val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; min-width: 44px; }
+
+  /* OFF/DEF pills */
+  .off-pill { color: var(--green); font-family: 'DM Mono', monospace; font-size: 12px; }
+  .def-pill { color: var(--red); font-family: 'DM Mono', monospace; font-size: 12px; }
+
+  /* PREDICTOR */
+  .predictor-wrap { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: start; margin-bottom: 32px; }
+  .team-picker { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .team-picker h3 { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; }
+  .vs-col { display: flex; align-items: center; justify-content: center; }
+  .vs-badge { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--muted); padding-top: 60px; }
+  .team-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; margin-bottom: 12px; }
+  .venue-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+  .venue-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-family: 'DM Mono', monospace; transition: all .2s; }
+  .venue-btn.active { background: rgba(0,229,255,.1); border-color: var(--accent); color: var(--accent); }
+  .predict-btn { width: 100%; background: var(--accent); color: #000; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; border: none; padding: 14px; border-radius: 8px; cursor: pointer; transition: opacity .2s; }
+  .predict-btn:hover { opacity: .85; }
+
+  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; }
+  .result-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--muted); margin-bottom: 20px; }
+  .prob-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .prob-box { flex: 1; text-align: center; background: var(--surface2); border-radius: 8px; padding: 16px 8px; }
+  .prob-box .outcome { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .prob-box .prob-val { font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: var(--text); }
+  .prob-box.home .prob-val { color: var(--accent); }
+  .prob-box.draw .prob-val { color: var(--muted); }
+  .prob-box.away .prob-val { color: var(--accent2); }
+  .score-matrix { margin-top: 16px; }
+  .score-matrix h4 { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+  .matrix-grid { display: grid; gap: 3px; }
+  .matrix-cell { background: var(--surface2); border-radius: 4px; padding: 5px; text-align: center; font-family: 'DM Mono', monospace; font-size: 11px; transition: background .2s; }
+  .matrix-cell.header-cell { color: var(--muted); font-size: 10px; background: transparent; }
+  .proj-score { font-family: 'Bebas Neue', sans-serif; font-size: 48px; text-align: center; margin: 16px 0; letter-spacing: 4px; }
+  .proj-score .s1 { color: var(--accent); }
+  .proj-score .sep { color: var(--muted); }
+  .proj-score .s2 { color: var(--accent2); }
+
+  /* STANDINGS */
+  .league-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .league-pill {
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .5px;
+    padding: 6px 12px; border-radius: 20px; cursor: pointer; transition: all .2s;
+  }
+  .league-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .league-pill.active { background: rgba(0,229,255,.1); border-color: var(--accent); color: var(--accent); }
+  .pts-cell { font-weight: 600; font-family: 'DM Mono', monospace; }
+  .form-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 2px; }
+  .form-dot.W { background: var(--green); }
+  .form-dot.D { background: var(--yellow); }
+  .form-dot.L { background: var(--red); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .predictor-wrap { grid-template-columns: 1fr; }
+    .vs-col { display: none; }
+    header { flex-wrap: wrap; }
+    nav { width: 100%; overflow-x: auto; }
+  }
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+  .fade-in { animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ABOUT */
+  .about-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .about-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
+  .about-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--accent); margin-bottom: 12px; }
+  .about-card p, .about-card li { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .about-card ul { padding-left: 18px; }
+  .about-card li { margin-bottom: 4px; }
+</style>
 </head>
 <body>
 
-<!-- Ambient atmosphere -->
-<div id="ambient" aria-hidden="true"></div>
-
-<!-- ── TOPBAR ── -->
-<header id="topbar" role="banner">
-  <div class="brand" aria-label="Stream app">
-    <div class="brand-icon" aria-hidden="true">
-      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 10C4 6.686 6.686 4 10 4s6 2.686 6 6-2.686 6-6 6-6-2.686-6-6z" fill="none" stroke="white" stroke-width="1.4"/>
-        <path d="M8.5 8.134a.5.5 0 01.75-.433l3 1.732a.5.5 0 010 .866l-3 1.732A.5.5 0 018.5 11.6V8.134z" fill="white"/>
-      </svg>
-    </div>
-    <span class="brand-name">Stream</span>
+<header>
+  <div>
+    <div class="logo">SPI<span>538</span></div>
+    <div class="tagline">Soccer Power Index · 2025–26 · 22 Leagues</div>
   </div>
-
-  <div class="live-badge" aria-label="Live">
-    <div class="live-dot"></div>
-    LIVE
-  </div>
-
-  <div id="now-playing" aria-live="polite" aria-atomic="true">
-    <div id="now-playing-label">Now Playing</div>
-    <div id="now-playing-name">Select a channel</div>
-  </div>
-
-  <div class="controls">
-    <div class="search-field">
-      <svg class="search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M13.5 13.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      <input type="search" id="search-box" placeholder="Search channels" aria-label="Search channels" autocomplete="off" spellcheck="false">
-    </div>
-
-    <button id="refresh-btn" class="icon-btn" aria-label="Refresh stream" title="Refresh (R)">
-      <svg viewBox="0 0 20 20" fill="none">
-        <path d="M14.5 6A6 6 0 0010 4a6 6 0 100 12 6 6 0 004.5-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M14 3.5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-
-    <button id="fullscreen-btn" class="icon-btn" aria-label="Toggle full screen" title="Full Screen (F)">
-      <svg id="fs-icon" viewBox="0 0 20 20" fill="none">
-        <path d="M4 4h4M4 4v4M16 4h-4M16 4v4M4 16h4M4 16v-4M16 16h-4M16 16v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-    </button>
-
-    <button id="logout-btn" class="icon-btn danger" aria-label="Sign out" title="Sign Out">
-      <svg viewBox="0 0 20 20" fill="none">
-        <path d="M12 4h3a1 1 0 011 1v10a1 1 0 01-1 1h-3M8 13l3-3-3-3M11 10H4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-  </div>
+  <nav>
+    <button class="nav-btn active" onclick="showTab('rankings')">Rankings</button>
+    <button class="nav-btn" onclick="showTab('predictor')">Predictor</button>
+    <button class="nav-btn" onclick="showTab('standings')">Standings</button>
+    <button class="nav-btn" onclick="showTab('about')">Methodology</button>
+  </nav>
 </header>
 
-<!-- ── CHANNEL RAIL ── -->
-<div id="rail-wrap" role="navigation" aria-label="Channels">
-  <div id="rail" role="list" aria-label="Channel list"></div>
+<!-- ══════════ RANKINGS TAB ══════════ -->
+<div id="tab-rankings" class="tab active">
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Teams</div>
+      <div class="stat-value" id="stat-teams">396</div>
+      <div class="stat-sub">across 22 leagues</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">Matches Analyzed</div>
+      <div class="stat-value">6,179</div>
+      <div class="stat-sub">2025–26 season</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">Top Rated Team</div>
+      <div class="stat-value" id="stat-top" style="font-size:22px;padding-top:6px">—</div>
+      <div class="stat-sub" id="stat-top-spi">SPI —</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best Attack</div>
+      <div class="stat-value" id="stat-off" style="font-size:22px;padding-top:6px">—</div>
+      <div class="stat-sub" id="stat-off-val">OFF —</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best Defense</div>
+      <div class="stat-value" id="stat-def" style="font-size:22px;padding-top:6px">—</div>
+      <div class="stat-sub" id="stat-def-val">DEF —</div>
+    </div>
+  </div>
+
+  <div class="section-title">Global Rankings <span>Sorted by Soccer Power Index</span></div>
+  <div class="controls">
+    <input class="search-box" id="search-input" type="text" placeholder="Search team…" oninput="renderTable()">
+    <select class="select-box" id="league-filter" onchange="renderTable()">
+      <option value="">All Leagues</option>
+    </select>
+    <select class="select-box" id="sort-col" onchange="renderTable()">
+      <option value="spi">Sort: SPI</option>
+      <option value="off">Sort: Offensive</option>
+      <option value="def">Sort: Defensive</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px">#</th>
+          <th>Team</th>
+          <th>League</th>
+          <th class="num">SPI</th>
+          <th class="num">OFF</th>
+          <th class="num">DEF</th>
+          <th class="num">W</th>
+          <th class="num">D</th>
+          <th class="num">L</th>
+          <th class="num">GF</th>
+          <th class="num">GA</th>
+        </tr>
+      </thead>
+      <tbody id="rankings-body"></tbody>
+    </table>
+  </div>
 </div>
 
-<!-- ── PLAYER ── -->
-<main id="stage" role="main">
-  <div id="loading" class="overlay" role="status" aria-label="Loading stream">
-    <div class="overlay-card">
-      <div class="spinner"></div>
-      <div class="overlay-title">Loading Stream</div>
-      <div class="overlay-sub">Connecting…</div>
+<!-- ══════════ PREDICTOR TAB ══════════ -->
+<div id="tab-predictor" class="tab">
+  <div class="section-title">Match Predictor <span>Poisson model with home advantage</span></div>
+  <div class="predictor-wrap">
+    <div class="team-picker">
+      <h3>Home Team</h3>
+      <select class="team-select" id="home-team"></select>
+      <div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">Venue</div>
+      <div class="venue-toggle">
+        <button class="venue-btn active" onclick="setVenue('home')">Home Ground</button>
+        <button class="venue-btn" onclick="setVenue('neutral')">Neutral</button>
+      </div>
+      <div id="home-spi-info" style="font-size:12px;color:var(--muted);padding:8px;background:var(--surface2);border-radius:6px;font-family:'DM Mono',monospace"></div>
+    </div>
+    <div class="vs-col"><div class="vs-badge">VS</div></div>
+    <div class="team-picker">
+      <h3>Away Team</h3>
+      <select class="team-select" id="away-team"></select>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-family:'DM Mono',monospace">—</div>
+      <div id="away-spi-info" style="font-size:12px;color:var(--muted);padding:8px;background:var(--surface2);border-radius:6px;font-family:'DM Mono',monospace"></div>
     </div>
   </div>
+  <div style="text-align:center;margin-bottom:28px">
+    <button class="predict-btn" style="width:280px" onclick="runPredictor()">Predict Match</button>
+  </div>
+  <div id="result-area"></div>
+</div>
 
-  <div id="error-overlay" class="overlay" role="alert" aria-label="Stream error">
-    <div class="overlay-card">
-      <div class="error-icon">⚠</div>
-      <div class="overlay-title">Stream Unavailable</div>
-      <div class="overlay-sub" id="error-detail">Try a different channel or source</div>
+<!-- ══════════ STANDINGS TAB ══════════ -->
+<div id="tab-standings" class="tab">
+  <div class="section-title">League Standings <span>Full season 2025–26</span></div>
+  <div class="league-nav" id="league-nav"></div>
+  <div class="table-wrap" id="standings-table"></div>
+</div>
+
+<!-- ══════════ ABOUT TAB ══════════ -->
+<div id="tab-about" class="tab">
+  <div class="section-title">Methodology</div>
+  <div class="about-grid">
+    <div class="about-card">
+      <h3>SPI Ratings</h3>
+      <p>Each team receives an <strong style="color:var(--text)">offensive rating</strong> (expected goals scored vs an average team on a neutral field) and a <strong style="color:var(--text)">defensive rating</strong> (expected goals conceded). These combine into an overall <strong style="color:var(--accent)">Soccer Power Index</strong> — the percentage of available points (win=3, draw=1, loss=0) that team would earn against an average opponent over many repeated matches.</p>
+    </div>
+    <div class="about-card">
+      <h3>Poisson Model</h3>
+      <p>We fit a maximum-likelihood Poisson regression per league to estimate each team's attack and defense parameters. Given two teams, expected goals are computed with a league-specific home advantage. We then:</p>
+      <ul>
+        <li>Generate two Poisson distributions around those expected goals</li>
+        <li>Build a full score matrix of all possible results</li>
+        <li>Apply diagonal inflation (~9%) to correct for draw frequency</li>
+        <li>Read off win/draw/loss probabilities</li>
+      </ul>
+    </div>
+    <div class="about-card">
+      <h3>Inspired by FiveThirtyEight</h3>
+      <p>This model is inspired by FiveThirtyEight's Soccer Power Index, originally created by Nate Silver in 2009. Key elements borrowed from their methodology:</p>
+      <ul>
+        <li>Offensive & defensive rating separation</li>
+        <li>SPI as % of available points vs average team</li>
+        <li>Poisson process for goal-scoring</li>
+        <li>Draw probability inflation on the diagonal</li>
+        <li>Per-league home advantage estimation</li>
+      </ul>
+    </div>
+    <div class="about-card">
+      <h3>Data Source</h3>
+      <p>Match results from <strong style="color:var(--text)">football-data.co.uk</strong> covering the 2025–26 season across 22 European leagues including Premier League, La Liga, Bundesliga, Serie A, Ligue 1, and many more. The model uses only final scorelines for rating estimation.</p>
+    </div>
+    <div class="about-card">
+      <h3>Home Advantage</h3>
+      <p>Each league gets its own home advantage parameter estimated from the data (in log-goals units). Typical values range from ~0.1 to ~0.33. La Liga (0.324) and Premier League (0.198) are estimated from this season's data.</p>
+    </div>
+    <div class="about-card">
+      <h3>Limitations</h3>
+      <ul>
+        <li>No xG or shot data used (only scorelines)</li>
+        <li>No transfer market valuations for preseason priors</li>
+        <li>No cross-league strength calibration</li>
+        <li>Ratings are within-league only</li>
+        <li>Early season data has high uncertainty</li>
+      </ul>
     </div>
   </div>
-
-  <iframe id="player"
-    allowfullscreen
-    allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write"
-    referrerpolicy="no-referrer-when-downgrade"
-    sandbox="allow-scripts allow-same-origin allow-fullscreen allow-presentation allow-forms"
-    title="Stream player">
-  </iframe>
-</main>
-
-<button id="float-exit-fs" aria-label="Exit full screen">
-  <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-    <path d="M4 8V4h4M16 8V4h-4M4 12v4h4M16 12v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  Exit
-</button>
-
-<!-- ── TOAST STACK ── -->
-<div id="toast-stack" aria-live="polite" aria-atomic="false"></div>
-
-<!-- ── KEYBOARD HINTS ── -->
-<div id="kb-hint" aria-hidden="true">
-  <span class="kb-key">← → navigate</span>
-  <span class="kb-key">F fullscreen</span>
-  <span class="kb-key">R refresh</span>
 </div>
 
 <script>
-'use strict';
+const SPI_DATA = [{"rank": 1, "League": "Bundesliga", "Team": "Bayern Munich", "off": 3.151, "def": 0.826, "spi": 85.7, "W": 7, "D": 2, "L": 1, "GF": 31, "GA": 12}, {"rank": 2, "League": "Primeira Liga", "Team": "Sp Lisbon", "off": 2.095, "def": 0.488, "spi": 80.2, "W": 7, "D": 3, "L": 0, "GF": 22, "GA": 7}, {"rank": 3, "League": "Super Lig", "Team": "Galatasaray", "off": 2.12, "def": 0.657, "spi": 76.8, "W": 8, "D": 1, "L": 1, "GF": 26, "GA": 6}, {"rank": 4, "League": "Primeira Liga", "Team": "Porto", "off": 1.615, "def": 0.332, "spi": 76.6, "W": 7, "D": 2, "L": 1, "GF": 18, "GA": 7}, {"rank": 5, "League": "Conference", "Team": "York", "off": 2.338, "def": 0.843, "spi": 75.9, "W": 9, "D": 0, "L": 1, "GF": 28, "GA": 8}, {"rank": 6, "League": "La Liga", "Team": "Barcelona", "off": 2.124, "def": 0.824, "spi": 73.1, "W": 8, "D": 0, "L": 2, "GF": 25, "GA": 8}, {"rank": 7, "League": "Serie A", "Team": "Inter", "off": 1.97, "def": 0.746, "spi": 72.3, "W": 7, "D": 2, "L": 1, "GF": 23, "GA": 7}, {"rank": 8, "League": "Primeira Liga", "Team": "Benfica", "off": 1.668, "def": 0.573, "spi": 71.2, "W": 8, "D": 2, "L": 0, "GF": 22, "GA": 6}, {"rank": 9, "League": "Ligue 1", "Team": "Paris SG", "off": 1.818, "def": 0.7, "spi": 70.7, "W": 8, "D": 0, "L": 2, "GF": 23, "GA": 8}, {"rank": 10, "League": "Super League Greece", "Team": "Olympiakos", "off": 1.352, "def": 0.36, "spi": 70.7, "W": 5, "D": 4, "L": 1, "GF": 12, "GA": 3}, {"rank": 11, "League": "Premier League", "Team": "Arsenal", "off": 1.726, "def": 0.639, "spi": 70.6, "W": 6, "D": 3, "L": 1, "GF": 21, "GA": 8}, {"rank": 12, "League": "Super League Greece", "Team": "PAOK", "off": 1.585, "def": 0.566, "spi": 69.7, "W": 5, "D": 4, "L": 1, "GF": 18, "GA": 5}, {"rank": 13, "League": "Eredivisie", "Team": "PSV Eindhoven", "off": 2.325, "def": 1.163, "spi": 69.0, "W": 6, "D": 1, "L": 3, "GF": 21, "GA": 15}, {"rank": 14, "League": "La Liga", "Team": "Real Madrid", "off": 1.795, "def": 0.754, "spi": 69.0, "W": 8, "D": 0, "L": 2, "GF": 22, "GA": 9}, {"rank": 15, "League": "Conference", "Team": "Rochdale", "off": 1.731, "def": 0.719, "spi": 68.6, "W": 6, "D": 3, "L": 1, "GF": 21, "GA": 12}, {"rank": 16, "League": "Jupiler Pro League", "Team": "St. Gilloise", "off": 1.472, "def": 0.526, "spi": 68.5, "W": 7, "D": 3, "L": 0, "GF": 14, "GA": 5}, {"rank": 17, "League": "Super Lig", "Team": "Fenerbahce", "off": 2.097, "def": 1.011, "spi": 68.4, "W": 6, "D": 3, "L": 1, "GF": 22, "GA": 14}, {"rank": 18, "League": "Super League Greece", "Team": "AEK", "off": 1.493, "def": 0.562, "spi": 68.0, "W": 6, "D": 4, "L": 0, "GF": 22, "GA": 5}, {"rank": 19, "League": "Serie B", "Team": "Venezia", "off": 1.634, "def": 0.709, "spi": 67.0, "W": 6, "D": 3, "L": 1, "GF": 20, "GA": 8}, {"rank": 20, "League": "Championship", "Team": "Coventry", "off": 1.921, "def": 0.936, "spi": 67.0, "W": 7, "D": 1, "L": 2, "GF": 19, "GA": 7}, {"rank": 21, "League": "Serie A", "Team": "Como", "off": 1.587, "def": 0.677, "spi": 66.9, "W": 7, "D": 2, "L": 1, "GF": 25, "GA": 6}, {"rank": 22, "League": "Bundesliga", "Team": "Dortmund", "off": 1.844, "def": 0.91, "spi": 66.2, "W": 8, "D": 1, "L": 1, "GF": 26, "GA": 13}, {"rank": 23, "League": "Ligue 1", "Team": "Lens", "off": 1.607, "def": 0.754, "spi": 65.3, "W": 6, "D": 1, "L": 3, "GF": 23, "GA": 11}, {"rank": 24, "League": "Scottish League One", "Team": "Inverness C", "off": 1.436, "def": 0.616, "spi": 65.3, "W": 5, "D": 5, "L": 0, "GF": 18, "GA": 8}, {"rank": 25, "League": "Scottish Championship", "Team": "St Johnstone", "off": 1.512, "def": 0.681, "spi": 65.2, "W": 5, "D": 4, "L": 1, "GF": 11, "GA": 5}, {"rank": 26, "League": "League One", "Team": "Lincoln", "off": 1.574, "def": 0.735, "spi": 65.1, "W": 8, "D": 2, "L": 0, "GF": 26, "GA": 5}, {"rank": 27, "League": "Premier League", "Team": "Man City", "off": 1.702, "def": 0.85, "spi": 64.9, "W": 5, "D": 4, "L": 1, "GF": 16, "GA": 10}, {"rank": 28, "League": "League Two", "Team": "Milton Keynes Dons", "off": 1.792, "def": 0.982, "spi": 63.5, "W": 7, "D": 2, "L": 1, "GF": 20, "GA": 9}, {"rank": 29, "League": "Primeira Liga", "Team": "Sp Braga", "off": 1.683, "def": 0.895, "spi": 63.4, "W": 6, "D": 2, "L": 2, "GF": 25, "GA": 12}, {"rank": 30, "League": "Serie B", "Team": "Frosinone", "off": 1.581, "def": 0.845, "spi": 62.5, "W": 5, "D": 4, "L": 1, "GF": 22, "GA": 13}, {"rank": 31, "League": "Serie A", "Team": "Milan", "off": 1.409, "def": 0.707, "spi": 62.3, "W": 6, "D": 2, "L": 2, "GF": 14, "GA": 7}, {"rank": 32, "League": "Scottish Premiership", "Team": "Rangers", "off": 1.427, "def": 0.72, "spi": 62.3, "W": 6, "D": 4, "L": 0, "GF": 24, "GA": 9}, {"rank": 33, "League": "Serie A", "Team": "Juventus", "off": 1.597, "def": 0.883, "spi": 61.9, "W": 4, "D": 3, "L": 3, "GF": 20, "GA": 13}, {"rank": 34, "League": "Super Lig", "Team": "Trabzonspor", "off": 1.764, "def": 1.042, "spi": 61.5, "W": 8, "D": 1, "L": 1, "GF": 20, "GA": 9}, {"rank": 35, "League": "Ligue 2", "Team": "St Etienne", "off": 1.702, "def": 0.99, "spi": 61.5, "W": 7, "D": 1, "L": 2, "GF": 15, "GA": 4}, {"rank": 36, "League": "Scottish Premiership", "Team": "Hearts", "off": 1.346, "def": 0.687, "spi": 61.3, "W": 6, "D": 1, "L": 3, "GF": 13, "GA": 8}, {"rank": 37, "League": "Ligue 2", "Team": "Troyes", "off": 1.633, "def": 0.954, "spi": 60.9, "W": 6, "D": 1, "L": 3, "GF": 18, "GA": 12}, {"rank": 38, "League": "Conference", "Team": "Carlisle", "off": 1.76, "def": 1.073, "spi": 60.7, "W": 6, "D": 1, "L": 3, "GF": 23, "GA": 14}, {"rank": 39, "League": "League One", "Team": "Cardiff", "off": 1.55, "def": 0.896, "spi": 60.6, "W": 5, "D": 2, "L": 3, "GF": 21, "GA": 12}, {"rank": 40, "League": "League Two", "Team": "Cambridge", "off": 1.331, "def": 0.702, "spi": 60.6, "W": 5, "D": 4, "L": 1, "GF": 18, "GA": 6}, {"rank": 41, "League": "Championship", "Team": "Ipswich", "off": 1.584, "def": 0.935, "spi": 60.3, "W": 5, "D": 4, "L": 1, "GF": 19, "GA": 12}, {"rank": 42, "League": "Ligue 1", "Team": "Marseille", "off": 1.735, "def": 1.072, "spi": 60.2, "W": 5, "D": 2, "L": 3, "GF": 18, "GA": 18}, {"rank": 43, "League": "Conference", "Team": "Boreham Wood", "off": 1.873, "def": 1.197, "spi": 60.1, "W": 5, "D": 3, "L": 2, "GF": 25, "GA": 18}, {"rank": 44, "League": "Serie B", "Team": "Monza", "off": 1.275, "def": 0.676, "spi": 60.0, "W": 6, "D": 3, "L": 1, "GF": 16, "GA": 8}, {"rank": 45, "League": "Jupiler Pro League", "Team": "Club Brugge", "off": 1.796, "def": 1.135, "spi": 60.0, "W": 7, "D": 1, "L": 2, "GF": 23, "GA": 14}, {"rank": 46, "League": "Scottish Premiership", "Team": "Motherwell", "off": 1.221, "def": 0.631, "spi": 59.9, "W": 5, "D": 3, "L": 2, "GF": 19, "GA": 7}, {"rank": 47, "League": "Conference", "Team": "Southend", "off": 1.462, "def": 0.849, "spi": 59.8, "W": 4, "D": 3, "L": 3, "GF": 17, "GA": 11}, {"rank": 48, "League": "La Liga", "Team": "Villarreal", "off": 1.542, "def": 0.924, "spi": 59.7, "W": 5, "D": 2, "L": 3, "GF": 17, "GA": 15}, {"rank": 49, "League": "Super Lig", "Team": "Besiktas", "off": 1.73, "def": 1.095, "spi": 59.6, "W": 7, "D": 2, "L": 1, "GF": 19, "GA": 9}, {"rank": 50, "League": "Serie B", "Team": "Palermo", "off": 1.326, "def": 0.735, "spi": 59.6, "W": 6, "D": 2, "L": 2, "GF": 19, "GA": 13}, {"rank": 51, "League": "Bundesliga", "Team": "RB Leipzig", "off": 1.711, "def": 1.085, "spi": 59.4, "W": 5, "D": 3, "L": 2, "GF": 20, "GA": 11}, {"rank": 52, "League": "League Two", "Team": "Notts County", "off": 1.552, "def": 0.956, "spi": 59.1, "W": 6, "D": 1, "L": 3, "GF": 22, "GA": 10}, {"rank": 53, "League": "Eredivisie", "Team": "Nijmegen", "off": 2.1, "def": 1.456, "spi": 58.9, "W": 5, "D": 3, "L": 2, "GF": 22, "GA": 15}, {"rank": 54, "League": "La Liga", "Team": "Ath Madrid", "off": 1.365, "def": 0.803, "spi": 58.8, "W": 6, "D": 1, "L": 3, "GF": 15, "GA": 11}, {"rank": 55, "League": "Eredivisie", "Team": "Feyenoord", "off": 1.864, "def": 1.25, "spi": 58.8, "W": 5, "D": 2, "L": 3, "GF": 17, "GA": 17}, {"rank": 56, "League": "League Two", "Team": "Bromley", "off": 1.44, "def": 0.873, "spi": 58.7, "W": 5, "D": 5, "L": 0, "GF": 10, "GA": 5}, {"rank": 57, "League": "2. Bundesliga", "Team": "Darmstadt", "off": 1.613, "def": 1.037, "spi": 58.5, "W": 4, "D": 5, "L": 1, "GF": 20, "GA": 13}, {"rank": 58, "League": "Scottish League Two", "Team": "Clyde", "off": 1.559, "def": 0.995, "spi": 58.3, "W": 4, "D": 4, "L": 2, "GF": 17, "GA": 10}, {"rank": 59, "League": "Scottish Premiership", "Team": "Celtic", "off": 1.473, "def": 0.919, "spi": 58.3, "W": 6, "D": 2, "L": 2, "GF": 18, "GA": 13}, {"rank": 60, "League": "Scottish League Two", "Team": "East Kilbride", "off": 2.095, "def": 1.498, "spi": 58.0, "W": 8, "D": 0, "L": 2, "GF": 28, "GA": 16}, {"rank": 61, "League": "Ligue 2", "Team": "Reims", "off": 1.391, "def": 0.864, "spi": 57.8, "W": 3, "D": 5, "L": 2, "GF": 7, "GA": 5}, {"rank": 62, "League": "Serie A", "Team": "Roma", "off": 1.194, "def": 0.683, "spi": 57.8, "W": 4, "D": 3, "L": 3, "GF": 16, "GA": 11}, {"rank": 63, "League": "Championship", "Team": "Middlesbrough", "off": 1.378, "def": 0.851, "spi": 57.8, "W": 4, "D": 4, "L": 2, "GF": 13, "GA": 8}, {"rank": 64, "League": "2. Bundesliga", "Team": "Elversberg", "off": 1.514, "def": 0.98, "spi": 57.7, "W": 5, "D": 2, "L": 3, "GF": 16, "GA": 14}, {"rank": 65, "League": "Super League Greece", "Team": "Panathinaikos", "off": 1.369, "def": 0.851, "spi": 57.6, "W": 7, "D": 3, "L": 0, "GF": 20, "GA": 5}, {"rank": 66, "League": "Bundesliga", "Team": "Stuttgart", "off": 1.772, "def": 1.229, "spi": 57.4, "W": 6, "D": 3, "L": 1, "GF": 24, "GA": 11}, {"rank": 67, "League": "Bundesliga", "Team": "Leverkusen", "off": 1.681, "def": 1.146, "spi": 57.4, "W": 4, "D": 5, "L": 1, "GF": 18, "GA": 11}, {"rank": 68, "League": "Eredivisie", "Team": "Ajax", "off": 1.588, "def": 1.068, "spi": 57.2, "W": 3, "D": 6, "L": 1, "GF": 18, "GA": 11}, {"rank": 69, "League": "Bundesliga", "Team": "Hoffenheim", "off": 1.735, "def": 1.205, "spi": 57.2, "W": 5, "D": 2, "L": 3, "GF": 19, "GA": 18}, {"rank": 70, "League": "La Liga 2", "Team": "Santander", "off": 1.846, "def": 1.312, "spi": 57.1, "W": 7, "D": 0, "L": 3, "GF": 17, "GA": 13}, {"rank": 71, "League": "Scottish League Two", "Team": "Spartans", "off": 1.615, "def": 1.102, "spi": 57.0, "W": 5, "D": 3, "L": 2, "GF": 20, "GA": 10}, {"rank": 72, "League": "Serie A", "Team": "Napoli", "off": 1.373, "def": 0.895, "spi": 56.6, "W": 7, "D": 1, "L": 2, "GF": 16, "GA": 13}, {"rank": 73, "League": "Conference", "Team": "Forest Green", "off": 1.477, "def": 0.989, "spi": 56.6, "W": 4, "D": 1, "L": 5, "GF": 16, "GA": 16}, {"rank": 74, "League": "Super Lig", "Team": "Buyuksehyr", "off": 1.514, "def": 1.033, "spi": 56.4, "W": 6, "D": 2, "L": 2, "GF": 17, "GA": 12}, {"rank": 75, "League": "Eredivisie", "Team": "Twente", "off": 1.407, "def": 0.939, "spi": 56.3, "W": 6, "D": 3, "L": 1, "GF": 20, "GA": 8}, {"rank": 76, "League": "Scottish League One", "Team": "Stenhousemuir", "off": 1.107, "def": 0.659, "spi": 56.2, "W": 6, "D": 4, "L": 0, "GF": 18, "GA": 6}, {"rank": 77, "League": "2. Bundesliga", "Team": "Schalke 04", "off": 1.237, "def": 0.786, "spi": 56.1, "W": 3, "D": 6, "L": 1, "GF": 16, "GA": 14}, {"rank": 78, "League": "La Liga 2", "Team": "Las Palmas", "off": 1.117, "def": 0.684, "spi": 55.8, "W": 3, "D": 4, "L": 3, "GF": 14, "GA": 11}, {"rank": 79, "League": "Ligue 2", "Team": "Le Mans", "off": 1.38, "def": 0.954, "spi": 55.3, "W": 5, "D": 4, "L": 1, "GF": 19, "GA": 12}, {"rank": 80, "League": "Serie B", "Team": "Modena", "off": 1.079, "def": 0.681, "spi": 54.9, "W": 5, "D": 2, "L": 3, "GF": 14, "GA": 8}, {"rank": 81, "League": "Conference", "Team": "Scunthorpe", "off": 1.675, "def": 1.268, "spi": 54.5, "W": 4, "D": 2, "L": 4, "GF": 19, "GA": 22}, {"rank": 82, "League": "2. Bundesliga", "Team": "Paderborn", "off": 1.473, "def": 1.077, "spi": 54.5, "W": 5, "D": 3, "L": 2, "GF": 17, "GA": 13}, {"rank": 83, "League": "Primeira Liga", "Team": "Gil Vicente", "off": 1.235, "def": 0.852, "spi": 54.4, "W": 4, "D": 2, "L": 4, "GF": 17, "GA": 16}, {"rank": 84, "League": "Serie A", "Team": "Atalanta", "off": 1.206, "def": 0.823, "spi": 54.4, "W": 5, "D": 4, "L": 1, "GF": 16, "GA": 8}, {"rank": 85, "League": "La Liga 2", "Team": "Almeria", "off": 1.7, "def": 1.301, "spi": 54.3, "W": 6, "D": 1, "L": 3, "GF": 19, "GA": 13}, {"rank": 86, "League": "Super League Greece", "Team": "Levadeiakos", "off": 1.632, "def": 1.236, "spi": 54.3, "W": 3, "D": 2, "L": 5, "GF": 12, "GA": 19}, {"rank": 87, "League": "Premier League", "Team": "Chelsea", "off": 1.486, "def": 1.101, "spi": 54.2, "W": 5, "D": 2, "L": 3, "GF": 19, "GA": 14}, {"rank": 88, "League": "La Liga 2", "Team": "La Coruna", "off": 1.37, "def": 0.989, "spi": 54.2, "W": 7, "D": 0, "L": 3, "GF": 13, "GA": 11}, {"rank": 89, "League": "League Two", "Team": "Grimsby", "off": 1.366, "def": 0.989, "spi": 54.1, "W": 5, "D": 3, "L": 2, "GF": 15, "GA": 8}, {"rank": 90, "League": "Super Lig", "Team": "Goztep", "off": 1.047, "def": 0.684, "spi": 53.9, "W": 3, "D": 5, "L": 2, "GF": 11, "GA": 11}, {"rank": 91, "League": "Scottish League One", "Team": "Alloa", "off": 1.269, "def": 0.912, "spi": 53.7, "W": 5, "D": 2, "L": 3, "GF": 22, "GA": 17}, {"rank": 92, "League": "La Liga 2", "Team": "Malaga", "off": 1.48, "def": 1.115, "spi": 53.7, "W": 7, "D": 1, "L": 2, "GF": 21, "GA": 11}, {"rank": 93, "League": "League Two", "Team": "Swindon", "off": 1.456, "def": 1.092, "spi": 53.7, "W": 5, "D": 2, "L": 3, "GF": 16, "GA": 11}, {"rank": 94, "League": "Ligue 1", "Team": "Strasbourg", "off": 1.344, "def": 0.991, "spi": 53.5, "W": 4, "D": 4, "L": 2, "GF": 17, "GA": 12}, {"rank": 95, "League": "Premier League", "Team": "Man United", "off": 1.591, "def": 1.237, "spi": 53.4, "W": 7, "D": 2, "L": 1, "GF": 20, "GA": 11}, {"rank": 96, "League": "La Liga 2", "Team": "Castellon", "off": 1.445, "def": 1.094, "spi": 53.4, "W": 4, "D": 3, "L": 3, "GF": 16, "GA": 13}, {"rank": 97, "League": "Championship", "Team": "Southampton", "off": 1.467, "def": 1.118, "spi": 53.3, "W": 8, "D": 2, "L": 0, "GF": 22, "GA": 7}, {"rank": 98, "League": "Jupiler Pro League", "Team": "St Truiden", "off": 1.426, "def": 1.081, "spi": 53.3, "W": 6, "D": 0, "L": 4, "GF": 17, "GA": 12}, {"rank": 99, "League": "Ligue 2", "Team": "Dunkerque", "off": 1.475, "def": 1.134, "spi": 53.2, "W": 2, "D": 3, "L": 5, "GF": 11, "GA": 14}, {"rank": 100, "League": "Scottish Premiership", "Team": "Hibernian", "off": 1.266, "def": 0.934, "spi": 53.1, "W": 3, "D": 5, "L": 2, "GF": 12, "GA": 12}, {"rank": 101, "League": "2. Bundesliga", "Team": "Hannover", "off": 1.5, "def": 1.163, "spi": 53.1, "W": 6, "D": 2, "L": 2, "GF": 16, "GA": 12}, {"rank": 102, "League": "Scottish Championship", "Team": "Partick", "off": 1.289, "def": 0.958, "spi": 53.0, "W": 4, "D": 5, "L": 1, "GF": 14, "GA": 12}, {"rank": 103, "League": "Ligue 1", "Team": "Lyon", "off": 1.215, "def": 0.885, "spi": 53.0, "W": 5, "D": 2, "L": 3, "GF": 16, "GA": 12}, {"rank": 104, "League": "Eredivisie", "Team": "Utrecht", "off": 1.263, "def": 0.932, "spi": 53.0, "W": 5, "D": 3, "L": 2, "GF": 13, "GA": 6}, {"rank": 105, "League": "League One", "Team": "Bolton", "off": 1.162, "def": 0.847, "spi": 52.6, "W": 4, "D": 5, "L": 1, "GF": 18, "GA": 12}, {"rank": 106, "League": "2. Bundesliga", "Team": "Hertha", "off": 1.429, "def": 1.114, "spi": 52.6, "W": 4, "D": 4, "L": 2, "GF": 21, "GA": 17}, {"rank": 107, "League": "League Two", "Team": "Oldham", "off": 1.085, "def": 0.778, "spi": 52.4, "W": 7, "D": 2, "L": 1, "GF": 16, "GA": 5}, {"rank": 108, "League": "Ligue 1", "Team": "Monaco", "off": 1.452, "def": 1.171, "spi": 51.8, "W": 7, "D": 2, "L": 1, "GF": 20, "GA": 8}, {"rank": 109, "League": "Serie B", "Team": "Catanzaro", "off": 1.294, "def": 1.022, "spi": 51.6, "W": 6, "D": 2, "L": 2, "GF": 22, "GA": 14}, {"rank": 110, "League": "La Liga 2", "Team": "Burgos", "off": 1.033, "def": 0.755, "spi": 51.6, "W": 5, "D": 3, "L": 2, "GF": 11, "GA": 6}, {"rank": 111, "League": "Ligue 1", "Team": "Lille", "off": 1.288, "def": 1.017, "spi": 51.5, "W": 4, "D": 3, "L": 3, "GF": 9, "GA": 12}, {"rank": 112, "League": "Ligue 2", "Team": "Montpellier", "off": 1.099, "def": 0.829, "spi": 51.5, "W": 5, "D": 2, "L": 3, "GF": 14, "GA": 6}, {"rank": 113, "League": "Conference", "Team": "Woking", "off": 1.367, "def": 1.103, "spi": 51.4, "W": 5, "D": 2, "L": 3, "GF": 20, "GA": 17}, {"rank": 114, "League": "League One", "Team": "Wycombe", "off": 1.184, "def": 0.92, "spi": 51.3, "W": 5, "D": 1, "L": 4, "GF": 19, "GA": 12}, {"rank": 115, "League": "Scottish League One", "Team": "Hamilton", "off": 1.307, "def": 1.047, "spi": 51.3, "W": 3, "D": 3, "L": 4, "GF": 10, "GA": 11}, {"rank": 116, "League": "League Two", "Team": "Chesterfield", "off": 1.486, "def": 1.258, "spi": 50.6, "W": 5, "D": 2, "L": 3, "GF": 15, "GA": 13}, {"rank": 117, "League": "Primeira Liga", "Team": "Famalicao", "off": 0.954, "def": 0.713, "spi": 50.6, "W": 7, "D": 1, "L": 2, "GF": 13, "GA": 8}, {"rank": 118, "League": "La Liga", "Team": "Betis", "off": 1.276, "def": 1.054, "spi": 50.4, "W": 4, "D": 3, "L": 3, "GF": 13, "GA": 12}, {"rank": 119, "League": "Ligue 2", "Team": "Red Star", "off": 1.113, "def": 0.89, "spi": 50.3, "W": 4, "D": 3, "L": 3, "GF": 11, "GA": 11}, {"rank": 120, "League": "Championship", "Team": "Millwall", "off": 1.23, "def": 1.011, "spi": 50.2, "W": 6, "D": 2, "L": 2, "GF": 17, "GA": 9}, {"rank": 121, "League": "League Two", "Team": "Colchester", "off": 1.209, "def": 0.993, "spi": 50.2, "W": 3, "D": 2, "L": 5, "GF": 9, "GA": 10}, {"rank": 122, "League": "Scottish Championship", "Team": "Dunfermline", "off": 1.281, "def": 1.071, "spi": 50.1, "W": 5, "D": 2, "L": 3, "GF": 16, "GA": 13}, {"rank": 123, "League": "Premier League", "Team": "Liverpool", "off": 1.409, "def": 1.212, "spi": 49.9, "W": 4, "D": 2, "L": 4, "GF": 18, "GA": 14}, {"rank": 124, "League": "Eredivisie", "Team": "Heerenveen", "off": 1.543, "def": 1.359, "spi": 49.6, "W": 5, "D": 2, "L": 3, "GF": 18, "GA": 18}, {"rank": 125, "League": "League Two", "Team": "Crewe", "off": 1.338, "def": 1.15, "spi": 49.6, "W": 5, "D": 2, "L": 3, "GF": 13, "GA": 10}, {"rank": 126, "League": "Ligue 1", "Team": "Rennes", "off": 1.325, "def": 1.136, "spi": 49.6, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 13}, {"rank": 127, "League": "Championship", "Team": "Wrexham", "off": 1.383, "def": 1.2, "spi": 49.5, "W": 6, "D": 1, "L": 3, "GF": 17, "GA": 14}, {"rank": 128, "League": "Jupiler Pro League", "Team": "Gent", "off": 1.508, "def": 1.334, "spi": 49.4, "W": 6, "D": 1, "L": 3, "GF": 21, "GA": 14}, {"rank": 129, "League": "La Liga", "Team": "Celta", "off": 1.177, "def": 1.001, "spi": 49.2, "W": 3, "D": 3, "L": 4, "GF": 16, "GA": 15}, {"rank": 130, "League": "League Two", "Team": "Walsall", "off": 1.143, "def": 0.969, "spi": 49.1, "W": 3, "D": 2, "L": 5, "GF": 11, "GA": 13}, {"rank": 131, "League": "Championship", "Team": "Derby", "off": 1.303, "def": 1.137, "spi": 49.0, "W": 6, "D": 0, "L": 4, "GF": 17, "GA": 11}, {"rank": 132, "League": "Conference", "Team": "Halifax", "off": 1.401, "def": 1.256, "spi": 48.7, "W": 4, "D": 3, "L": 3, "GF": 17, "GA": 16}, {"rank": 133, "League": "2. Bundesliga", "Team": "Kaiserslautern", "off": 1.514, "def": 1.373, "spi": 48.7, "W": 4, "D": 1, "L": 5, "GF": 16, "GA": 20}, {"rank": 134, "League": "League One", "Team": "Huddersfield", "off": 1.267, "def": 1.114, "spi": 48.7, "W": 3, "D": 3, "L": 4, "GF": 11, "GA": 13}, {"rank": 135, "League": "League One", "Team": "Peterboro", "off": 1.279, "def": 1.134, "spi": 48.6, "W": 3, "D": 3, "L": 4, "GF": 22, "GA": 16}, {"rank": 136, "League": "League One", "Team": "Plymouth", "off": 1.296, "def": 1.15, "spi": 48.6, "W": 7, "D": 1, "L": 2, "GF": 24, "GA": 12}, {"rank": 137, "League": "Super Lig", "Team": "Alanyaspor", "off": 1.179, "def": 1.032, "spi": 48.5, "W": 2, "D": 4, "L": 4, "GF": 17, "GA": 17}, {"rank": 138, "League": "Championship", "Team": "Norwich", "off": 1.213, "def": 1.067, "spi": 48.5, "W": 7, "D": 0, "L": 3, "GF": 15, "GA": 5}, {"rank": 139, "League": "Premier League", "Team": "Brighton", "off": 1.185, "def": 1.044, "spi": 48.3, "W": 4, "D": 2, "L": 4, "GF": 10, "GA": 9}, {"rank": 140, "League": "League One", "Team": "Reading", "off": 1.233, "def": 1.097, "spi": 48.3, "W": 5, "D": 3, "L": 2, "GF": 16, "GA": 13}, {"rank": 141, "League": "Premier League", "Team": "Aston Villa", "off": 1.187, "def": 1.046, "spi": 48.3, "W": 3, "D": 2, "L": 5, "GF": 9, "GA": 13}, {"rank": 142, "League": "Championship", "Team": "Hull", "off": 1.454, "def": 1.334, "spi": 48.2, "W": 4, "D": 1, "L": 5, "GF": 14, "GA": 17}, {"rank": 143, "League": "League Two", "Team": "Barnet", "off": 1.149, "def": 1.018, "spi": 48.0, "W": 4, "D": 2, "L": 4, "GF": 12, "GA": 13}, {"rank": 144, "League": "Eredivisie", "Team": "Groningen", "off": 1.238, "def": 1.112, "spi": 48.0, "W": 3, "D": 1, "L": 6, "GF": 15, "GA": 15}, {"rank": 145, "League": "Jupiler Pro League", "Team": "Anderlecht", "off": 1.313, "def": 1.197, "spi": 47.9, "W": 2, "D": 3, "L": 5, "GF": 15, "GA": 17}, {"rank": 146, "League": "Scottish League One", "Team": "Queen of Sth", "off": 1.377, "def": 1.274, "spi": 47.7, "W": 3, "D": 4, "L": 3, "GF": 20, "GA": 16}, {"rank": 147, "League": "Eredivisie", "Team": "AZ Alkmaar", "off": 1.454, "def": 1.36, "spi": 47.6, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 14}, {"rank": 148, "League": "Championship", "Team": "Stoke", "off": 1.086, "def": 0.967, "spi": 47.6, "W": 2, "D": 3, "L": 5, "GF": 12, "GA": 17}, {"rank": 149, "League": "Scottish Championship", "Team": "Arbroath", "off": 1.104, "def": 0.994, "spi": 47.5, "W": 3, "D": 5, "L": 2, "GF": 11, "GA": 9}, {"rank": 150, "League": "La Liga", "Team": "Sociedad", "off": 1.29, "def": 1.194, "spi": 47.4, "W": 5, "D": 2, "L": 3, "GF": 20, "GA": 18}, {"rank": 151, "League": "League One", "Team": "Bradford", "off": 1.046, "def": 0.932, "spi": 47.4, "W": 5, "D": 1, "L": 4, "GF": 12, "GA": 11}, {"rank": 152, "League": "League One", "Team": "Mansfield", "off": 1.055, "def": 0.944, "spi": 47.4, "W": 2, "D": 5, "L": 3, "GF": 11, "GA": 11}, {"rank": 153, "League": "League Two", "Team": "Salford", "off": 1.263, "def": 1.168, "spi": 47.4, "W": 5, "D": 0, "L": 5, "GF": 13, "GA": 13}, {"rank": 154, "League": "Premier League", "Team": "Brentford", "off": 1.307, "def": 1.216, "spi": 47.4, "W": 3, "D": 4, "L": 3, "GF": 11, "GA": 14}, {"rank": 155, "League": "Ligue 1", "Team": "Toulouse", "off": 1.123, "def": 1.018, "spi": 47.4, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 10}, {"rank": 156, "League": "2. Bundesliga", "Team": "Bochum", "off": 1.306, "def": 1.216, "spi": 47.3, "W": 2, "D": 6, "L": 2, "GF": 15, "GA": 14}, {"rank": 157, "League": "Championship", "Team": "Watford", "off": 1.157, "def": 1.065, "spi": 47.1, "W": 3, "D": 4, "L": 3, "GF": 11, "GA": 11}, {"rank": 158, "League": "La Liga 2", "Team": "Granada", "off": 1.06, "def": 0.961, "spi": 47.1, "W": 5, "D": 2, "L": 3, "GF": 14, "GA": 7}, {"rank": 159, "League": "La Liga 2", "Team": "Eibar", "off": 0.955, "def": 0.847, "spi": 47.1, "W": 6, "D": 3, "L": 1, "GF": 10, "GA": 4}, {"rank": 160, "League": "League One", "Team": "Stockport", "off": 1.165, "def": 1.079, "spi": 47.0, "W": 4, "D": 2, "L": 4, "GF": 13, "GA": 15}, {"rank": 161, "League": "Ligue 2", "Team": "Annecy", "off": 1.209, "def": 1.126, "spi": 47.0, "W": 5, "D": 2, "L": 3, "GF": 13, "GA": 14}, {"rank": 162, "League": "League One", "Team": "Luton", "off": 1.125, "def": 1.045, "spi": 46.8, "W": 3, "D": 4, "L": 3, "GF": 14, "GA": 15}, {"rank": 163, "League": "Bundesliga", "Team": "Ein Frankfurt", "off": 1.653, "def": 1.614, "spi": 46.7, "W": 3, "D": 3, "L": 4, "GF": 15, "GA": 15}, {"rank": 164, "League": "Serie A", "Team": "Lazio", "off": 0.928, "def": 0.83, "spi": 46.7, "W": 4, "D": 3, "L": 3, "GF": 10, "GA": 12}, {"rank": 165, "League": "Ligue 2", "Team": "Rodez", "off": 1.2, "def": 1.134, "spi": 46.6, "W": 6, "D": 4, "L": 0, "GF": 14, "GA": 7}, {"rank": 166, "League": "La Liga 2", "Team": "Sociedad B", "off": 1.3, "def": 1.247, "spi": 46.5, "W": 5, "D": 2, "L": 3, "GF": 16, "GA": 13}, {"rank": 167, "League": "La Liga 2", "Team": "Sp Gijon", "off": 1.22, "def": 1.164, "spi": 46.4, "W": 4, "D": 3, "L": 3, "GF": 16, "GA": 10}, {"rank": 168, "League": "Jupiler Pro League", "Team": "Mechelen", "off": 1.187, "def": 1.127, "spi": 46.4, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 15}, {"rank": 169, "League": "League One", "Team": "Stevenage", "off": 0.898, "def": 0.822, "spi": 46.1, "W": 6, "D": 0, "L": 4, "GF": 11, "GA": 11}, {"rank": 170, "League": "La Liga 2", "Team": "Leganes", "off": 1.043, "def": 0.982, "spi": 46.1, "W": 3, "D": 2, "L": 5, "GF": 13, "GA": 13}, {"rank": 171, "League": "Championship", "Team": "Sheffield United", "off": 1.272, "def": 1.239, "spi": 46.0, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 12}, {"rank": 172, "League": "Premier League", "Team": "Everton", "off": 1.031, "def": 0.985, "spi": 45.7, "W": 5, "D": 2, "L": 3, "GF": 14, "GA": 10}, {"rank": 173, "League": "Conference", "Team": "Hartlepool", "off": 1.001, "def": 0.952, "spi": 45.7, "W": 4, "D": 2, "L": 4, "GF": 12, "GA": 14}, {"rank": 174, "League": "League Two", "Team": "Fleetwood Town", "off": 1.134, "def": 1.104, "spi": 45.6, "W": 4, "D": 5, "L": 1, "GF": 10, "GA": 7}, {"rank": 175, "League": "League One", "Team": "Barnsley", "off": 1.34, "def": 1.335, "spi": 45.5, "W": 3, "D": 4, "L": 3, "GF": 15, "GA": 14}, {"rank": 176, "League": "2. Bundesliga", "Team": "Dresden", "off": 1.507, "def": 1.521, "spi": 45.4, "W": 4, "D": 4, "L": 2, "GF": 21, "GA": 12}, {"rank": 177, "League": "Eredivisie", "Team": "Go Ahead Eagles", "off": 1.388, "def": 1.396, "spi": 45.3, "W": 3, "D": 3, "L": 4, "GF": 17, "GA": 14}, {"rank": 178, "League": "2. Bundesliga", "Team": "Nurnberg", "off": 1.238, "def": 1.238, "spi": 45.2, "W": 4, "D": 2, "L": 4, "GF": 18, "GA": 14}, {"rank": 179, "League": "Scottish League Two", "Team": "Forfar", "off": 1.371, "def": 1.388, "spi": 45.1, "W": 3, "D": 4, "L": 3, "GF": 12, "GA": 10}, {"rank": 180, "League": "Serie A", "Team": "Bologna", "off": 1.119, "def": 1.111, "spi": 45.1, "W": 4, "D": 0, "L": 6, "GF": 9, "GA": 14}, {"rank": 181, "League": "La Liga 2", "Team": "Albacete", "off": 1.127, "def": 1.12, "spi": 45.1, "W": 5, "D": 3, "L": 2, "GF": 13, "GA": 6}, {"rank": 182, "League": "Primeira Liga", "Team": "Estoril", "off": 1.419, "def": 1.446, "spi": 45.0, "W": 5, "D": 2, "L": 3, "GF": 20, "GA": 15}, {"rank": 183, "League": "Jupiler Pro League", "Team": "Genk", "off": 1.425, "def": 1.451, "spi": 45.0, "W": 5, "D": 2, "L": 3, "GF": 19, "GA": 16}, {"rank": 184, "League": "Ligue 2", "Team": "Guingamp", "off": 1.299, "def": 1.312, "spi": 45.0, "W": 3, "D": 4, "L": 3, "GF": 10, "GA": 10}, {"rank": 185, "League": "2. Bundesliga", "Team": "Bielefeld", "off": 1.295, "def": 1.315, "spi": 44.9, "W": 2, "D": 3, "L": 5, "GF": 12, "GA": 15}, {"rank": 186, "League": "Serie B", "Team": "Carrarese", "off": 1.092, "def": 1.087, "spi": 44.9, "W": 2, "D": 4, "L": 4, "GF": 10, "GA": 10}, {"rank": 187, "League": "Championship", "Team": "Birmingham", "off": 1.127, "def": 1.127, "spi": 44.9, "W": 4, "D": 2, "L": 4, "GF": 9, "GA": 11}, {"rank": 188, "League": "La Liga", "Team": "Osasuna", "off": 0.965, "def": 0.949, "spi": 44.8, "W": 5, "D": 3, "L": 2, "GF": 16, "GA": 13}, {"rank": 189, "League": "Championship", "Team": "Bristol City", "off": 1.142, "def": 1.153, "spi": 44.7, "W": 2, "D": 2, "L": 6, "GF": 9, "GA": 19}, {"rank": 190, "League": "Premier League", "Team": "Newcastle", "off": 1.249, "def": 1.279, "spi": 44.5, "W": 3, "D": 1, "L": 6, "GF": 12, "GA": 18}, {"rank": 191, "League": "Premier League", "Team": "Fulham", "off": 1.22, "def": 1.269, "spi": 44.1, "W": 4, "D": 1, "L": 5, "GF": 13, "GA": 14}, {"rank": 192, "League": "Super Lig", "Team": "Rizespor", "off": 1.199, "def": 1.243, "spi": 44.1, "W": 3, "D": 3, "L": 4, "GF": 12, "GA": 13}, {"rank": 193, "League": "Scottish Championship", "Team": "Ayr", "off": 1.038, "def": 1.062, "spi": 44.1, "W": 1, "D": 5, "L": 4, "GF": 9, "GA": 13}, {"rank": 194, "League": "Conference", "Team": "Solihull", "off": 1.433, "def": 1.511, "spi": 43.9, "W": 1, "D": 3, "L": 6, "GF": 13, "GA": 23}, {"rank": 195, "League": "Serie B", "Team": "Sudtirol", "off": 0.872, "def": 0.879, "spi": 43.9, "W": 2, "D": 4, "L": 4, "GF": 10, "GA": 12}, {"rank": 196, "League": "Scottish Championship", "Team": "Raith Rvs", "off": 0.947, "def": 0.966, "spi": 43.9, "W": 2, "D": 3, "L": 5, "GF": 11, "GA": 14}, {"rank": 197, "League": "Scottish League Two", "Team": "Stranraer", "off": 1.263, "def": 1.331, "spi": 43.8, "W": 3, "D": 3, "L": 4, "GF": 12, "GA": 15}, {"rank": 198, "League": "Jupiler Pro League", "Team": "Antwerp", "off": 0.935, "def": 0.962, "spi": 43.7, "W": 2, "D": 2, "L": 6, "GF": 7, "GA": 11}, {"rank": 199, "League": "Serie B", "Team": "Juve Stabia", "off": 0.976, "def": 1.016, "spi": 43.5, "W": 2, "D": 5, "L": 3, "GF": 14, "GA": 15}, {"rank": 200, "League": "Ligue 2", "Team": "Pau FC", "off": 1.403, "def": 1.503, "spi": 43.4, "W": 3, "D": 3, "L": 4, "GF": 14, "GA": 16}, {"rank": 201, "League": "Scottish League Two", "Team": "Elgin", "off": 1.443, "def": 1.549, "spi": 43.4, "W": 4, "D": 3, "L": 3, "GF": 16, "GA": 17}, {"rank": 202, "League": "Championship", "Team": "Preston", "off": 1.06, "def": 1.122, "spi": 43.3, "W": 2, "D": 3, "L": 5, "GF": 9, "GA": 16}, {"rank": 203, "League": "Premier League", "Team": "Bournemouth", "off": 1.291, "def": 1.388, "spi": 43.2, "W": 3, "D": 7, "L": 0, "GF": 12, "GA": 8}, {"rank": 204, "League": "Conference", "Team": "Aldershot", "off": 1.554, "def": 1.687, "spi": 43.1, "W": 4, "D": 1, "L": 5, "GF": 14, "GA": 18}, {"rank": 205, "League": "Serie A", "Team": "Sassuolo", "off": 1.107, "def": 1.186, "spi": 43.1, "W": 5, "D": 1, "L": 4, "GF": 13, "GA": 13}, {"rank": 206, "League": "La Liga 2", "Team": "Cordoba", "off": 1.201, "def": 1.306, "spi": 42.8, "W": 3, "D": 0, "L": 7, "GF": 14, "GA": 23}, {"rank": 207, "League": "Ligue 1", "Team": "Lorient", "off": 1.148, "def": 1.256, "spi": 42.6, "W": 5, "D": 3, "L": 2, "GF": 17, "GA": 12}, {"rank": 208, "League": "Championship", "Team": "Leicester", "off": 1.225, "def": 1.343, "spi": 42.6, "W": 1, "D": 4, "L": 5, "GF": 11, "GA": 17}, {"rank": 209, "League": "Championship", "Team": "QPR", "off": 1.291, "def": 1.417, "spi": 42.6, "W": 4, "D": 1, "L": 5, "GF": 15, "GA": 19}, {"rank": 210, "League": "Super Lig", "Team": "Samsunspor", "off": 1.005, "def": 1.093, "spi": 42.5, "W": 2, "D": 4, "L": 4, "GF": 7, "GA": 13}, {"rank": 211, "League": "Jupiler Pro League", "Team": "Charleroi", "off": 1.166, "def": 1.278, "spi": 42.5, "W": 3, "D": 1, "L": 6, "GF": 15, "GA": 16}, {"rank": 212, "League": "Bundesliga", "Team": "Freiburg", "off": 1.27, "def": 1.396, "spi": 42.5, "W": 4, "D": 2, "L": 4, "GF": 12, "GA": 15}, {"rank": 213, "League": "Scottish Premiership", "Team": "Falkirk", "off": 0.993, "def": 1.079, "spi": 42.5, "W": 4, "D": 1, "L": 5, "GF": 16, "GA": 13}, {"rank": 214, "League": "League One", "Team": "Leyton Orient", "off": 1.235, "def": 1.361, "spi": 42.5, "W": 5, "D": 1, "L": 4, "GF": 15, "GA": 14}, {"rank": 215, "League": "Jupiler Pro League", "Team": "Westerlo", "off": 1.101, "def": 1.213, "spi": 42.3, "W": 4, "D": 3, "L": 3, "GF": 8, "GA": 10}, {"rank": 216, "League": "Premier League", "Team": "Sunderland", "off": 0.904, "def": 0.989, "spi": 42.2, "W": 4, "D": 1, "L": 5, "GF": 11, "GA": 14}, {"rank": 217, "League": "Championship", "Team": "Swansea", "off": 1.026, "def": 1.134, "spi": 42.1, "W": 5, "D": 1, "L": 4, "GF": 12, "GA": 12}, {"rank": 218, "League": "Premier League", "Team": "Crystal Palace", "off": 0.949, "def": 1.045, "spi": 42.1, "W": 3, "D": 3, "L": 4, "GF": 11, "GA": 12}, {"rank": 219, "League": "Serie B", "Team": "Empoli", "off": 1.111, "def": 1.237, "spi": 42.0, "W": 1, "D": 5, "L": 4, "GF": 17, "GA": 19}, {"rank": 220, "League": "League Two", "Team": "Accrington", "off": 0.914, "def": 1.012, "spi": 41.9, "W": 2, "D": 2, "L": 6, "GF": 4, "GA": 12}, {"rank": 221, "League": "League One", "Team": "AFC Wimbledon", "off": 1.086, "def": 1.224, "spi": 41.7, "W": 4, "D": 3, "L": 3, "GF": 20, "GA": 19}, {"rank": 222, "League": "La Liga 2", "Team": "Andorra", "off": 1.066, "def": 1.201, "spi": 41.7, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 13}, {"rank": 223, "League": "La Liga", "Team": "Elche", "off": 1.072, "def": 1.218, "spi": 41.5, "W": 1, "D": 3, "L": 6, "GF": 13, "GA": 22}, {"rank": 224, "League": "Serie B", "Team": "Cesena", "off": 1.06, "def": 1.208, "spi": 41.4, "W": 2, "D": 3, "L": 5, "GF": 12, "GA": 20}, {"rank": 225, "League": "Ligue 1", "Team": "Brest", "off": 1.036, "def": 1.181, "spi": 41.4, "W": 4, "D": 2, "L": 4, "GF": 11, "GA": 12}, {"rank": 226, "League": "Conference", "Team": "Boston Utd", "off": 1.194, "def": 1.365, "spi": 41.3, "W": 6, "D": 2, "L": 2, "GF": 19, "GA": 16}, {"rank": 227, "League": "Eredivisie", "Team": "Telstar", "off": 1.179, "def": 1.355, "spi": 41.2, "W": 3, "D": 3, "L": 4, "GF": 16, "GA": 16}, {"rank": 228, "League": "La Liga", "Team": "Vallecano", "off": 0.807, "def": 0.917, "spi": 41.1, "W": 2, "D": 4, "L": 4, "GF": 12, "GA": 13}, {"rank": 229, "League": "Scottish League Two", "Team": "Dumbarton", "off": 1.395, "def": 1.611, "spi": 41.1, "W": 3, "D": 3, "L": 4, "GF": 11, "GA": 11}, {"rank": 230, "League": "Scottish League One", "Team": "Cove Rangers", "off": 0.987, "def": 1.141, "spi": 40.9, "W": 2, "D": 5, "L": 3, "GF": 13, "GA": 14}, {"rank": 231, "League": "Super League Greece", "Team": "Atromitos", "off": 0.814, "def": 0.942, "spi": 40.7, "W": 4, "D": 4, "L": 2, "GF": 12, "GA": 8}, {"rank": 232, "League": "Eredivisie", "Team": "For Sittard", "off": 1.336, "def": 1.564, "spi": 40.7, "W": 4, "D": 1, "L": 5, "GF": 16, "GA": 21}, {"rank": 233, "League": "Super Lig", "Team": "Konyaspor", "off": 1.109, "def": 1.299, "spi": 40.7, "W": 3, "D": 4, "L": 3, "GF": 10, "GA": 10}, {"rank": 234, "League": "Ligue 2", "Team": "Clermont", "off": 1.013, "def": 1.186, "spi": 40.6, "W": 2, "D": 0, "L": 8, "GF": 10, "GA": 15}, {"rank": 235, "League": "La Liga", "Team": "Getafe", "off": 0.709, "def": 0.819, "spi": 40.5, "W": 5, "D": 2, "L": 3, "GF": 10, "GA": 6}, {"rank": 236, "League": "2. Bundesliga", "Team": "Holstein Kiel", "off": 1.162, "def": 1.372, "spi": 40.4, "W": 2, "D": 2, "L": 6, "GF": 14, "GA": 20}, {"rank": 237, "League": "Serie A", "Team": "Udinese", "off": 1.062, "def": 1.255, "spi": 40.4, "W": 4, "D": 1, "L": 5, "GF": 13, "GA": 10}, {"rank": 238, "League": "League One", "Team": "Wigan", "off": 0.916, "def": 1.078, "spi": 40.4, "W": 4, "D": 2, "L": 4, "GF": 12, "GA": 17}, {"rank": 239, "League": "Jupiler Pro League", "Team": "Cercle Brugge", "off": 1.207, "def": 1.434, "spi": 40.3, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 17}, {"rank": 240, "League": "Serie A", "Team": "Genoa", "off": 1.082, "def": 1.281, "spi": 40.3, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 13}, {"rank": 241, "League": "League One", "Team": "Exeter", "off": 0.924, "def": 1.096, "spi": 40.2, "W": 0, "D": 4, "L": 6, "GF": 9, "GA": 22}, {"rank": 242, "League": "Bundesliga", "Team": "FC Koln", "off": 1.254, "def": 1.489, "spi": 40.2, "W": 2, "D": 3, "L": 5, "GF": 13, "GA": 18}, {"rank": 243, "League": "League One", "Team": "Burton", "off": 0.967, "def": 1.158, "spi": 40.0, "W": 4, "D": 3, "L": 3, "GF": 13, "GA": 11}, {"rank": 244, "League": "Super Lig", "Team": "Gaziantep", "off": 1.27, "def": 1.525, "spi": 39.9, "W": 2, "D": 4, "L": 4, "GF": 12, "GA": 16}, {"rank": 245, "League": "Conference", "Team": "Wealdstone", "off": 1.236, "def": 1.489, "spi": 39.8, "W": 4, "D": 0, "L": 6, "GF": 16, "GA": 18}, {"rank": 246, "League": "Scottish Premiership", "Team": "Dundee United", "off": 1.069, "def": 1.293, "spi": 39.8, "W": 3, "D": 3, "L": 4, "GF": 12, "GA": 18}, {"rank": 247, "League": "Jupiler Pro League", "Team": "RAAL La Louviere", "off": 0.912, "def": 1.11, "spi": 39.6, "W": 2, "D": 5, "L": 3, "GF": 15, "GA": 16}, {"rank": 248, "League": "Jupiler Pro League", "Team": "Waregem", "off": 1.176, "def": 1.431, "spi": 39.6, "W": 3, "D": 0, "L": 7, "GF": 12, "GA": 18}, {"rank": 249, "League": "Bundesliga", "Team": "Mainz", "off": 1.066, "def": 1.296, "spi": 39.6, "W": 5, "D": 3, "L": 2, "GF": 16, "GA": 13}, {"rank": 250, "League": "Championship", "Team": "Charlton", "off": 0.848, "def": 1.034, "spi": 39.5, "W": 3, "D": 4, "L": 3, "GF": 7, "GA": 8}, {"rank": 251, "League": "Premier League", "Team": "Leeds", "off": 1.098, "def": 1.342, "spi": 39.5, "W": 2, "D": 5, "L": 3, "GF": 8, "GA": 11}, {"rank": 252, "League": "Serie A", "Team": "Fiorentina", "off": 1.064, "def": 1.301, "spi": 39.4, "W": 4, "D": 3, "L": 3, "GF": 14, "GA": 13}, {"rank": 253, "League": "Premier League", "Team": "Tottenham", "off": 1.132, "def": 1.385, "spi": 39.4, "W": 0, "D": 3, "L": 7, "GF": 10, "GA": 23}, {"rank": 254, "League": "La Liga", "Team": "Espanol", "off": 1.028, "def": 1.262, "spi": 39.4, "W": 0, "D": 3, "L": 7, "GF": 13, "GA": 24}, {"rank": 255, "League": "Conference", "Team": "Altrincham", "off": 1.069, "def": 1.316, "spi": 39.3, "W": 5, "D": 1, "L": 4, "GF": 12, "GA": 13}, {"rank": 256, "League": "Primeira Liga", "Team": "Nacional", "off": 0.916, "def": 1.134, "spi": 39.2, "W": 1, "D": 2, "L": 7, "GF": 8, "GA": 13}, {"rank": 257, "League": "Primeira Liga", "Team": "Moreirense", "off": 0.964, "def": 1.193, "spi": 39.2, "W": 2, "D": 2, "L": 6, "GF": 7, "GA": 15}, {"rank": 258, "League": "Bundesliga", "Team": "Hamburg", "off": 1.006, "def": 1.246, "spi": 39.1, "W": 3, "D": 4, "L": 3, "GF": 14, "GA": 13}, {"rank": 259, "League": "Scottish Championship", "Team": "Morton", "off": 0.912, "def": 1.138, "spi": 39.0, "W": 3, "D": 2, "L": 5, "GF": 12, "GA": 15}, {"rank": 260, "League": "League Two", "Team": "Gillingham", "off": 1.082, "def": 1.345, "spi": 39.0, "W": 2, "D": 1, "L": 7, "GF": 6, "GA": 21}, {"rank": 261, "League": "Conference", "Team": "Tamworth", "off": 1.196, "def": 1.489, "spi": 38.9, "W": 3, "D": 3, "L": 4, "GF": 18, "GA": 18}, {"rank": 262, "League": "La Liga 2", "Team": "Valladolid", "off": 1.034, "def": 1.293, "spi": 38.9, "W": 3, "D": 2, "L": 5, "GF": 15, "GA": 22}, {"rank": 263, "League": "La Liga 2", "Team": "Cadiz", "off": 0.896, "def": 1.128, "spi": 38.8, "W": 1, "D": 1, "L": 8, "GF": 6, "GA": 16}, {"rank": 264, "League": "Scottish League One", "Team": "Peterhead", "off": 1.298, "def": 1.62, "spi": 38.7, "W": 3, "D": 4, "L": 3, "GF": 15, "GA": 13}, {"rank": 265, "League": "La Liga", "Team": "Valencia", "off": 0.911, "def": 1.153, "spi": 38.6, "W": 6, "D": 0, "L": 4, "GF": 14, "GA": 11}, {"rank": 266, "League": "2. Bundesliga", "Team": "Karlsruhe", "off": 1.401, "def": 1.751, "spi": 38.5, "W": 4, "D": 3, "L": 3, "GF": 18, "GA": 18}, {"rank": 267, "League": "La Liga", "Team": "Mallorca", "off": 0.976, "def": 1.237, "spi": 38.5, "W": 3, "D": 1, "L": 6, "GF": 13, "GA": 19}, {"rank": 268, "League": "Ligue 2", "Team": "Boulogne", "off": 1.012, "def": 1.289, "spi": 38.4, "W": 5, "D": 3, "L": 2, "GF": 12, "GA": 9}, {"rank": 269, "League": "Ligue 2", "Team": "Grenoble", "off": 0.866, "def": 1.109, "spi": 38.4, "W": 1, "D": 6, "L": 3, "GF": 7, "GA": 11}, {"rank": 270, "League": "Jupiler Pro League", "Team": "Standard", "off": 0.818, "def": 1.045, "spi": 38.4, "W": 3, "D": 4, "L": 3, "GF": 9, "GA": 12}, {"rank": 271, "League": "La Liga 2", "Team": "Ceuta", "off": 1.139, "def": 1.443, "spi": 38.4, "W": 4, "D": 0, "L": 6, "GF": 14, "GA": 24}, {"rank": 272, "League": "Serie B", "Team": "Pescara", "off": 1.155, "def": 1.468, "spi": 38.3, "W": 4, "D": 2, "L": 4, "GF": 16, "GA": 14}, {"rank": 273, "League": "La Liga", "Team": "Ath Bilbao", "off": 0.885, "def": 1.134, "spi": 38.3, "W": 4, "D": 2, "L": 4, "GF": 15, "GA": 16}, {"rank": 274, "League": "Scottish League Two", "Team": "Annan Athletic", "off": 1.303, "def": 1.647, "spi": 38.3, "W": 3, "D": 2, "L": 5, "GF": 13, "GA": 18}, {"rank": 275, "League": "Scottish Championship", "Team": "Queens Park", "off": 0.969, "def": 1.24, "spi": 38.3, "W": 5, "D": 2, "L": 3, "GF": 11, "GA": 9}, {"rank": 276, "League": "Championship", "Team": "West Brom", "off": 0.943, "def": 1.213, "spi": 38.2, "W": 2, "D": 5, "L": 3, "GF": 8, "GA": 10}, {"rank": 277, "League": "Serie B", "Team": "Padova", "off": 0.855, "def": 1.108, "spi": 38.1, "W": 2, "D": 3, "L": 5, "GF": 11, "GA": 16}, {"rank": 278, "League": "Bundesliga", "Team": "M'gladbach", "off": 1.091, "def": 1.401, "spi": 38.1, "W": 2, "D": 4, "L": 4, "GF": 10, "GA": 17}, {"rank": 279, "League": "Conference", "Team": "Sutton", "off": 1.204, "def": 1.538, "spi": 38.1, "W": 4, "D": 3, "L": 3, "GF": 15, "GA": 17}, {"rank": 280, "League": "Bundesliga", "Team": "Union Berlin", "off": 1.046, "def": 1.348, "spi": 38.0, "W": 2, "D": 2, "L": 6, "GF": 8, "GA": 20}, {"rank": 281, "League": "2. Bundesliga", "Team": "Magdeburg", "off": 1.303, "def": 1.663, "spi": 38.0, "W": 3, "D": 1, "L": 6, "GF": 18, "GA": 21}, {"rank": 282, "League": "Scottish League One", "Team": "Montrose", "off": 1.285, "def": 1.643, "spi": 38.0, "W": 3, "D": 5, "L": 2, "GF": 19, "GA": 20}, {"rank": 283, "League": "Super Lig", "Team": "Genclerbirligi", "off": 0.947, "def": 1.233, "spi": 37.9, "W": 1, "D": 4, "L": 5, "GF": 7, "GA": 13}, {"rank": 284, "League": "Ligue 1", "Team": "Paris FC", "off": 1.007, "def": 1.307, "spi": 37.9, "W": 3, "D": 6, "L": 1, "GF": 10, "GA": 12}, {"rank": 285, "League": "Eredivisie", "Team": "Sparta Rotterdam", "off": 1.067, "def": 1.383, "spi": 37.8, "W": 4, "D": 3, "L": 3, "GF": 15, "GA": 16}, {"rank": 286, "League": "Super League Greece", "Team": "Kifisia", "off": 1.032, "def": 1.341, "spi": 37.8, "W": 2, "D": 2, "L": 6, "GF": 9, "GA": 18}, {"rank": 287, "League": "La Liga", "Team": "Sevilla", "off": 1.059, "def": 1.377, "spi": 37.8, "W": 2, "D": 5, "L": 3, "GF": 13, "GA": 19}, {"rank": 288, "League": "La Liga", "Team": "Alaves", "off": 0.854, "def": 1.125, "spi": 37.7, "W": 3, "D": 3, "L": 4, "GF": 14, "GA": 17}, {"rank": 289, "League": "Super Lig", "Team": "Kocaelispor", "off": 0.781, "def": 1.034, "spi": 37.6, "W": 3, "D": 1, "L": 6, "GF": 8, "GA": 15}, {"rank": 290, "League": "Super League Greece", "Team": "OFI Crete", "off": 1.105, "def": 1.444, "spi": 37.5, "W": 5, "D": 2, "L": 3, "GF": 15, "GA": 15}, {"rank": 291, "League": "Jupiler Pro League", "Team": "Oud-Heverlee Leuven", "off": 0.983, "def": 1.296, "spi": 37.5, "W": 4, "D": 2, "L": 4, "GF": 13, "GA": 14}, {"rank": 292, "League": "Serie B", "Team": "Mantova", "off": 0.936, "def": 1.235, "spi": 37.5, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 12}, {"rank": 293, "League": "League One", "Team": "Blackpool", "off": 1.01, "def": 1.337, "spi": 37.4, "W": 2, "D": 4, "L": 4, "GF": 11, "GA": 21}, {"rank": 294, "League": "Conference", "Team": "Yeovil", "off": 0.969, "def": 1.282, "spi": 37.4, "W": 3, "D": 1, "L": 6, "GF": 13, "GA": 19}, {"rank": 295, "League": "Super League Greece", "Team": "Aris", "off": 0.621, "def": 0.836, "spi": 37.3, "W": 1, "D": 6, "L": 3, "GF": 6, "GA": 10}, {"rank": 296, "League": "Championship", "Team": "Oxford", "off": 0.86, "def": 1.149, "spi": 37.3, "W": 3, "D": 3, "L": 4, "GF": 9, "GA": 13}, {"rank": 297, "League": "Premier League", "Team": "Nott'm Forest", "off": 0.895, "def": 1.205, "spi": 37.1, "W": 2, "D": 5, "L": 3, "GF": 10, "GA": 9}, {"rank": 298, "League": "Serie B", "Team": "Sampdoria", "off": 0.81, "def": 1.094, "spi": 37.1, "W": 3, "D": 3, "L": 4, "GF": 10, "GA": 15}, {"rank": 299, "League": "Championship", "Team": "Blackburn", "off": 0.838, "def": 1.132, "spi": 37.1, "W": 4, "D": 2, "L": 4, "GF": 10, "GA": 11}, {"rank": 300, "League": "Serie A", "Team": "Cagliari", "off": 0.951, "def": 1.287, "spi": 36.8, "W": 3, "D": 2, "L": 5, "GF": 10, "GA": 12}, {"rank": 301, "League": "La Liga", "Team": "Levante", "off": 0.982, "def": 1.332, "spi": 36.7, "W": 3, "D": 3, "L": 4, "GF": 13, "GA": 16}, {"rank": 302, "League": "Eredivisie", "Team": "Zwolle", "off": 1.21, "def": 1.615, "spi": 36.7, "W": 3, "D": 4, "L": 3, "GF": 16, "GA": 14}, {"rank": 303, "League": "Serie B", "Team": "Avellino", "off": 0.969, "def": 1.323, "spi": 36.6, "W": 3, "D": 2, "L": 5, "GF": 10, "GA": 16}, {"rank": 304, "League": "Primeira Liga", "Team": "Santa Clara", "off": 0.71, "def": 0.986, "spi": 36.6, "W": 3, "D": 2, "L": 5, "GF": 10, "GA": 12}, {"rank": 305, "League": "La Liga", "Team": "Girona", "off": 0.887, "def": 1.229, "spi": 36.4, "W": 3, "D": 4, "L": 3, "GF": 13, "GA": 10}, {"rank": 306, "League": "League One", "Team": "Doncaster", "off": 0.908, "def": 1.258, "spi": 36.3, "W": 5, "D": 2, "L": 3, "GF": 10, "GA": 14}, {"rank": 307, "League": "Scottish League Two", "Team": "Stirling", "off": 1.264, "def": 1.711, "spi": 36.2, "W": 2, "D": 3, "L": 5, "GF": 10, "GA": 17}, {"rank": 308, "League": "Conference", "Team": "Eastleigh", "off": 1.11, "def": 1.524, "spi": 36.1, "W": 3, "D": 2, "L": 5, "GF": 14, "GA": 21}, {"rank": 309, "League": "Serie B", "Team": "Virtus Entella", "off": 0.812, "def": 1.147, "spi": 36.0, "W": 4, "D": 1, "L": 5, "GF": 12, "GA": 16}, {"rank": 310, "League": "Primeira Liga", "Team": "Guimaraes", "off": 0.903, "def": 1.266, "spi": 36.0, "W": 2, "D": 1, "L": 7, "GF": 11, "GA": 20}, {"rank": 311, "League": "Bundesliga", "Team": "Augsburg", "off": 1.084, "def": 1.518, "spi": 35.6, "W": 5, "D": 1, "L": 4, "GF": 15, "GA": 17}, {"rank": 312, "League": "Super League Greece", "Team": "Volos NFC", "off": 0.829, "def": 1.195, "spi": 35.5, "W": 1, "D": 3, "L": 6, "GF": 7, "GA": 17}, {"rank": 313, "League": "Scottish Premiership", "Team": "Aberdeen", "off": 0.822, "def": 1.186, "spi": 35.5, "W": 1, "D": 2, "L": 7, "GF": 11, "GA": 20}, {"rank": 314, "League": "League Two", "Team": "Bristol Rvs", "off": 0.978, "def": 1.391, "spi": 35.4, "W": 5, "D": 1, "L": 4, "GF": 14, "GA": 13}, {"rank": 315, "League": "Ligue 1", "Team": "Le Havre", "off": 0.689, "def": 1.01, "spi": 35.4, "W": 2, "D": 3, "L": 5, "GF": 7, "GA": 12}, {"rank": 316, "League": "Championship", "Team": "Portsmouth", "off": 0.879, "def": 1.288, "spi": 34.9, "W": 2, "D": 1, "L": 7, "GF": 10, "GA": 17}, {"rank": 317, "League": "League Two", "Team": "Tranmere", "off": 1.174, "def": 1.667, "spi": 34.9, "W": 1, "D": 1, "L": 8, "GF": 6, "GA": 20}, {"rank": 318, "League": "Serie B", "Team": "Spezia", "off": 0.809, "def": 1.197, "spi": 34.9, "W": 2, "D": 4, "L": 4, "GF": 12, "GA": 17}, {"rank": 319, "League": "Ligue 1", "Team": "Angers", "off": 0.715, "def": 1.078, "spi": 34.7, "W": 3, "D": 1, "L": 6, "GF": 6, "GA": 17}, {"rank": 320, "League": "Serie A", "Team": "Torino", "off": 1.095, "def": 1.586, "spi": 34.6, "W": 3, "D": 1, "L": 6, "GF": 13, "GA": 21}, {"rank": 321, "League": "Ligue 1", "Team": "Auxerre", "off": 0.679, "def": 1.035, "spi": 34.6, "W": 2, "D": 4, "L": 4, "GF": 8, "GA": 9}, {"rank": 322, "League": "Scottish League Two", "Team": "Edinburgh City", "off": 1.349, "def": 1.916, "spi": 34.4, "W": 2, "D": 3, "L": 5, "GF": 8, "GA": 20}, {"rank": 323, "League": "La Liga 2", "Team": "Huesca", "off": 0.859, "def": 1.286, "spi": 34.4, "W": 2, "D": 2, "L": 6, "GF": 10, "GA": 15}, {"rank": 324, "League": "League Two", "Team": "Cheltenham", "off": 1.082, "def": 1.577, "spi": 34.4, "W": 2, "D": 6, "L": 2, "GF": 16, "GA": 17}, {"rank": 325, "League": "La Liga 2", "Team": "Zaragoza", "off": 0.796, "def": 1.209, "spi": 34.3, "W": 2, "D": 4, "L": 4, "GF": 7, "GA": 9}, {"rank": 326, "League": "Ligue 2", "Team": "Amiens", "off": 1.139, "def": 1.665, "spi": 34.2, "W": 1, "D": 2, "L": 7, "GF": 11, "GA": 22}, {"rank": 327, "League": "Eredivisie", "Team": "Volendam", "off": 0.929, "def": 1.397, "spi": 34.1, "W": 4, "D": 1, "L": 5, "GF": 11, "GA": 16}, {"rank": 328, "League": "Scottish Championship", "Team": "Ross County", "off": 0.831, "def": 1.27, "spi": 34.0, "W": 3, "D": 3, "L": 4, "GF": 7, "GA": 9}, {"rank": 329, "League": "Scottish Championship", "Team": "Airdrie Utd", "off": 0.716, "def": 1.116, "spi": 34.0, "W": 2, "D": 3, "L": 5, "GF": 7, "GA": 9}, {"rank": 330, "League": "Primeira Liga", "Team": "Estrela", "off": 0.967, "def": 1.456, "spi": 33.9, "W": 2, "D": 3, "L": 5, "GF": 10, "GA": 18}, {"rank": 331, "League": "Conference", "Team": "Morecambe", "off": 1.305, "def": 1.892, "spi": 33.9, "W": 3, "D": 3, "L": 4, "GF": 23, "GA": 20}, {"rank": 332, "League": "Scottish Premiership", "Team": "Dundee", "off": 0.84, "def": 1.289, "spi": 33.9, "W": 2, "D": 4, "L": 4, "GF": 12, "GA": 16}, {"rank": 333, "League": "2. Bundesliga", "Team": "Fortuna Dusseldorf", "off": 0.869, "def": 1.328, "spi": 33.8, "W": 4, "D": 2, "L": 4, "GF": 11, "GA": 13}, {"rank": 334, "League": "Bundesliga", "Team": "Werder Bremen", "off": 0.967, "def": 1.46, "spi": 33.8, "W": 3, "D": 1, "L": 6, "GF": 9, "GA": 13}, {"rank": 335, "League": "Super League Greece", "Team": "Panetolikos", "off": 0.765, "def": 1.19, "spi": 33.8, "W": 3, "D": 2, "L": 5, "GF": 10, "GA": 11}, {"rank": 336, "League": "2. Bundesliga", "Team": "Greuther Furth", "off": 1.353, "def": 1.965, "spi": 33.7, "W": 4, "D": 2, "L": 4, "GF": 14, "GA": 15}, {"rank": 337, "League": "Eredivisie", "Team": "Excelsior", "off": 0.887, "def": 1.363, "spi": 33.6, "W": 1, "D": 4, "L": 5, "GF": 10, "GA": 13}, {"rank": 338, "League": "Serie B", "Team": "Reggiana", "off": 0.791, "def": 1.236, "spi": 33.6, "W": 2, "D": 3, "L": 5, "GF": 5, "GA": 17}, {"rank": 339, "League": "2. Bundesliga", "Team": "Braunschweig", "off": 0.951, "def": 1.459, "spi": 33.4, "W": 2, "D": 3, "L": 5, "GF": 9, "GA": 15}, {"rank": 340, "League": "Super Lig", "Team": "Kasimpasa", "off": 0.78, "def": 1.233, "spi": 33.4, "W": 2, "D": 3, "L": 5, "GF": 9, "GA": 14}, {"rank": 341, "League": "Primeira Liga", "Team": "Rio Ave", "off": 0.877, "def": 1.365, "spi": 33.3, "W": 3, "D": 1, "L": 6, "GF": 6, "GA": 17}, {"rank": 342, "League": "League One", "Team": "Rotherham", "off": 0.782, "def": 1.245, "spi": 33.2, "W": 1, "D": 2, "L": 7, "GF": 4, "GA": 18}, {"rank": 343, "League": "Premier League", "Team": "West Ham", "off": 1.036, "def": 1.582, "spi": 33.2, "W": 4, "D": 3, "L": 3, "GF": 14, "GA": 14}, {"rank": 344, "League": "2. Bundesliga", "Team": "Preu\u00dfen M\u00fcnster", "off": 1.025, "def": 1.577, "spi": 33.0, "W": 1, "D": 3, "L": 6, "GF": 9, "GA": 21}, {"rank": 345, "League": "League Two", "Team": "Crawley Town", "off": 0.877, "def": 1.385, "spi": 32.9, "W": 0, "D": 5, "L": 5, "GF": 4, "GA": 13}, {"rank": 346, "League": "Primeira Liga", "Team": "Arouca", "off": 1.095, "def": 1.685, "spi": 32.8, "W": 5, "D": 0, "L": 5, "GF": 16, "GA": 13}, {"rank": 347, "League": "La Liga 2", "Team": "Cultural Leonesa", "off": 0.849, "def": 1.36, "spi": 32.7, "W": 0, "D": 3, "L": 7, "GF": 7, "GA": 20}, {"rank": 348, "League": "League One", "Team": "Northampton", "off": 0.722, "def": 1.186, "spi": 32.7, "W": 1, "D": 2, "L": 7, "GF": 7, "GA": 18}, {"rank": 349, "League": "Ligue 1", "Team": "Nice", "off": 1.003, "def": 1.575, "spi": 32.5, "W": 2, "D": 3, "L": 5, "GF": 12, "GA": 22}, {"rank": 350, "League": "Primeira Liga", "Team": "Alverca", "off": 0.845, "def": 1.372, "spi": 32.4, "W": 1, "D": 6, "L": 3, "GF": 10, "GA": 18}, {"rank": 351, "League": "Serie A", "Team": "Cremonese", "off": 0.78, "def": 1.291, "spi": 32.2, "W": 1, "D": 2, "L": 7, "GF": 5, "GA": 16}, {"rank": 352, "League": "League Two", "Team": "Newport County", "off": 0.96, "def": 1.541, "spi": 32.1, "W": 3, "D": 1, "L": 6, "GF": 10, "GA": 13}, {"rank": 353, "League": "Ligue 2", "Team": "Nancy", "off": 0.823, "def": 1.353, "spi": 32.1, "W": 1, "D": 4, "L": 5, "GF": 7, "GA": 17}, {"rank": 354, "League": "Bundesliga", "Team": "Wolfsburg", "off": 1.155, "def": 1.8, "spi": 32.1, "W": 0, "D": 3, "L": 7, "GF": 9, "GA": 20}, {"rank": 355, "League": "La Liga 2", "Team": "Mirandes", "off": 0.874, "def": 1.426, "spi": 32.1, "W": 3, "D": 1, "L": 6, "GF": 8, "GA": 15}, {"rank": 356, "League": "League One", "Team": "Port Vale", "off": 0.674, "def": 1.151, "spi": 32.0, "W": 2, "D": 4, "L": 4, "GF": 9, "GA": 12}, {"rank": 357, "League": "League Two", "Team": "Shrewsbury", "off": 0.898, "def": 1.469, "spi": 31.9, "W": 6, "D": 0, "L": 4, "GF": 14, "GA": 14}, {"rank": 358, "League": "Super Lig", "Team": "Antalyaspor", "off": 0.854, "def": 1.418, "spi": 31.7, "W": 2, "D": 4, "L": 4, "GF": 9, "GA": 12}, {"rank": 359, "League": "Serie B", "Team": "Bari", "off": 0.769, "def": 1.301, "spi": 31.7, "W": 3, "D": 2, "L": 5, "GF": 12, "GA": 16}, {"rank": 360, "League": "Eredivisie", "Team": "NAC Breda", "off": 0.887, "def": 1.469, "spi": 31.6, "W": 2, "D": 3, "L": 5, "GF": 13, "GA": 24}, {"rank": 361, "League": "Bundesliga", "Team": "St Pauli", "off": 0.792, "def": 1.342, "spi": 31.5, "W": 3, "D": 3, "L": 4, "GF": 8, "GA": 13}, {"rank": 362, "League": "Super League Greece", "Team": "Larisa", "off": 0.703, "def": 1.215, "spi": 31.5, "W": 3, "D": 4, "L": 3, "GF": 8, "GA": 11}, {"rank": 363, "League": "Ligue 2", "Team": "Laval", "off": 0.811, "def": 1.371, "spi": 31.5, "W": 1, "D": 5, "L": 4, "GF": 10, "GA": 15}, {"rank": 364, "League": "Serie A", "Team": "Lecce", "off": 0.657, "def": 1.157, "spi": 31.4, "W": 3, "D": 1, "L": 6, "GF": 8, "GA": 12}, {"rank": 365, "League": "Conference", "Team": "Brackley Town", "off": 0.834, "def": 1.415, "spi": 31.2, "W": 1, "D": 1, "L": 8, "GF": 11, "GA": 27}, {"rank": 366, "League": "Scottish Premiership", "Team": "Kilmarnock", "off": 0.956, "def": 1.588, "spi": 31.2, "W": 4, "D": 2, "L": 4, "GF": 16, "GA": 22}, {"rank": 367, "League": "Super Lig", "Team": "Eyupspor", "off": 0.687, "def": 1.218, "spi": 31.0, "W": 2, "D": 3, "L": 5, "GF": 9, "GA": 14}, {"rank": 368, "League": "Scottish Premiership", "Team": "St Mirren", "off": 0.673, "def": 1.216, "spi": 30.7, "W": 2, "D": 3, "L": 5, "GF": 9, "GA": 17}, {"rank": 369, "League": "Conference", "Team": "Truro", "off": 0.879, "def": 1.521, "spi": 30.5, "W": 1, "D": 1, "L": 8, "GF": 9, "GA": 16}, {"rank": 370, "League": "Serie A", "Team": "Parma", "off": 0.621, "def": 1.147, "spi": 30.5, "W": 3, "D": 3, "L": 4, "GF": 7, "GA": 16}, {"rank": 371, "League": "Super League Greece", "Team": "Asteras Tripolis", "off": 0.706, "def": 1.278, "spi": 30.4, "W": 1, "D": 1, "L": 8, "GF": 7, "GA": 18}, {"rank": 372, "League": "Super Lig", "Team": "Karagumruk", "off": 0.853, "def": 1.501, "spi": 30.2, "W": 2, "D": 2, "L": 6, "GF": 10, "GA": 15}, {"rank": 373, "League": "Primeira Liga", "Team": "Casa Pia", "off": 0.833, "def": 1.483, "spi": 30.0, "W": 2, "D": 4, "L": 4, "GF": 10, "GA": 19}, {"rank": 374, "League": "League Two", "Team": "Barrow", "off": 0.87, "def": 1.549, "spi": 29.7, "W": 1, "D": 2, "L": 7, "GF": 7, "GA": 19}, {"rank": 375, "League": "Ligue 2", "Team": "Bastia", "off": 0.523, "def": 1.046, "spi": 29.6, "W": 1, "D": 6, "L": 3, "GF": 6, "GA": 9}, {"rank": 376, "League": "Ligue 1", "Team": "Nantes", "off": 0.766, "def": 1.436, "spi": 29.1, "W": 2, "D": 0, "L": 8, "GF": 10, "GA": 17}, {"rank": 377, "League": "Premier League", "Team": "Burnley", "off": 0.947, "def": 1.705, "spi": 28.9, "W": 1, "D": 4, "L": 5, "GF": 11, "GA": 20}, {"rank": 378, "League": "Scottish League One", "Team": "East Fife", "off": 0.858, "def": 1.587, "spi": 28.8, "W": 1, "D": 2, "L": 7, "GF": 9, "GA": 24}, {"rank": 379, "League": "Conference", "Team": "Braintree Town", "off": 0.69, "def": 1.347, "spi": 28.7, "W": 2, "D": 3, "L": 5, "GF": 12, "GA": 17}, {"rank": 380, "League": "Scottish Premiership", "Team": "Livingston", "off": 0.858, "def": 1.605, "spi": 28.5, "W": 0, "D": 5, "L": 5, "GF": 10, "GA": 20}, {"rank": 381, "League": "League Two", "Team": "Harrogate", "off": 0.689, "def": 1.354, "spi": 28.5, "W": 3, "D": 3, "L": 4, "GF": 9, "GA": 10}, {"rank": 382, "League": "Conference", "Team": "Gateshead", "off": 1.045, "def": 1.894, "spi": 28.1, "W": 5, "D": 3, "L": 2, "GF": 14, "GA": 14}, {"rank": 383, "League": "Primeira Liga", "Team": "Tondela", "off": 0.589, "def": 1.26, "spi": 27.5, "W": 1, "D": 5, "L": 4, "GF": 7, "GA": 11}, {"rank": 384, "League": "Jupiler Pro League", "Team": "Dender", "off": 0.746, "def": 1.517, "spi": 27.2, "W": 1, "D": 3, "L": 6, "GF": 8, "GA": 17}, {"rank": 385, "League": "Premier League", "Team": "Wolves", "off": 0.706, "def": 1.461, "spi": 27.1, "W": 2, "D": 4, "L": 4, "GF": 9, "GA": 13}, {"rank": 386, "League": "Super Lig", "Team": "Kayserispor", "off": 0.759, "def": 1.553, "spi": 26.9, "W": 2, "D": 2, "L": 6, "GF": 5, "GA": 15}, {"rank": 387, "League": "La Liga", "Team": "Oviedo", "off": 0.578, "def": 1.3, "spi": 26.4, "W": 2, "D": 2, "L": 6, "GF": 11, "GA": 20}, {"rank": 388, "League": "Serie A", "Team": "Pisa", "off": 0.72, "def": 1.533, "spi": 26.2, "W": 1, "D": 2, "L": 7, "GF": 8, "GA": 24}, {"rank": 389, "League": "Eredivisie", "Team": "Heracles", "off": 1.045, "def": 2.046, "spi": 25.8, "W": 1, "D": 2, "L": 7, "GF": 7, "GA": 24}, {"rank": 390, "League": "Scottish League One", "Team": "Kelty Hearts", "off": 0.764, "def": 1.645, "spi": 25.5, "W": 0, "D": 6, "L": 4, "GF": 6, "GA": 13}, {"rank": 391, "League": "Ligue 1", "Team": "Metz", "off": 0.835, "def": 1.753, "spi": 25.5, "W": 0, "D": 2, "L": 8, "GF": 7, "GA": 22}, {"rank": 392, "League": "Bundesliga", "Team": "Heidenheim", "off": 0.896, "def": 1.875, "spi": 25.0, "W": 0, "D": 3, "L": 7, "GF": 11, "GA": 23}, {"rank": 393, "League": "Serie A", "Team": "Verona", "off": 0.668, "def": 1.599, "spi": 23.9, "W": 1, "D": 2, "L": 7, "GF": 5, "GA": 18}, {"rank": 394, "League": "Super League Greece", "Team": "Panserraikos", "off": 0.53, "def": 1.693, "spi": 19.1, "W": 3, "D": 3, "L": 4, "GF": 9, "GA": 15}, {"rank": 395, "League": "Championship", "Team": "Sheffield Weds", "off": 0.57, "def": 1.778, "spi": 18.9, "W": 0, "D": 1, "L": 9, "GF": 6, "GA": 22}, {"rank": 396, "League": "Primeira Liga", "Team": "AVS", "off": 0.543, "def": 1.776, "spi": 18.3, "W": 1, "D": 4, "L": 5, "GF": 7, "GA": 15}];
+const STANDINGS = {"Bundesliga": [{"Team": "Bayern Munich", "MP": 27, "W": 22, "D": 4, "L": 1, "GF": 97, "GA": 25, "GD": 72, "Pts": 70}, {"Team": "Dortmund", "MP": 27, "W": 18, "D": 7, "L": 2, "GF": 58, "GA": 28, "GD": 30, "Pts": 61}, {"Team": "Stuttgart", "MP": 27, "W": 16, "D": 5, "L": 6, "GF": 56, "GA": 36, "GD": 20, "Pts": 53}, {"Team": "RB Leipzig", "MP": 27, "W": 15, "D": 5, "L": 7, "GF": 53, "GA": 35, "GD": 18, "Pts": 50}, {"Team": "Hoffenheim", "MP": 27, "W": 15, "D": 5, "L": 7, "GF": 54, "GA": 39, "GD": 15, "Pts": 50}, {"Team": "Leverkusen", "MP": 27, "W": 13, "D": 7, "L": 7, "GF": 52, "GA": 36, "GD": 16, "Pts": 46}, {"Team": "Ein Frankfurt", "MP": 27, "W": 10, "D": 8, "L": 9, "GF": 50, "GA": 51, "GD": -1, "Pts": 38}, {"Team": "Freiburg", "MP": 27, "W": 10, "D": 7, "L": 10, "GF": 39, "GA": 44, "GD": -5, "Pts": 37}, {"Team": "Union Berlin", "MP": 27, "W": 8, "D": 7, "L": 12, "GF": 31, "GA": 46, "GD": -15, "Pts": 31}, {"Team": "Augsburg", "MP": 27, "W": 9, "D": 4, "L": 14, "GF": 33, "GA": 50, "GD": -17, "Pts": 31}, {"Team": "Mainz", "MP": 27, "W": 7, "D": 9, "L": 11, "GF": 33, "GA": 42, "GD": -9, "Pts": 30}, {"Team": "Hamburg", "MP": 27, "W": 7, "D": 9, "L": 11, "GF": 31, "GA": 40, "GD": -9, "Pts": 30}, {"Team": "M'gladbach", "MP": 27, "W": 7, "D": 8, "L": 12, "GF": 33, "GA": 46, "GD": -13, "Pts": 29}, {"Team": "Werder Bremen", "MP": 27, "W": 7, "D": 7, "L": 13, "GF": 30, "GA": 47, "GD": -17, "Pts": 28}, {"Team": "FC Koln", "MP": 27, "W": 6, "D": 8, "L": 13, "GF": 38, "GA": 47, "GD": -9, "Pts": 26}, {"Team": "St Pauli", "MP": 27, "W": 6, "D": 6, "L": 15, "GF": 24, "GA": 44, "GD": -20, "Pts": 24}, {"Team": "Wolfsburg", "MP": 27, "W": 5, "D": 6, "L": 16, "GF": 35, "GA": 57, "GD": -22, "Pts": 21}, {"Team": "Heidenheim", "MP": 27, "W": 3, "D": 6, "L": 18, "GF": 27, "GA": 61, "GD": -34, "Pts": 15}], "Primeira Liga": [{"Team": "Porto", "MP": 27, "W": 23, "D": 3, "L": 1, "GF": 54, "GA": 11, "GD": 43, "Pts": 72}, {"Team": "Sp Lisbon", "MP": 26, "W": 20, "D": 5, "L": 1, "GF": 68, "GA": 15, "GD": 53, "Pts": 65}, {"Team": "Benfica", "MP": 27, "W": 19, "D": 8, "L": 0, "GF": 58, "GA": 17, "GD": 41, "Pts": 65}, {"Team": "Sp Braga", "MP": 26, "W": 13, "D": 7, "L": 6, "GF": 53, "GA": 27, "GD": 26, "Pts": 46}, {"Team": "Famalicao", "MP": 27, "W": 13, "D": 6, "L": 8, "GF": 33, "GA": 22, "GD": 11, "Pts": 45}, {"Team": "Gil Vicente", "MP": 27, "W": 11, "D": 9, "L": 7, "GF": 39, "GA": 28, "GD": 11, "Pts": 42}, {"Team": "Estoril", "MP": 27, "W": 10, "D": 7, "L": 10, "GF": 48, "GA": 44, "GD": 4, "Pts": 37}, {"Team": "Moreirense", "MP": 27, "W": 10, "D": 5, "L": 12, "GF": 31, "GA": 39, "GD": -8, "Pts": 35}, {"Team": "Guimaraes", "MP": 27, "W": 9, "D": 5, "L": 13, "GF": 29, "GA": 42, "GD": -13, "Pts": 32}, {"Team": "Rio Ave", "MP": 27, "W": 7, "D": 9, "L": 11, "GF": 28, "GA": 46, "GD": -18, "Pts": 30}, {"Team": "Alverca", "MP": 27, "W": 7, "D": 8, "L": 12, "GF": 27, "GA": 45, "GD": -18, "Pts": 29}, {"Team": "Arouca", "MP": 27, "W": 8, "D": 5, "L": 14, "GF": 34, "GA": 55, "GD": -21, "Pts": 29}, {"Team": "Santa Clara", "MP": 27, "W": 7, "D": 7, "L": 13, "GF": 24, "GA": 31, "GD": -7, "Pts": 28}, {"Team": "Estrela", "MP": 27, "W": 6, "D": 10, "L": 11, "GF": 33, "GA": 45, "GD": -12, "Pts": 28}, {"Team": "Casa Pia", "MP": 26, "W": 5, "D": 9, "L": 12, "GF": 26, "GA": 48, "GD": -22, "Pts": 24}, {"Team": "Nacional", "MP": 27, "W": 5, "D": 7, "L": 15, "GF": 29, "GA": 39, "GD": -10, "Pts": 22}, {"Team": "Tondela", "MP": 26, "W": 4, "D": 8, "L": 14, "GF": 19, "GA": 39, "GD": -20, "Pts": 20}, {"Team": "AVS", "MP": 27, "W": 1, "D": 8, "L": 18, "GF": 18, "GA": 58, "GD": -40, "Pts": 11}], "Super Lig": [{"Team": "Galatasaray", "MP": 26, "W": 20, "D": 4, "L": 2, "GF": 62, "GA": 18, "GD": 44, "Pts": 64}, {"Team": "Fenerbahce", "MP": 27, "W": 17, "D": 9, "L": 1, "GF": 61, "GA": 28, "GD": 33, "Pts": 60}, {"Team": "Trabzonspor", "MP": 27, "W": 18, "D": 6, "L": 3, "GF": 53, "GA": 29, "GD": 24, "Pts": 60}, {"Team": "Besiktas", "MP": 27, "W": 15, "D": 7, "L": 5, "GF": 49, "GA": 31, "GD": 18, "Pts": 52}, {"Team": "Buyuksehyr", "MP": 27, "W": 12, "D": 7, "L": 8, "GF": 44, "GA": 30, "GD": 14, "Pts": 43}, {"Team": "Goztep", "MP": 26, "W": 11, "D": 10, "L": 5, "GF": 30, "GA": 20, "GD": 10, "Pts": 43}, {"Team": "Samsunspor", "MP": 26, "W": 8, "D": 11, "L": 7, "GF": 29, "GA": 31, "GD": -2, "Pts": 35}, {"Team": "Kocaelispor", "MP": 27, "W": 9, "D": 6, "L": 12, "GF": 23, "GA": 32, "GD": -9, "Pts": 33}, {"Team": "Gaziantep", "MP": 27, "W": 8, "D": 9, "L": 10, "GF": 36, "GA": 46, "GD": -10, "Pts": 33}, {"Team": "Alanyaspor", "MP": 27, "W": 6, "D": 13, "L": 8, "GF": 33, "GA": 32, "GD": 1, "Pts": 31}, {"Team": "Rizespor", "MP": 26, "W": 7, "D": 9, "L": 10, "GF": 32, "GA": 36, "GD": -4, "Pts": 30}, {"Team": "Konyaspor", "MP": 27, "W": 7, "D": 9, "L": 11, "GF": 31, "GA": 39, "GD": -8, "Pts": 30}, {"Team": "Genclerbirligi", "MP": 27, "W": 6, "D": 7, "L": 14, "GF": 28, "GA": 37, "GD": -9, "Pts": 25}, {"Team": "Antalyaspor", "MP": 27, "W": 6, "D": 7, "L": 14, "GF": 25, "GA": 43, "GD": -18, "Pts": 25}, {"Team": "Kasimpasa", "MP": 27, "W": 5, "D": 9, "L": 13, "GF": 23, "GA": 38, "GD": -15, "Pts": 24}, {"Team": "Kayserispor", "MP": 27, "W": 4, "D": 11, "L": 12, "GF": 21, "GA": 48, "GD": -27, "Pts": 23}, {"Team": "Eyupspor", "MP": 27, "W": 5, "D": 7, "L": 15, "GF": 19, "GA": 38, "GD": -19, "Pts": 22}, {"Team": "Karagumruk", "MP": 27, "W": 4, "D": 5, "L": 18, "GF": 24, "GA": 47, "GD": -23, "Pts": 17}], "Conference": [{"Team": "Rochdale", "MP": 39, "W": 30, "D": 4, "L": 5, "GF": 77, "GA": 31, "GD": 46, "Pts": 94}, {"Team": "York", "MP": 39, "W": 28, "D": 8, "L": 3, "GF": 104, "GA": 36, "GD": 68, "Pts": 92}, {"Team": "Carlisle", "MP": 39, "W": 24, "D": 6, "L": 9, "GF": 75, "GA": 48, "GD": 27, "Pts": 78}, {"Team": "Boreham Wood", "MP": 39, "W": 22, "D": 8, "L": 9, "GF": 80, "GA": 52, "GD": 28, "Pts": 74}, {"Team": "Scunthorpe", "MP": 39, "W": 21, "D": 10, "L": 8, "GF": 73, "GA": 56, "GD": 17, "Pts": 73}, {"Team": "Forest Green", "MP": 39, "W": 19, "D": 11, "L": 9, "GF": 64, "GA": 45, "GD": 19, "Pts": 68}, {"Team": "Halifax", "MP": 39, "W": 18, "D": 8, "L": 13, "GF": 62, "GA": 55, "GD": 7, "Pts": 62}, {"Team": "Southend", "MP": 37, "W": 17, "D": 10, "L": 10, "GF": 61, "GA": 36, "GD": 25, "Pts": 61}, {"Team": "Hartlepool", "MP": 38, "W": 15, "D": 12, "L": 11, "GF": 44, "GA": 40, "GD": 4, "Pts": 57}, {"Team": "Woking", "MP": 37, "W": 14, "D": 10, "L": 13, "GF": 56, "GA": 46, "GD": 10, "Pts": 52}, {"Team": "Wealdstone", "MP": 38, "W": 13, "D": 9, "L": 16, "GF": 53, "GA": 63, "GD": -10, "Pts": 48}, {"Team": "Tamworth", "MP": 39, "W": 13, "D": 9, "L": 17, "GF": 52, "GA": 66, "GD": -14, "Pts": 48}, {"Team": "Boston Utd", "MP": 39, "W": 12, "D": 11, "L": 16, "GF": 52, "GA": 61, "GD": -9, "Pts": 47}, {"Team": "Altrincham", "MP": 38, "W": 14, "D": 4, "L": 20, "GF": 45, "GA": 56, "GD": -11, "Pts": 46}, {"Team": "Solihull", "MP": 38, "W": 11, "D": 11, "L": 16, "GF": 61, "GA": 65, "GD": -4, "Pts": 44}, {"Team": "Yeovil", "MP": 38, "W": 13, "D": 5, "L": 20, "GF": 41, "GA": 55, "GD": -14, "Pts": 44}, {"Team": "Sutton", "MP": 39, "W": 10, "D": 13, "L": 16, "GF": 53, "GA": 66, "GD": -13, "Pts": 43}, {"Team": "Aldershot", "MP": 38, "W": 12, "D": 6, "L": 20, "GF": 63, "GA": 73, "GD": -10, "Pts": 42}, {"Team": "Eastleigh", "MP": 39, "W": 11, "D": 9, "L": 19, "GF": 48, "GA": 68, "GD": -20, "Pts": 42}, {"Team": "Brackley Town", "MP": 39, "W": 9, "D": 10, "L": 20, "GF": 36, "GA": 63, "GD": -27, "Pts": 37}, {"Team": "Gateshead", "MP": 39, "W": 10, "D": 7, "L": 22, "GF": 45, "GA": 82, "GD": -37, "Pts": 37}, {"Team": "Morecambe", "MP": 39, "W": 8, "D": 10, "L": 21, "GF": 57, "GA": 81, "GD": -24, "Pts": 34}, {"Team": "Braintree Town", "MP": 39, "W": 8, "D": 10, "L": 21, "GF": 31, "GA": 60, "GD": -29, "Pts": 34}, {"Team": "Truro", "MP": 39, "W": 7, "D": 7, "L": 25, "GF": 38, "GA": 67, "GD": -29, "Pts": 28}], "La Liga": [{"Team": "Barcelona", "MP": 29, "W": 24, "D": 1, "L": 4, "GF": 78, "GA": 28, "GD": 50, "Pts": 73}, {"Team": "Real Madrid", "MP": 29, "W": 22, "D": 3, "L": 4, "GF": 63, "GA": 26, "GD": 37, "Pts": 69}, {"Team": "Villarreal", "MP": 29, "W": 18, "D": 4, "L": 7, "GF": 54, "GA": 34, "GD": 20, "Pts": 58}, {"Team": "Ath Madrid", "MP": 29, "W": 17, "D": 6, "L": 6, "GF": 49, "GA": 28, "GD": 21, "Pts": 57}, {"Team": "Betis", "MP": 29, "W": 11, "D": 11, "L": 7, "GF": 44, "GA": 37, "GD": 7, "Pts": 44}, {"Team": "Celta", "MP": 29, "W": 10, "D": 11, "L": 8, "GF": 41, "GA": 35, "GD": 6, "Pts": 41}, {"Team": "Sociedad", "MP": 29, "W": 10, "D": 8, "L": 11, "GF": 44, "GA": 45, "GD": -1, "Pts": 38}, {"Team": "Getafe", "MP": 29, "W": 11, "D": 5, "L": 13, "GF": 25, "GA": 31, "GD": -6, "Pts": 38}, {"Team": "Ath Bilbao", "MP": 29, "W": 11, "D": 5, "L": 13, "GF": 32, "GA": 41, "GD": -9, "Pts": 38}, {"Team": "Osasuna", "MP": 29, "W": 10, "D": 7, "L": 12, "GF": 34, "GA": 35, "GD": -1, "Pts": 37}, {"Team": "Espanol", "MP": 29, "W": 10, "D": 7, "L": 12, "GF": 36, "GA": 44, "GD": -8, "Pts": 37}, {"Team": "Valencia", "MP": 29, "W": 9, "D": 8, "L": 12, "GF": 32, "GA": 42, "GD": -10, "Pts": 35}, {"Team": "Girona", "MP": 29, "W": 8, "D": 10, "L": 11, "GF": 31, "GA": 44, "GD": -13, "Pts": 34}, {"Team": "Vallecano", "MP": 29, "W": 7, "D": 11, "L": 11, "GF": 28, "GA": 35, "GD": -7, "Pts": 32}, {"Team": "Alaves", "MP": 29, "W": 8, "D": 7, "L": 14, "GF": 30, "GA": 41, "GD": -11, "Pts": 31}, {"Team": "Sevilla", "MP": 29, "W": 8, "D": 7, "L": 14, "GF": 37, "GA": 49, "GD": -12, "Pts": 31}, {"Team": "Elche", "MP": 29, "W": 6, "D": 11, "L": 12, "GF": 38, "GA": 46, "GD": -8, "Pts": 29}, {"Team": "Mallorca", "MP": 29, "W": 7, "D": 7, "L": 15, "GF": 34, "GA": 47, "GD": -13, "Pts": 28}, {"Team": "Levante", "MP": 29, "W": 6, "D": 8, "L": 15, "GF": 34, "GA": 48, "GD": -14, "Pts": 26}, {"Team": "Oviedo", "MP": 29, "W": 4, "D": 9, "L": 16, "GF": 20, "GA": 48, "GD": -28, "Pts": 21}], "Serie A": [{"Team": "Inter", "MP": 30, "W": 22, "D": 3, "L": 5, "GF": 66, "GA": 24, "GD": 42, "Pts": 69}, {"Team": "Milan", "MP": 30, "W": 18, "D": 9, "L": 3, "GF": 47, "GA": 23, "GD": 24, "Pts": 63}, {"Team": "Napoli", "MP": 30, "W": 19, "D": 5, "L": 6, "GF": 46, "GA": 30, "GD": 16, "Pts": 62}, {"Team": "Como", "MP": 30, "W": 16, "D": 9, "L": 5, "GF": 53, "GA": 22, "GD": 31, "Pts": 57}, {"Team": "Juventus", "MP": 30, "W": 15, "D": 9, "L": 6, "GF": 52, "GA": 29, "GD": 23, "Pts": 54}, {"Team": "Roma", "MP": 30, "W": 17, "D": 3, "L": 10, "GF": 40, "GA": 23, "GD": 17, "Pts": 54}, {"Team": "Atalanta", "MP": 30, "W": 13, "D": 11, "L": 6, "GF": 41, "GA": 27, "GD": 14, "Pts": 50}, {"Team": "Lazio", "MP": 30, "W": 11, "D": 10, "L": 9, "GF": 31, "GA": 28, "GD": 3, "Pts": 43}, {"Team": "Bologna", "MP": 30, "W": 12, "D": 6, "L": 12, "GF": 38, "GA": 36, "GD": 2, "Pts": 42}, {"Team": "Sassuolo", "MP": 30, "W": 11, "D": 6, "L": 13, "GF": 36, "GA": 40, "GD": -4, "Pts": 39}, {"Team": "Udinese", "MP": 30, "W": 11, "D": 6, "L": 13, "GF": 35, "GA": 42, "GD": -7, "Pts": 39}, {"Team": "Parma", "MP": 30, "W": 8, "D": 10, "L": 12, "GF": 21, "GA": 38, "GD": -17, "Pts": 34}, {"Team": "Genoa", "MP": 30, "W": 8, "D": 9, "L": 13, "GF": 36, "GA": 42, "GD": -6, "Pts": 33}, {"Team": "Torino", "MP": 30, "W": 9, "D": 6, "L": 15, "GF": 34, "GA": 53, "GD": -19, "Pts": 33}, {"Team": "Cagliari", "MP": 30, "W": 7, "D": 9, "L": 14, "GF": 31, "GA": 42, "GD": -11, "Pts": 30}, {"Team": "Fiorentina", "MP": 30, "W": 6, "D": 11, "L": 13, "GF": 35, "GA": 44, "GD": -9, "Pts": 29}, {"Team": "Cremonese", "MP": 30, "W": 6, "D": 9, "L": 15, "GF": 25, "GA": 44, "GD": -19, "Pts": 27}, {"Team": "Lecce", "MP": 30, "W": 7, "D": 6, "L": 17, "GF": 21, "GA": 40, "GD": -19, "Pts": 27}, {"Team": "Verona", "MP": 30, "W": 3, "D": 9, "L": 18, "GF": 22, "GA": 52, "GD": -30, "Pts": 18}, {"Team": "Pisa", "MP": 30, "W": 2, "D": 12, "L": 16, "GF": 23, "GA": 54, "GD": -31, "Pts": 18}], "Ligue 1": [{"Team": "Paris SG", "MP": 26, "W": 19, "D": 3, "L": 4, "GF": 58, "GA": 22, "GD": 36, "Pts": 60}, {"Team": "Lens", "MP": 27, "W": 19, "D": 2, "L": 6, "GF": 54, "GA": 24, "GD": 30, "Pts": 59}, {"Team": "Marseille", "MP": 27, "W": 15, "D": 4, "L": 8, "GF": 54, "GA": 35, "GD": 19, "Pts": 49}, {"Team": "Lyon", "MP": 27, "W": 14, "D": 5, "L": 8, "GF": 41, "GA": 29, "GD": 12, "Pts": 47}, {"Team": "Lille", "MP": 27, "W": 14, "D": 5, "L": 8, "GF": 42, "GA": 34, "GD": 8, "Pts": 47}, {"Team": "Monaco", "MP": 27, "W": 14, "D": 4, "L": 9, "GF": 47, "GA": 38, "GD": 9, "Pts": 46}, {"Team": "Rennes", "MP": 27, "W": 12, "D": 8, "L": 7, "GF": 43, "GA": 37, "GD": 6, "Pts": 44}, {"Team": "Strasbourg", "MP": 27, "W": 11, "D": 7, "L": 9, "GF": 43, "GA": 33, "GD": 10, "Pts": 40}, {"Team": "Toulouse", "MP": 27, "W": 10, "D": 7, "L": 10, "GF": 38, "GA": 32, "GD": 6, "Pts": 37}, {"Team": "Lorient", "MP": 27, "W": 9, "D": 10, "L": 8, "GF": 37, "GA": 41, "GD": -4, "Pts": 37}, {"Team": "Brest", "MP": 27, "W": 10, "D": 6, "L": 11, "GF": 34, "GA": 39, "GD": -5, "Pts": 36}, {"Team": "Angers", "MP": 27, "W": 9, "D": 5, "L": 13, "GF": 24, "GA": 37, "GD": -13, "Pts": 32}, {"Team": "Paris FC", "MP": 27, "W": 7, "D": 10, "L": 10, "GF": 32, "GA": 43, "GD": -11, "Pts": 31}, {"Team": "Le Havre", "MP": 27, "W": 6, "D": 9, "L": 12, "GF": 22, "GA": 35, "GD": -13, "Pts": 27}, {"Team": "Nice", "MP": 27, "W": 7, "D": 6, "L": 14, "GF": 32, "GA": 52, "GD": -20, "Pts": 27}, {"Team": "Auxerre", "MP": 27, "W": 5, "D": 7, "L": 15, "GF": 22, "GA": 36, "GD": -14, "Pts": 22}, {"Team": "Nantes", "MP": 26, "W": 4, "D": 5, "L": 17, "GF": 24, "GA": 45, "GD": -21, "Pts": 17}, {"Team": "Metz", "MP": 27, "W": 3, "D": 5, "L": 19, "GF": 25, "GA": 60, "GD": -35, "Pts": 14}], "Super League Greece": [{"Team": "AEK", "MP": 26, "W": 18, "D": 6, "L": 2, "GF": 49, "GA": 17, "GD": 32, "Pts": 60}, {"Team": "Olympiakos", "MP": 26, "W": 17, "D": 7, "L": 2, "GF": 45, "GA": 11, "GD": 34, "Pts": 58}, {"Team": "PAOK", "MP": 26, "W": 17, "D": 6, "L": 3, "GF": 52, "GA": 17, "GD": 35, "Pts": 57}, {"Team": "Panathinaikos", "MP": 26, "W": 14, "D": 7, "L": 5, "GF": 44, "GA": 26, "GD": 18, "Pts": 49}, {"Team": "Levadeiakos", "MP": 26, "W": 12, "D": 6, "L": 8, "GF": 51, "GA": 37, "GD": 14, "Pts": 42}, {"Team": "OFI Crete", "MP": 26, "W": 10, "D": 2, "L": 14, "GF": 34, "GA": 45, "GD": -11, "Pts": 32}, {"Team": "Volos NFC", "MP": 26, "W": 9, "D": 4, "L": 13, "GF": 26, "GA": 38, "GD": -12, "Pts": 31}, {"Team": "Aris", "MP": 26, "W": 6, "D": 12, "L": 8, "GF": 20, "GA": 27, "GD": -7, "Pts": 30}, {"Team": "Atromitos", "MP": 26, "W": 7, "D": 8, "L": 11, "GF": 26, "GA": 30, "GD": -4, "Pts": 29}, {"Team": "Kifisia", "MP": 26, "W": 6, "D": 9, "L": 11, "GF": 32, "GA": 42, "GD": -10, "Pts": 27}, {"Team": "Panetolikos", "MP": 26, "W": 7, "D": 5, "L": 14, "GF": 24, "GA": 38, "GD": -14, "Pts": 26}, {"Team": "Larisa", "MP": 26, "W": 4, "D": 11, "L": 11, "GF": 22, "GA": 39, "GD": -17, "Pts": 23}, {"Team": "Asteras Tripolis", "MP": 26, "W": 3, "D": 8, "L": 15, "GF": 22, "GA": 41, "GD": -19, "Pts": 17}, {"Team": "Panserraikos", "MP": 26, "W": 4, "D": 5, "L": 17, "GF": 16, "GA": 55, "GD": -39, "Pts": 17}], "Premier League": [{"Team": "Arsenal", "MP": 31, "W": 21, "D": 7, "L": 3, "GF": 61, "GA": 22, "GD": 39, "Pts": 70}, {"Team": "Man City", "MP": 30, "W": 18, "D": 7, "L": 5, "GF": 60, "GA": 28, "GD": 32, "Pts": 61}, {"Team": "Man United", "MP": 31, "W": 15, "D": 10, "L": 6, "GF": 56, "GA": 43, "GD": 13, "Pts": 55}, {"Team": "Aston Villa", "MP": 31, "W": 16, "D": 6, "L": 9, "GF": 42, "GA": 37, "GD": 5, "Pts": 54}, {"Team": "Liverpool", "MP": 31, "W": 14, "D": 7, "L": 10, "GF": 50, "GA": 42, "GD": 8, "Pts": 49}, {"Team": "Chelsea", "MP": 31, "W": 13, "D": 9, "L": 9, "GF": 53, "GA": 38, "GD": 15, "Pts": 48}, {"Team": "Brentford", "MP": 31, "W": 13, "D": 7, "L": 11, "GF": 46, "GA": 42, "GD": 4, "Pts": 46}, {"Team": "Everton", "MP": 31, "W": 13, "D": 7, "L": 11, "GF": 37, "GA": 35, "GD": 2, "Pts": 46}, {"Team": "Fulham", "MP": 31, "W": 13, "D": 5, "L": 13, "GF": 43, "GA": 44, "GD": -1, "Pts": 44}, {"Team": "Brighton", "MP": 31, "W": 11, "D": 10, "L": 10, "GF": 41, "GA": 37, "GD": 4, "Pts": 43}, {"Team": "Sunderland", "MP": 31, "W": 11, "D": 10, "L": 10, "GF": 32, "GA": 36, "GD": -4, "Pts": 43}, {"Team": "Newcastle", "MP": 31, "W": 12, "D": 6, "L": 13, "GF": 44, "GA": 45, "GD": -1, "Pts": 42}, {"Team": "Bournemouth", "MP": 31, "W": 9, "D": 15, "L": 7, "GF": 46, "GA": 48, "GD": -2, "Pts": 42}, {"Team": "Crystal Palace", "MP": 30, "W": 10, "D": 9, "L": 11, "GF": 33, "GA": 35, "GD": -2, "Pts": 39}, {"Team": "Leeds", "MP": 31, "W": 7, "D": 12, "L": 12, "GF": 37, "GA": 48, "GD": -11, "Pts": 33}, {"Team": "Nott'm Forest", "MP": 31, "W": 8, "D": 8, "L": 15, "GF": 31, "GA": 43, "GD": -12, "Pts": 32}, {"Team": "Tottenham", "MP": 31, "W": 7, "D": 9, "L": 15, "GF": 40, "GA": 50, "GD": -10, "Pts": 30}, {"Team": "West Ham", "MP": 31, "W": 7, "D": 8, "L": 16, "GF": 36, "GA": 57, "GD": -21, "Pts": 29}, {"Team": "Burnley", "MP": 31, "W": 4, "D": 8, "L": 19, "GF": 33, "GA": 61, "GD": -28, "Pts": 20}, {"Team": "Wolves", "MP": 31, "W": 3, "D": 8, "L": 20, "GF": 24, "GA": 54, "GD": -30, "Pts": 17}], "Eredivisie": [{"Team": "PSV Eindhoven", "MP": 28, "W": 22, "D": 2, "L": 4, "GF": 78, "GA": 37, "GD": 41, "Pts": 68}, {"Team": "Feyenoord", "MP": 28, "W": 16, "D": 5, "L": 7, "GF": 61, "GA": 40, "GD": 21, "Pts": 53}, {"Team": "Nijmegen", "MP": 28, "W": 14, "D": 8, "L": 6, "GF": 69, "GA": 47, "GD": 22, "Pts": 50}, {"Team": "Ajax", "MP": 28, "W": 12, "D": 12, "L": 4, "GF": 53, "GA": 35, "GD": 18, "Pts": 48}, {"Team": "Twente", "MP": 28, "W": 12, "D": 11, "L": 5, "GF": 47, "GA": 30, "GD": 17, "Pts": 47}, {"Team": "AZ Alkmaar", "MP": 28, "W": 12, "D": 6, "L": 10, "GF": 47, "GA": 45, "GD": 2, "Pts": 42}, {"Team": "Utrecht", "MP": 28, "W": 11, "D": 8, "L": 9, "GF": 42, "GA": 31, "GD": 11, "Pts": 41}, {"Team": "Heerenveen", "MP": 28, "W": 11, "D": 8, "L": 9, "GF": 49, "GA": 46, "GD": 3, "Pts": 41}, {"Team": "Sparta Rotterdam", "MP": 28, "W": 12, "D": 5, "L": 11, "GF": 35, "GA": 47, "GD": -12, "Pts": 41}, {"Team": "Groningen", "MP": 28, "W": 11, "D": 5, "L": 12, "GF": 40, "GA": 37, "GD": 3, "Pts": 38}, {"Team": "For Sittard", "MP": 28, "W": 10, "D": 5, "L": 13, "GF": 43, "GA": 52, "GD": -9, "Pts": 35}, {"Team": "Zwolle", "MP": 28, "W": 8, "D": 9, "L": 11, "GF": 38, "GA": 53, "GD": -15, "Pts": 33}, {"Team": "Go Ahead Eagles", "MP": 28, "W": 7, "D": 11, "L": 10, "GF": 45, "GA": 45, "GD": 0, "Pts": 32}, {"Team": "Telstar", "MP": 28, "W": 6, "D": 9, "L": 13, "GF": 38, "GA": 46, "GD": -8, "Pts": 27}, {"Team": "Volendam", "MP": 28, "W": 7, "D": 6, "L": 15, "GF": 30, "GA": 48, "GD": -18, "Pts": 27}, {"Team": "Excelsior", "MP": 28, "W": 7, "D": 6, "L": 15, "GF": 29, "GA": 47, "GD": -18, "Pts": 27}, {"Team": "NAC Breda", "MP": 28, "W": 5, "D": 8, "L": 15, "GF": 29, "GA": 50, "GD": -21, "Pts": 23}, {"Team": "Heracles", "MP": 28, "W": 5, "D": 4, "L": 19, "GF": 33, "GA": 70, "GD": -37, "Pts": 19}], "Jupiler Pro League": [{"Team": "St. Gilloise", "MP": 30, "W": 19, "D": 9, "L": 2, "GF": 50, "GA": 17, "GD": 33, "Pts": 66}, {"Team": "Club Brugge", "MP": 30, "W": 20, "D": 3, "L": 7, "GF": 59, "GA": 36, "GD": 23, "Pts": 63}, {"Team": "St Truiden", "MP": 30, "W": 18, "D": 3, "L": 9, "GF": 47, "GA": 35, "GD": 12, "Pts": 57}, {"Team": "Gent", "MP": 30, "W": 13, "D": 6, "L": 11, "GF": 49, "GA": 43, "GD": 6, "Pts": 45}, {"Team": "Mechelen", "MP": 30, "W": 12, "D": 9, "L": 9, "GF": 39, "GA": 37, "GD": 2, "Pts": 45}, {"Team": "Anderlecht", "MP": 30, "W": 12, "D": 8, "L": 10, "GF": 43, "GA": 39, "GD": 4, "Pts": 44}, {"Team": "Genk", "MP": 30, "W": 11, "D": 9, "L": 10, "GF": 46, "GA": 47, "GD": -1, "Pts": 42}, {"Team": "Standard", "MP": 30, "W": 11, "D": 7, "L": 12, "GF": 27, "GA": 35, "GD": -8, "Pts": 40}, {"Team": "Westerlo", "MP": 30, "W": 10, "D": 9, "L": 11, "GF": 36, "GA": 40, "GD": -4, "Pts": 39}, {"Team": "Antwerp", "MP": 30, "W": 9, "D": 8, "L": 13, "GF": 31, "GA": 32, "GD": -1, "Pts": 35}, {"Team": "Charleroi", "MP": 30, "W": 9, "D": 7, "L": 14, "GF": 38, "GA": 42, "GD": -4, "Pts": 34}, {"Team": "Oud-Heverlee Leuven", "MP": 30, "W": 9, "D": 7, "L": 14, "GF": 32, "GA": 43, "GD": -11, "Pts": 34}, {"Team": "Waregem", "MP": 30, "W": 8, "D": 8, "L": 14, "GF": 38, "GA": 47, "GD": -9, "Pts": 32}, {"Team": "RAAL La Louviere", "MP": 30, "W": 6, "D": 13, "L": 11, "GF": 30, "GA": 37, "GD": -7, "Pts": 31}, {"Team": "Cercle Brugge", "MP": 30, "W": 7, "D": 10, "L": 13, "GF": 39, "GA": 47, "GD": -8, "Pts": 31}, {"Team": "Dender", "MP": 30, "W": 3, "D": 10, "L": 17, "GF": 24, "GA": 51, "GD": -27, "Pts": 19}], "Serie B": [{"Team": "Venezia", "MP": 32, "W": 20, "D": 8, "L": 4, "GF": 64, "GA": 27, "GD": 37, "Pts": 68}, {"Team": "Frosinone", "MP": 32, "W": 18, "D": 11, "L": 3, "GF": 62, "GA": 32, "GD": 30, "Pts": 65}, {"Team": "Monza", "MP": 32, "W": 19, "D": 8, "L": 5, "GF": 50, "GA": 26, "GD": 24, "Pts": 65}, {"Team": "Palermo", "MP": 32, "W": 17, "D": 10, "L": 5, "GF": 52, "GA": 27, "GD": 25, "Pts": 61}, {"Team": "Catanzaro", "MP": 31, "W": 14, "D": 10, "L": 7, "GF": 49, "GA": 38, "GD": 11, "Pts": 52}, {"Team": "Modena", "MP": 31, "W": 14, "D": 8, "L": 9, "GF": 42, "GA": 25, "GD": 17, "Pts": 50}, {"Team": "Juve Stabia", "MP": 32, "W": 10, "D": 15, "L": 7, "GF": 38, "GA": 38, "GD": 0, "Pts": 45}, {"Team": "Cesena", "MP": 32, "W": 12, "D": 7, "L": 13, "GF": 41, "GA": 47, "GD": -6, "Pts": 43}, {"Team": "Carrarese", "MP": 32, "W": 9, "D": 12, "L": 11, "GF": 41, "GA": 42, "GD": -1, "Pts": 39}, {"Team": "Avellino", "MP": 32, "W": 10, "D": 9, "L": 13, "GF": 37, "GA": 51, "GD": -14, "Pts": 39}, {"Team": "Sudtirol", "MP": 32, "W": 8, "D": 14, "L": 10, "GF": 34, "GA": 35, "GD": -1, "Pts": 38}, {"Team": "Empoli", "MP": 32, "W": 8, "D": 12, "L": 12, "GF": 43, "GA": 47, "GD": -4, "Pts": 36}, {"Team": "Padova", "MP": 32, "W": 8, "D": 10, "L": 14, "GF": 32, "GA": 43, "GD": -11, "Pts": 34}, {"Team": "Mantova", "MP": 32, "W": 9, "D": 7, "L": 16, "GF": 36, "GA": 48, "GD": -12, "Pts": 34}, {"Team": "Sampdoria", "MP": 32, "W": 8, "D": 10, "L": 14, "GF": 31, "GA": 43, "GD": -12, "Pts": 34}, {"Team": "Virtus Entella", "MP": 32, "W": 8, "D": 10, "L": 14, "GF": 31, "GA": 45, "GD": -14, "Pts": 34}, {"Team": "Bari", "MP": 32, "W": 7, "D": 10, "L": 15, "GF": 30, "GA": 50, "GD": -20, "Pts": 31}, {"Team": "Spezia", "MP": 32, "W": 7, "D": 9, "L": 16, "GF": 31, "GA": 46, "GD": -15, "Pts": 30}, {"Team": "Reggiana", "MP": 32, "W": 7, "D": 9, "L": 16, "GF": 30, "GA": 49, "GD": -19, "Pts": 30}, {"Team": "Pescara", "MP": 32, "W": 6, "D": 11, "L": 15, "GF": 43, "GA": 58, "GD": -15, "Pts": 29}], "Championship": [{"Team": "Coventry", "MP": 39, "W": 24, "D": 8, "L": 7, "GF": 81, "GA": 40, "GD": 41, "Pts": 80}, {"Team": "Middlesbrough", "MP": 39, "W": 20, "D": 11, "L": 8, "GF": 59, "GA": 37, "GD": 22, "Pts": 71}, {"Team": "Ipswich", "MP": 38, "W": 19, "D": 12, "L": 7, "GF": 67, "GA": 39, "GD": 28, "Pts": 69}, {"Team": "Millwall", "MP": 39, "W": 20, "D": 9, "L": 10, "GF": 53, "GA": 44, "GD": 9, "Pts": 69}, {"Team": "Hull", "MP": 39, "W": 20, "D": 6, "L": 13, "GF": 62, "GA": 57, "GD": 5, "Pts": 66}, {"Team": "Southampton", "MP": 39, "W": 17, "D": 12, "L": 10, "GF": 63, "GA": 48, "GD": 15, "Pts": 63}, {"Team": "Wrexham", "MP": 39, "W": 17, "D": 12, "L": 10, "GF": 60, "GA": 51, "GD": 9, "Pts": 63}, {"Team": "Derby", "MP": 39, "W": 17, "D": 9, "L": 13, "GF": 56, "GA": 48, "GD": 8, "Pts": 60}, {"Team": "Watford", "MP": 39, "W": 14, "D": 14, "L": 11, "GF": 50, "GA": 46, "GD": 4, "Pts": 56}, {"Team": "Norwich", "MP": 39, "W": 16, "D": 6, "L": 17, "GF": 52, "GA": 46, "GD": 6, "Pts": 54}, {"Team": "Birmingham", "MP": 39, "W": 14, "D": 11, "L": 14, "GF": 48, "GA": 49, "GD": -1, "Pts": 53}, {"Team": "QPR", "MP": 39, "W": 15, "D": 8, "L": 16, "GF": 55, "GA": 61, "GD": -6, "Pts": 53}, {"Team": "Preston", "MP": 39, "W": 13, "D": 13, "L": 13, "GF": 45, "GA": 49, "GD": -4, "Pts": 52}, {"Team": "Swansea", "MP": 39, "W": 15, "D": 7, "L": 17, "GF": 44, "GA": 49, "GD": -5, "Pts": 52}, {"Team": "Stoke", "MP": 39, "W": 14, "D": 9, "L": 16, "GF": 46, "GA": 43, "GD": 3, "Pts": 51}, {"Team": "Bristol City", "MP": 39, "W": 14, "D": 9, "L": 16, "GF": 49, "GA": 50, "GD": -1, "Pts": 51}, {"Team": "Sheffield United", "MP": 39, "W": 15, "D": 5, "L": 19, "GF": 54, "GA": 54, "GD": 0, "Pts": 50}, {"Team": "Charlton", "MP": 39, "W": 12, "D": 12, "L": 15, "GF": 36, "GA": 46, "GD": -10, "Pts": 48}, {"Team": "Leicester", "MP": 39, "W": 11, "D": 12, "L": 16, "GF": 51, "GA": 60, "GD": -9, "Pts": 45}, {"Team": "Blackburn", "MP": 39, "W": 11, "D": 10, "L": 18, "GF": 36, "GA": 49, "GD": -13, "Pts": 43}, {"Team": "West Brom", "MP": 39, "W": 11, "D": 10, "L": 18, "GF": 40, "GA": 54, "GD": -14, "Pts": 43}, {"Team": "Portsmouth", "MP": 38, "W": 10, "D": 10, "L": 18, "GF": 37, "GA": 54, "GD": -17, "Pts": 40}, {"Team": "Oxford", "MP": 39, "W": 9, "D": 12, "L": 18, "GF": 36, "GA": 51, "GD": -15, "Pts": 39}, {"Team": "Sheffield Weds", "MP": 39, "W": 1, "D": 9, "L": 29, "GF": 24, "GA": 79, "GD": -55, "Pts": 12}], "Scottish League One": [{"Team": "Inverness C", "MP": 30, "W": 18, "D": 8, "L": 4, "GF": 52, "GA": 20, "GD": 32, "Pts": 62}, {"Team": "Stenhousemuir", "MP": 30, "W": 15, "D": 11, "L": 4, "GF": 41, "GA": 22, "GD": 19, "Pts": 56}, {"Team": "Alloa", "MP": 30, "W": 13, "D": 8, "L": 9, "GF": 45, "GA": 30, "GD": 15, "Pts": 47}, {"Team": "Hamilton", "MP": 30, "W": 13, "D": 7, "L": 10, "GF": 46, "GA": 34, "GD": 12, "Pts": 46}, {"Team": "Queen of Sth", "MP": 30, "W": 12, "D": 8, "L": 10, "GF": 47, "GA": 41, "GD": 6, "Pts": 44}, {"Team": "Peterhead", "MP": 30, "W": 11, "D": 6, "L": 13, "GF": 43, "GA": 53, "GD": -10, "Pts": 39}, {"Team": "Montrose", "MP": 30, "W": 10, "D": 8, "L": 12, "GF": 42, "GA": 55, "GD": -13, "Pts": 38}, {"Team": "East Fife", "MP": 30, "W": 8, "D": 6, "L": 16, "GF": 29, "GA": 54, "GD": -25, "Pts": 30}, {"Team": "Cove Rangers", "MP": 30, "W": 6, "D": 10, "L": 14, "GF": 34, "GA": 39, "GD": -5, "Pts": 28}, {"Team": "Kelty Hearts", "MP": 30, "W": 3, "D": 10, "L": 17, "GF": 25, "GA": 56, "GD": -31, "Pts": 19}], "Scottish Championship": [{"Team": "St Johnstone", "MP": 30, "W": 17, "D": 10, "L": 3, "GF": 53, "GA": 22, "GD": 31, "Pts": 61}, {"Team": "Partick", "MP": 29, "W": 14, "D": 11, "L": 4, "GF": 42, "GA": 31, "GD": 11, "Pts": 53}, {"Team": "Arbroath", "MP": 30, "W": 12, "D": 11, "L": 7, "GF": 38, "GA": 33, "GD": 5, "Pts": 47}, {"Team": "Dunfermline", "MP": 29, "W": 11, "D": 7, "L": 11, "GF": 42, "GA": 34, "GD": 8, "Pts": 40}, {"Team": "Ayr", "MP": 29, "W": 7, "D": 14, "L": 8, "GF": 34, "GA": 35, "GD": -1, "Pts": 35}, {"Team": "Queens Park", "MP": 30, "W": 8, "D": 11, "L": 11, "GF": 32, "GA": 42, "GD": -10, "Pts": 35}, {"Team": "Raith Rvs", "MP": 29, "W": 8, "D": 9, "L": 12, "GF": 31, "GA": 32, "GD": -1, "Pts": 33}, {"Team": "Morton", "MP": 30, "W": 7, "D": 12, "L": 11, "GF": 30, "GA": 40, "GD": -10, "Pts": 33}, {"Team": "Ross County", "MP": 30, "W": 6, "D": 10, "L": 14, "GF": 27, "GA": 45, "GD": -18, "Pts": 28}, {"Team": "Airdrie Utd", "MP": 30, "W": 6, "D": 9, "L": 15, "GF": 24, "GA": 39, "GD": -15, "Pts": 27}], "League One": [{"Team": "Lincoln", "MP": 39, "W": 25, "D": 9, "L": 5, "GF": 74, "GA": 34, "GD": 40, "Pts": 84}, {"Team": "Cardiff", "MP": 39, "W": 23, "D": 8, "L": 8, "GF": 73, "GA": 41, "GD": 32, "Pts": 77}, {"Team": "Bolton", "MP": 39, "W": 17, "D": 15, "L": 7, "GF": 55, "GA": 39, "GD": 16, "Pts": 66}, {"Team": "Bradford", "MP": 39, "W": 19, "D": 8, "L": 12, "GF": 49, "GA": 44, "GD": 5, "Pts": 65}, {"Team": "Stockport", "MP": 37, "W": 17, "D": 9, "L": 11, "GF": 51, "GA": 48, "GD": 3, "Pts": 60}, {"Team": "Stevenage", "MP": 38, "W": 17, "D": 9, "L": 12, "GF": 41, "GA": 38, "GD": 3, "Pts": 60}, {"Team": "Plymouth", "MP": 39, "W": 18, "D": 5, "L": 16, "GF": 60, "GA": 54, "GD": 6, "Pts": 59}, {"Team": "Reading", "MP": 39, "W": 15, "D": 13, "L": 11, "GF": 57, "GA": 51, "GD": 6, "Pts": 58}, {"Team": "Huddersfield", "MP": 39, "W": 16, "D": 9, "L": 14, "GF": 59, "GA": 51, "GD": 8, "Pts": 57}, {"Team": "Wycombe", "MP": 39, "W": 15, "D": 11, "L": 13, "GF": 55, "GA": 43, "GD": 12, "Pts": 56}, {"Team": "Luton", "MP": 39, "W": 15, "D": 10, "L": 14, "GF": 52, "GA": 49, "GD": 3, "Pts": 55}, {"Team": "Peterboro", "MP": 38, "W": 15, "D": 5, "L": 18, "GF": 57, "GA": 52, "GD": 5, "Pts": 50}, {"Team": "Barnsley", "MP": 37, "W": 13, "D": 11, "L": 13, "GF": 59, "GA": 60, "GD": -1, "Pts": 50}, {"Team": "AFC Wimbledon", "MP": 38, "W": 14, "D": 8, "L": 16, "GF": 49, "GA": 55, "GD": -6, "Pts": 50}, {"Team": "Mansfield", "MP": 37, "W": 12, "D": 13, "L": 12, "GF": 47, "GA": 41, "GD": 6, "Pts": 49}, {"Team": "Leyton Orient", "MP": 38, "W": 14, "D": 6, "L": 18, "GF": 55, "GA": 62, "GD": -7, "Pts": 48}, {"Team": "Doncaster", "MP": 38, "W": 13, "D": 8, "L": 17, "GF": 41, "GA": 59, "GD": -18, "Pts": 47}, {"Team": "Burton", "MP": 39, "W": 12, "D": 10, "L": 17, "GF": 44, "GA": 54, "GD": -10, "Pts": 46}, {"Team": "Wigan", "MP": 38, "W": 11, "D": 12, "L": 15, "GF": 41, "GA": 51, "GD": -10, "Pts": 45}, {"Team": "Exeter", "MP": 39, "W": 11, "D": 9, "L": 19, "GF": 42, "GA": 52, "GD": -10, "Pts": 42}, {"Team": "Blackpool", "MP": 39, "W": 11, "D": 9, "L": 19, "GF": 46, "GA": 63, "GD": -17, "Pts": 42}, {"Team": "Rotherham", "MP": 38, "W": 9, "D": 9, "L": 20, "GF": 35, "GA": 58, "GD": -23, "Pts": 36}, {"Team": "Northampton", "MP": 39, "W": 9, "D": 8, "L": 22, "GF": 33, "GA": 56, "GD": -23, "Pts": 35}, {"Team": "Port Vale", "MP": 36, "W": 7, "D": 10, "L": 19, "GF": 29, "GA": 49, "GD": -20, "Pts": 31}], "League Two": [{"Team": "Bromley", "MP": 39, "W": 22, "D": 13, "L": 4, "GF": 62, "GA": 36, "GD": 26, "Pts": 79}, {"Team": "Milton Keynes Dons", "MP": 39, "W": 21, "D": 11, "L": 7, "GF": 76, "GA": 40, "GD": 36, "Pts": 74}, {"Team": "Cambridge", "MP": 38, "W": 20, "D": 12, "L": 6, "GF": 56, "GA": 28, "GD": 28, "Pts": 72}, {"Team": "Notts County", "MP": 38, "W": 21, "D": 7, "L": 10, "GF": 65, "GA": 39, "GD": 26, "Pts": 70}, {"Team": "Swindon", "MP": 39, "W": 21, "D": 6, "L": 12, "GF": 63, "GA": 45, "GD": 18, "Pts": 69}, {"Team": "Salford", "MP": 39, "W": 21, "D": 4, "L": 14, "GF": 54, "GA": 48, "GD": 6, "Pts": 67}, {"Team": "Grimsby", "MP": 38, "W": 17, "D": 11, "L": 10, "GF": 56, "GA": 40, "GD": 16, "Pts": 62}, {"Team": "Chesterfield", "MP": 39, "W": 16, "D": 14, "L": 9, "GF": 61, "GA": 52, "GD": 9, "Pts": 62}, {"Team": "Crewe", "MP": 39, "W": 17, "D": 9, "L": 13, "GF": 58, "GA": 47, "GD": 11, "Pts": 60}, {"Team": "Walsall", "MP": 39, "W": 17, "D": 9, "L": 13, "GF": 48, "GA": 41, "GD": 7, "Pts": 60}, {"Team": "Oldham", "MP": 37, "W": 15, "D": 13, "L": 9, "GF": 44, "GA": 31, "GD": 13, "Pts": 58}, {"Team": "Barnet", "MP": 39, "W": 15, "D": 12, "L": 12, "GF": 49, "GA": 43, "GD": 6, "Pts": 57}, {"Team": "Fleetwood Town", "MP": 39, "W": 14, "D": 12, "L": 13, "GF": 48, "GA": 46, "GD": 2, "Pts": 54}, {"Team": "Colchester", "MP": 38, "W": 14, "D": 11, "L": 13, "GF": 50, "GA": 41, "GD": 9, "Pts": 53}, {"Team": "Accrington", "MP": 38, "W": 13, "D": 9, "L": 16, "GF": 38, "GA": 42, "GD": -4, "Pts": 48}, {"Team": "Gillingham", "MP": 38, "W": 11, "D": 12, "L": 15, "GF": 44, "GA": 56, "GD": -12, "Pts": 45}, {"Team": "Bristol Rvs", "MP": 39, "W": 13, "D": 4, "L": 22, "GF": 40, "GA": 60, "GD": -20, "Pts": 43}, {"Team": "Cheltenham", "MP": 38, "W": 11, "D": 9, "L": 18, "GF": 43, "GA": 65, "GD": -22, "Pts": 42}, {"Team": "Shrewsbury", "MP": 39, "W": 11, "D": 8, "L": 20, "GF": 37, "GA": 63, "GD": -26, "Pts": 41}, {"Team": "Tranmere", "MP": 39, "W": 9, "D": 9, "L": 21, "GF": 48, "GA": 69, "GD": -21, "Pts": 36}, {"Team": "Crawley Town", "MP": 39, "W": 6, "D": 13, "L": 20, "GF": 36, "GA": 60, "GD": -24, "Pts": 31}, {"Team": "Newport County", "MP": 39, "W": 8, "D": 7, "L": 24, "GF": 39, "GA": 67, "GD": -28, "Pts": 31}, {"Team": "Harrogate", "MP": 39, "W": 7, "D": 9, "L": 23, "GF": 29, "GA": 58, "GD": -29, "Pts": 30}, {"Team": "Barrow", "MP": 38, "W": 7, "D": 8, "L": 23, "GF": 36, "GA": 63, "GD": -27, "Pts": 29}], "Scottish Premiership": [{"Team": "Hearts", "MP": 31, "W": 20, "D": 6, "L": 5, "GF": 53, "GA": 25, "GD": 28, "Pts": 66}, {"Team": "Rangers", "MP": 31, "W": 17, "D": 12, "L": 2, "GF": 56, "GA": 26, "GD": 30, "Pts": 63}, {"Team": "Celtic", "MP": 31, "W": 19, "D": 4, "L": 8, "GF": 56, "GA": 34, "GD": 22, "Pts": 61}, {"Team": "Motherwell", "MP": 31, "W": 14, "D": 12, "L": 5, "GF": 49, "GA": 23, "GD": 26, "Pts": 54}, {"Team": "Hibernian", "MP": 31, "W": 12, "D": 12, "L": 7, "GF": 48, "GA": 35, "GD": 13, "Pts": 48}, {"Team": "Falkirk", "MP": 31, "W": 12, "D": 7, "L": 12, "GF": 39, "GA": 40, "GD": -1, "Pts": 43}, {"Team": "Dundee United", "MP": 31, "W": 8, "D": 13, "L": 10, "GF": 40, "GA": 48, "GD": -8, "Pts": 37}, {"Team": "Dundee", "MP": 31, "W": 8, "D": 8, "L": 15, "GF": 31, "GA": 49, "GD": -18, "Pts": 32}, {"Team": "Aberdeen", "MP": 31, "W": 8, "D": 6, "L": 17, "GF": 31, "GA": 46, "GD": -15, "Pts": 30}, {"Team": "St Mirren", "MP": 31, "W": 6, "D": 9, "L": 16, "GF": 25, "GA": 47, "GD": -22, "Pts": 27}, {"Team": "Kilmarnock", "MP": 31, "W": 6, "D": 9, "L": 16, "GF": 35, "GA": 60, "GD": -25, "Pts": 27}, {"Team": "Livingston", "MP": 31, "W": 1, "D": 12, "L": 18, "GF": 31, "GA": 61, "GD": -30, "Pts": 15}], "Ligue 2": [{"Team": "Troyes", "MP": 28, "W": 17, "D": 6, "L": 5, "GF": 49, "GA": 28, "GD": 21, "Pts": 57}, {"Team": "St Etienne", "MP": 28, "W": 16, "D": 5, "L": 7, "GF": 50, "GA": 29, "GD": 21, "Pts": 53}, {"Team": "Le Mans", "MP": 28, "W": 13, "D": 11, "L": 4, "GF": 41, "GA": 29, "GD": 12, "Pts": 50}, {"Team": "Reims", "MP": 28, "W": 12, "D": 10, "L": 6, "GF": 41, "GA": 26, "GD": 15, "Pts": 46}, {"Team": "Red Star", "MP": 27, "W": 12, "D": 8, "L": 7, "GF": 32, "GA": 27, "GD": 5, "Pts": 44}, {"Team": "Rodez", "MP": 28, "W": 11, "D": 11, "L": 6, "GF": 35, "GA": 33, "GD": 2, "Pts": 44}, {"Team": "Montpellier", "MP": 28, "W": 12, "D": 6, "L": 10, "GF": 33, "GA": 25, "GD": 8, "Pts": 42}, {"Team": "Dunkerque", "MP": 28, "W": 10, "D": 9, "L": 9, "GF": 43, "GA": 34, "GD": 9, "Pts": 39}, {"Team": "Annecy", "MP": 28, "W": 11, "D": 6, "L": 11, "GF": 35, "GA": 34, "GD": 1, "Pts": 39}, {"Team": "Guingamp", "MP": 28, "W": 10, "D": 9, "L": 9, "GF": 38, "GA": 40, "GD": -2, "Pts": 39}, {"Team": "Pau FC", "MP": 28, "W": 10, "D": 9, "L": 9, "GF": 40, "GA": 44, "GD": -4, "Pts": 39}, {"Team": "Boulogne", "MP": 28, "W": 9, "D": 7, "L": 12, "GF": 30, "GA": 38, "GD": -8, "Pts": 34}, {"Team": "Grenoble", "MP": 28, "W": 6, "D": 12, "L": 10, "GF": 26, "GA": 33, "GD": -7, "Pts": 30}, {"Team": "Clermont", "MP": 28, "W": 7, "D": 7, "L": 14, "GF": 30, "GA": 37, "GD": -7, "Pts": 28}, {"Team": "Nancy", "MP": 28, "W": 7, "D": 7, "L": 14, "GF": 24, "GA": 40, "GD": -16, "Pts": 28}, {"Team": "Amiens", "MP": 28, "W": 6, "D": 5, "L": 17, "GF": 33, "GA": 50, "GD": -17, "Pts": 23}, {"Team": "Laval", "MP": 28, "W": 4, "D": 11, "L": 13, "GF": 24, "GA": 41, "GD": -17, "Pts": 23}, {"Team": "Bastia", "MP": 27, "W": 3, "D": 11, "L": 13, "GF": 15, "GA": 31, "GD": -16, "Pts": 20}], "2. Bundesliga": [{"Team": "Schalke 04", "MP": 27, "W": 15, "D": 7, "L": 5, "GF": 38, "GA": 24, "GD": 14, "Pts": 52}, {"Team": "Elversberg", "MP": 27, "W": 15, "D": 6, "L": 6, "GF": 47, "GA": 29, "GD": 18, "Pts": 51}, {"Team": "Paderborn", "MP": 27, "W": 15, "D": 6, "L": 6, "GF": 45, "GA": 31, "GD": 14, "Pts": 51}, {"Team": "Darmstadt", "MP": 27, "W": 13, "D": 11, "L": 3, "GF": 49, "GA": 30, "GD": 19, "Pts": 50}, {"Team": "Hannover", "MP": 27, "W": 14, "D": 7, "L": 6, "GF": 46, "GA": 34, "GD": 12, "Pts": 49}, {"Team": "Hertha", "MP": 27, "W": 12, "D": 8, "L": 7, "GF": 42, "GA": 33, "GD": 9, "Pts": 44}, {"Team": "Kaiserslautern", "MP": 27, "W": 12, "D": 4, "L": 11, "GF": 45, "GA": 41, "GD": 4, "Pts": 40}, {"Team": "Karlsruhe", "MP": 27, "W": 10, "D": 7, "L": 10, "GF": 43, "GA": 51, "GD": -8, "Pts": 37}, {"Team": "Nurnberg", "MP": 27, "W": 10, "D": 6, "L": 11, "GF": 37, "GA": 37, "GD": 0, "Pts": 36}, {"Team": "Bochum", "MP": 27, "W": 8, "D": 9, "L": 10, "GF": 38, "GA": 36, "GD": 2, "Pts": 33}, {"Team": "Fortuna Dusseldorf", "MP": 27, "W": 9, "D": 4, "L": 14, "GF": 26, "GA": 40, "GD": -14, "Pts": 31}, {"Team": "Dresden", "MP": 27, "W": 7, "D": 8, "L": 12, "GF": 45, "GA": 46, "GD": -1, "Pts": 29}, {"Team": "Braunschweig", "MP": 27, "W": 8, "D": 5, "L": 14, "GF": 29, "GA": 44, "GD": -15, "Pts": 29}, {"Team": "Greuther Furth", "MP": 27, "W": 8, "D": 5, "L": 14, "GF": 40, "GA": 59, "GD": -19, "Pts": 29}, {"Team": "Bielefeld", "MP": 27, "W": 7, "D": 7, "L": 13, "GF": 39, "GA": 39, "GD": 0, "Pts": 28}, {"Team": "Holstein Kiel", "MP": 27, "W": 7, "D": 7, "L": 13, "GF": 34, "GA": 42, "GD": -8, "Pts": 28}, {"Team": "Magdeburg", "MP": 27, "W": 8, "D": 3, "L": 16, "GF": 39, "GA": 50, "GD": -11, "Pts": 27}, {"Team": "Preu\u00dfen M\u00fcnster", "MP": 27, "W": 6, "D": 8, "L": 13, "GF": 31, "GA": 47, "GD": -16, "Pts": 26}], "Scottish League Two": [{"Team": "East Kilbride", "MP": 30, "W": 17, "D": 5, "L": 8, "GF": 64, "GA": 43, "GD": 21, "Pts": 56}, {"Team": "Spartans", "MP": 30, "W": 16, "D": 7, "L": 7, "GF": 50, "GA": 33, "GD": 17, "Pts": 55}, {"Team": "Clyde", "MP": 29, "W": 10, "D": 14, "L": 5, "GF": 47, "GA": 29, "GD": 18, "Pts": 44}, {"Team": "Forfar", "MP": 29, "W": 9, "D": 9, "L": 11, "GF": 40, "GA": 41, "GD": -1, "Pts": 36}, {"Team": "Stranraer", "MP": 29, "W": 9, "D": 9, "L": 11, "GF": 38, "GA": 40, "GD": -2, "Pts": 36}, {"Team": "Elgin", "MP": 29, "W": 9, "D": 9, "L": 11, "GF": 43, "GA": 46, "GD": -3, "Pts": 36}, {"Team": "Edinburgh City", "MP": 30, "W": 9, "D": 9, "L": 12, "GF": 40, "GA": 58, "GD": -18, "Pts": 36}, {"Team": "Dumbarton", "MP": 30, "W": 9, "D": 8, "L": 13, "GF": 42, "GA": 49, "GD": -7, "Pts": 35}, {"Team": "Annan Athletic", "MP": 30, "W": 8, "D": 10, "L": 12, "GF": 40, "GA": 50, "GD": -10, "Pts": 34}, {"Team": "Stirling", "MP": 30, "W": 8, "D": 8, "L": 14, "GF": 38, "GA": 53, "GD": -15, "Pts": 32}], "La Liga 2": [{"Team": "Santander", "MP": 31, "W": 18, "D": 5, "L": 8, "GF": 62, "GA": 44, "GD": 18, "Pts": 59}, {"Team": "Almeria", "MP": 31, "W": 16, "D": 7, "L": 8, "GF": 59, "GA": 43, "GD": 16, "Pts": 55}, {"Team": "La Coruna", "MP": 31, "W": 16, "D": 7, "L": 8, "GF": 48, "GA": 35, "GD": 13, "Pts": 55}, {"Team": "Malaga", "MP": 31, "W": 16, "D": 6, "L": 9, "GF": 52, "GA": 37, "GD": 15, "Pts": 54}, {"Team": "Las Palmas", "MP": 31, "W": 13, "D": 12, "L": 6, "GF": 40, "GA": 24, "GD": 16, "Pts": 51}, {"Team": "Castellon", "MP": 31, "W": 14, "D": 8, "L": 9, "GF": 50, "GA": 38, "GD": 12, "Pts": 50}, {"Team": "Burgos", "MP": 31, "W": 14, "D": 8, "L": 9, "GF": 36, "GA": 26, "GD": 10, "Pts": 50}, {"Team": "Sp Gijon", "MP": 31, "W": 13, "D": 6, "L": 12, "GF": 42, "GA": 39, "GD": 3, "Pts": 45}, {"Team": "Eibar", "MP": 31, "W": 12, "D": 9, "L": 10, "GF": 33, "GA": 30, "GD": 3, "Pts": 45}, {"Team": "Ceuta", "MP": 31, "W": 13, "D": 5, "L": 13, "GF": 39, "GA": 50, "GD": -11, "Pts": 44}, {"Team": "Albacete", "MP": 31, "W": 11, "D": 9, "L": 11, "GF": 39, "GA": 40, "GD": -1, "Pts": 42}, {"Team": "Cordoba", "MP": 31, "W": 11, "D": 8, "L": 12, "GF": 41, "GA": 47, "GD": -6, "Pts": 41}, {"Team": "Sociedad B", "MP": 31, "W": 11, "D": 7, "L": 13, "GF": 44, "GA": 43, "GD": 1, "Pts": 40}, {"Team": "Granada", "MP": 31, "W": 9, "D": 12, "L": 10, "GF": 37, "GA": 34, "GD": 3, "Pts": 39}, {"Team": "Andorra", "MP": 31, "W": 10, "D": 9, "L": 12, "GF": 37, "GA": 42, "GD": -5, "Pts": 39}, {"Team": "Cadiz", "MP": 31, "W": 10, "D": 8, "L": 13, "GF": 31, "GA": 39, "GD": -8, "Pts": 38}, {"Team": "Leganes", "MP": 31, "W": 9, "D": 10, "L": 12, "GF": 36, "GA": 34, "GD": 2, "Pts": 37}, {"Team": "Valladolid", "MP": 31, "W": 9, "D": 9, "L": 13, "GF": 36, "GA": 45, "GD": -9, "Pts": 36}, {"Team": "Huesca", "MP": 31, "W": 8, "D": 7, "L": 16, "GF": 30, "GA": 45, "GD": -15, "Pts": 31}, {"Team": "Zaragoza", "MP": 31, "W": 7, "D": 9, "L": 15, "GF": 27, "GA": 43, "GD": -16, "Pts": 30}, {"Team": "Cultural Leonesa", "MP": 31, "W": 7, "D": 7, "L": 17, "GF": 29, "GA": 50, "GD": -21, "Pts": 28}, {"Team": "Mirandes", "MP": 31, "W": 7, "D": 6, "L": 18, "GF": 30, "GA": 50, "GD": -20, "Pts": 27}]};
+const TEAM_LOOKUP = {"Bayern Munich": {"off": 3.151, "def": 0.826, "spi": 85.7, "league": "Bundesliga"}, "Sp Lisbon": {"off": 2.095, "def": 0.488, "spi": 80.2, "league": "Primeira Liga"}, "Galatasaray": {"off": 2.12, "def": 0.657, "spi": 76.8, "league": "Super Lig"}, "Porto": {"off": 1.615, "def": 0.332, "spi": 76.6, "league": "Primeira Liga"}, "York": {"off": 2.338, "def": 0.843, "spi": 75.9, "league": "Conference"}, "Barcelona": {"off": 2.124, "def": 0.824, "spi": 73.1, "league": "La Liga"}, "Inter": {"off": 1.97, "def": 0.746, "spi": 72.3, "league": "Serie A"}, "Benfica": {"off": 1.668, "def": 0.573, "spi": 71.2, "league": "Primeira Liga"}, "Paris SG": {"off": 1.818, "def": 0.7, "spi": 70.7, "league": "Ligue 1"}, "Olympiakos": {"off": 1.352, "def": 0.36, "spi": 70.7, "league": "Super League Greece"}, "Arsenal": {"off": 1.726, "def": 0.639, "spi": 70.6, "league": "Premier League"}, "PAOK": {"off": 1.585, "def": 0.566, "spi": 69.7, "league": "Super League Greece"}, "PSV Eindhoven": {"off": 2.325, "def": 1.163, "spi": 69.0, "league": "Eredivisie"}, "Real Madrid": {"off": 1.795, "def": 0.754, "spi": 69.0, "league": "La Liga"}, "Rochdale": {"off": 1.731, "def": 0.719, "spi": 68.6, "league": "Conference"}, "St. Gilloise": {"off": 1.472, "def": 0.526, "spi": 68.5, "league": "Jupiler Pro League"}, "Fenerbahce": {"off": 2.097, "def": 1.011, "spi": 68.4, "league": "Super Lig"}, "AEK": {"off": 1.493, "def": 0.562, "spi": 68.0, "league": "Super League Greece"}, "Venezia": {"off": 1.634, "def": 0.709, "spi": 67.0, "league": "Serie B"}, "Coventry": {"off": 1.921, "def": 0.936, "spi": 67.0, "league": "Championship"}, "Como": {"off": 1.587, "def": 0.677, "spi": 66.9, "league": "Serie A"}, "Dortmund": {"off": 1.844, "def": 0.91, "spi": 66.2, "league": "Bundesliga"}, "Lens": {"off": 1.607, "def": 0.754, "spi": 65.3, "league": "Ligue 1"}, "Inverness C": {"off": 1.436, "def": 0.616, "spi": 65.3, "league": "Scottish League One"}, "St Johnstone": {"off": 1.512, "def": 0.681, "spi": 65.2, "league": "Scottish Championship"}, "Lincoln": {"off": 1.574, "def": 0.735, "spi": 65.1, "league": "League One"}, "Man City": {"off": 1.702, "def": 0.85, "spi": 64.9, "league": "Premier League"}, "Milton Keynes Dons": {"off": 1.792, "def": 0.982, "spi": 63.5, "league": "League Two"}, "Sp Braga": {"off": 1.683, "def": 0.895, "spi": 63.4, "league": "Primeira Liga"}, "Frosinone": {"off": 1.581, "def": 0.845, "spi": 62.5, "league": "Serie B"}, "Milan": {"off": 1.409, "def": 0.707, "spi": 62.3, "league": "Serie A"}, "Rangers": {"off": 1.427, "def": 0.72, "spi": 62.3, "league": "Scottish Premiership"}, "Juventus": {"off": 1.597, "def": 0.883, "spi": 61.9, "league": "Serie A"}, "Trabzonspor": {"off": 1.764, "def": 1.042, "spi": 61.5, "league": "Super Lig"}, "St Etienne": {"off": 1.702, "def": 0.99, "spi": 61.5, "league": "Ligue 2"}, "Hearts": {"off": 1.346, "def": 0.687, "spi": 61.3, "league": "Scottish Premiership"}, "Troyes": {"off": 1.633, "def": 0.954, "spi": 60.9, "league": "Ligue 2"}, "Carlisle": {"off": 1.76, "def": 1.073, "spi": 60.7, "league": "Conference"}, "Cardiff": {"off": 1.55, "def": 0.896, "spi": 60.6, "league": "League One"}, "Cambridge": {"off": 1.331, "def": 0.702, "spi": 60.6, "league": "League Two"}, "Ipswich": {"off": 1.584, "def": 0.935, "spi": 60.3, "league": "Championship"}, "Marseille": {"off": 1.735, "def": 1.072, "spi": 60.2, "league": "Ligue 1"}, "Boreham Wood": {"off": 1.873, "def": 1.197, "spi": 60.1, "league": "Conference"}, "Monza": {"off": 1.275, "def": 0.676, "spi": 60.0, "league": "Serie B"}, "Club Brugge": {"off": 1.796, "def": 1.135, "spi": 60.0, "league": "Jupiler Pro League"}, "Motherwell": {"off": 1.221, "def": 0.631, "spi": 59.9, "league": "Scottish Premiership"}, "Southend": {"off": 1.462, "def": 0.849, "spi": 59.8, "league": "Conference"}, "Villarreal": {"off": 1.542, "def": 0.924, "spi": 59.7, "league": "La Liga"}, "Besiktas": {"off": 1.73, "def": 1.095, "spi": 59.6, "league": "Super Lig"}, "Palermo": {"off": 1.326, "def": 0.735, "spi": 59.6, "league": "Serie B"}, "RB Leipzig": {"off": 1.711, "def": 1.085, "spi": 59.4, "league": "Bundesliga"}, "Notts County": {"off": 1.552, "def": 0.956, "spi": 59.1, "league": "League Two"}, "Nijmegen": {"off": 2.1, "def": 1.456, "spi": 58.9, "league": "Eredivisie"}, "Ath Madrid": {"off": 1.365, "def": 0.803, "spi": 58.8, "league": "La Liga"}, "Feyenoord": {"off": 1.864, "def": 1.25, "spi": 58.8, "league": "Eredivisie"}, "Bromley": {"off": 1.44, "def": 0.873, "spi": 58.7, "league": "League Two"}, "Darmstadt": {"off": 1.613, "def": 1.037, "spi": 58.5, "league": "2. Bundesliga"}, "Clyde": {"off": 1.559, "def": 0.995, "spi": 58.3, "league": "Scottish League Two"}, "Celtic": {"off": 1.473, "def": 0.919, "spi": 58.3, "league": "Scottish Premiership"}, "East Kilbride": {"off": 2.095, "def": 1.498, "spi": 58.0, "league": "Scottish League Two"}, "Reims": {"off": 1.391, "def": 0.864, "spi": 57.8, "league": "Ligue 2"}, "Roma": {"off": 1.194, "def": 0.683, "spi": 57.8, "league": "Serie A"}, "Middlesbrough": {"off": 1.378, "def": 0.851, "spi": 57.8, "league": "Championship"}, "Elversberg": {"off": 1.514, "def": 0.98, "spi": 57.7, "league": "2. Bundesliga"}, "Panathinaikos": {"off": 1.369, "def": 0.851, "spi": 57.6, "league": "Super League Greece"}, "Stuttgart": {"off": 1.772, "def": 1.229, "spi": 57.4, "league": "Bundesliga"}, "Leverkusen": {"off": 1.681, "def": 1.146, "spi": 57.4, "league": "Bundesliga"}, "Ajax": {"off": 1.588, "def": 1.068, "spi": 57.2, "league": "Eredivisie"}, "Hoffenheim": {"off": 1.735, "def": 1.205, "spi": 57.2, "league": "Bundesliga"}, "Santander": {"off": 1.846, "def": 1.312, "spi": 57.1, "league": "La Liga 2"}, "Spartans": {"off": 1.615, "def": 1.102, "spi": 57.0, "league": "Scottish League Two"}, "Napoli": {"off": 1.373, "def": 0.895, "spi": 56.6, "league": "Serie A"}, "Forest Green": {"off": 1.477, "def": 0.989, "spi": 56.6, "league": "Conference"}, "Buyuksehyr": {"off": 1.514, "def": 1.033, "spi": 56.4, "league": "Super Lig"}, "Twente": {"off": 1.407, "def": 0.939, "spi": 56.3, "league": "Eredivisie"}, "Stenhousemuir": {"off": 1.107, "def": 0.659, "spi": 56.2, "league": "Scottish League One"}, "Schalke 04": {"off": 1.237, "def": 0.786, "spi": 56.1, "league": "2. Bundesliga"}, "Las Palmas": {"off": 1.117, "def": 0.684, "spi": 55.8, "league": "La Liga 2"}, "Le Mans": {"off": 1.38, "def": 0.954, "spi": 55.3, "league": "Ligue 2"}, "Modena": {"off": 1.079, "def": 0.681, "spi": 54.9, "league": "Serie B"}, "Scunthorpe": {"off": 1.675, "def": 1.268, "spi": 54.5, "league": "Conference"}, "Paderborn": {"off": 1.473, "def": 1.077, "spi": 54.5, "league": "2. Bundesliga"}, "Gil Vicente": {"off": 1.235, "def": 0.852, "spi": 54.4, "league": "Primeira Liga"}, "Atalanta": {"off": 1.206, "def": 0.823, "spi": 54.4, "league": "Serie A"}, "Almeria": {"off": 1.7, "def": 1.301, "spi": 54.3, "league": "La Liga 2"}, "Levadeiakos": {"off": 1.632, "def": 1.236, "spi": 54.3, "league": "Super League Greece"}, "Chelsea": {"off": 1.486, "def": 1.101, "spi": 54.2, "league": "Premier League"}, "La Coruna": {"off": 1.37, "def": 0.989, "spi": 54.2, "league": "La Liga 2"}, "Grimsby": {"off": 1.366, "def": 0.989, "spi": 54.1, "league": "League Two"}, "Goztep": {"off": 1.047, "def": 0.684, "spi": 53.9, "league": "Super Lig"}, "Alloa": {"off": 1.269, "def": 0.912, "spi": 53.7, "league": "Scottish League One"}, "Malaga": {"off": 1.48, "def": 1.115, "spi": 53.7, "league": "La Liga 2"}, "Swindon": {"off": 1.456, "def": 1.092, "spi": 53.7, "league": "League Two"}, "Strasbourg": {"off": 1.344, "def": 0.991, "spi": 53.5, "league": "Ligue 1"}, "Man United": {"off": 1.591, "def": 1.237, "spi": 53.4, "league": "Premier League"}, "Castellon": {"off": 1.445, "def": 1.094, "spi": 53.4, "league": "La Liga 2"}, "Southampton": {"off": 1.467, "def": 1.118, "spi": 53.3, "league": "Championship"}, "St Truiden": {"off": 1.426, "def": 1.081, "spi": 53.3, "league": "Jupiler Pro League"}, "Dunkerque": {"off": 1.475, "def": 1.134, "spi": 53.2, "league": "Ligue 2"}, "Hibernian": {"off": 1.266, "def": 0.934, "spi": 53.1, "league": "Scottish Premiership"}, "Hannover": {"off": 1.5, "def": 1.163, "spi": 53.1, "league": "2. Bundesliga"}, "Partick": {"off": 1.289, "def": 0.958, "spi": 53.0, "league": "Scottish Championship"}, "Lyon": {"off": 1.215, "def": 0.885, "spi": 53.0, "league": "Ligue 1"}, "Utrecht": {"off": 1.263, "def": 0.932, "spi": 53.0, "league": "Eredivisie"}, "Bolton": {"off": 1.162, "def": 0.847, "spi": 52.6, "league": "League One"}, "Hertha": {"off": 1.429, "def": 1.114, "spi": 52.6, "league": "2. Bundesliga"}, "Oldham": {"off": 1.085, "def": 0.778, "spi": 52.4, "league": "League Two"}, "Monaco": {"off": 1.452, "def": 1.171, "spi": 51.8, "league": "Ligue 1"}, "Catanzaro": {"off": 1.294, "def": 1.022, "spi": 51.6, "league": "Serie B"}, "Burgos": {"off": 1.033, "def": 0.755, "spi": 51.6, "league": "La Liga 2"}, "Lille": {"off": 1.288, "def": 1.017, "spi": 51.5, "league": "Ligue 1"}, "Montpellier": {"off": 1.099, "def": 0.829, "spi": 51.5, "league": "Ligue 2"}, "Woking": {"off": 1.367, "def": 1.103, "spi": 51.4, "league": "Conference"}, "Wycombe": {"off": 1.184, "def": 0.92, "spi": 51.3, "league": "League One"}, "Hamilton": {"off": 1.307, "def": 1.047, "spi": 51.3, "league": "Scottish League One"}, "Chesterfield": {"off": 1.486, "def": 1.258, "spi": 50.6, "league": "League Two"}, "Famalicao": {"off": 0.954, "def": 0.713, "spi": 50.6, "league": "Primeira Liga"}, "Betis": {"off": 1.276, "def": 1.054, "spi": 50.4, "league": "La Liga"}, "Red Star": {"off": 1.113, "def": 0.89, "spi": 50.3, "league": "Ligue 2"}, "Millwall": {"off": 1.23, "def": 1.011, "spi": 50.2, "league": "Championship"}, "Colchester": {"off": 1.209, "def": 0.993, "spi": 50.2, "league": "League Two"}, "Dunfermline": {"off": 1.281, "def": 1.071, "spi": 50.1, "league": "Scottish Championship"}, "Liverpool": {"off": 1.409, "def": 1.212, "spi": 49.9, "league": "Premier League"}, "Heerenveen": {"off": 1.543, "def": 1.359, "spi": 49.6, "league": "Eredivisie"}, "Crewe": {"off": 1.338, "def": 1.15, "spi": 49.6, "league": "League Two"}, "Rennes": {"off": 1.325, "def": 1.136, "spi": 49.6, "league": "Ligue 1"}, "Wrexham": {"off": 1.383, "def": 1.2, "spi": 49.5, "league": "Championship"}, "Gent": {"off": 1.508, "def": 1.334, "spi": 49.4, "league": "Jupiler Pro League"}, "Celta": {"off": 1.177, "def": 1.001, "spi": 49.2, "league": "La Liga"}, "Walsall": {"off": 1.143, "def": 0.969, "spi": 49.1, "league": "League Two"}, "Derby": {"off": 1.303, "def": 1.137, "spi": 49.0, "league": "Championship"}, "Halifax": {"off": 1.401, "def": 1.256, "spi": 48.7, "league": "Conference"}, "Kaiserslautern": {"off": 1.514, "def": 1.373, "spi": 48.7, "league": "2. Bundesliga"}, "Huddersfield": {"off": 1.267, "def": 1.114, "spi": 48.7, "league": "League One"}, "Peterboro": {"off": 1.279, "def": 1.134, "spi": 48.6, "league": "League One"}, "Plymouth": {"off": 1.296, "def": 1.15, "spi": 48.6, "league": "League One"}, "Alanyaspor": {"off": 1.179, "def": 1.032, "spi": 48.5, "league": "Super Lig"}, "Norwich": {"off": 1.213, "def": 1.067, "spi": 48.5, "league": "Championship"}, "Brighton": {"off": 1.185, "def": 1.044, "spi": 48.3, "league": "Premier League"}, "Reading": {"off": 1.233, "def": 1.097, "spi": 48.3, "league": "League One"}, "Aston Villa": {"off": 1.187, "def": 1.046, "spi": 48.3, "league": "Premier League"}, "Hull": {"off": 1.454, "def": 1.334, "spi": 48.2, "league": "Championship"}, "Barnet": {"off": 1.149, "def": 1.018, "spi": 48.0, "league": "League Two"}, "Groningen": {"off": 1.238, "def": 1.112, "spi": 48.0, "league": "Eredivisie"}, "Anderlecht": {"off": 1.313, "def": 1.197, "spi": 47.9, "league": "Jupiler Pro League"}, "Queen of Sth": {"off": 1.377, "def": 1.274, "spi": 47.7, "league": "Scottish League One"}, "AZ Alkmaar": {"off": 1.454, "def": 1.36, "spi": 47.6, "league": "Eredivisie"}, "Stoke": {"off": 1.086, "def": 0.967, "spi": 47.6, "league": "Championship"}, "Arbroath": {"off": 1.104, "def": 0.994, "spi": 47.5, "league": "Scottish Championship"}, "Sociedad": {"off": 1.29, "def": 1.194, "spi": 47.4, "league": "La Liga"}, "Bradford": {"off": 1.046, "def": 0.932, "spi": 47.4, "league": "League One"}, "Mansfield": {"off": 1.055, "def": 0.944, "spi": 47.4, "league": "League One"}, "Salford": {"off": 1.263, "def": 1.168, "spi": 47.4, "league": "League Two"}, "Brentford": {"off": 1.307, "def": 1.216, "spi": 47.4, "league": "Premier League"}, "Toulouse": {"off": 1.123, "def": 1.018, "spi": 47.4, "league": "Ligue 1"}, "Bochum": {"off": 1.306, "def": 1.216, "spi": 47.3, "league": "2. Bundesliga"}, "Watford": {"off": 1.157, "def": 1.065, "spi": 47.1, "league": "Championship"}, "Granada": {"off": 1.06, "def": 0.961, "spi": 47.1, "league": "La Liga 2"}, "Eibar": {"off": 0.955, "def": 0.847, "spi": 47.1, "league": "La Liga 2"}, "Stockport": {"off": 1.165, "def": 1.079, "spi": 47.0, "league": "League One"}, "Annecy": {"off": 1.209, "def": 1.126, "spi": 47.0, "league": "Ligue 2"}, "Luton": {"off": 1.125, "def": 1.045, "spi": 46.8, "league": "League One"}, "Ein Frankfurt": {"off": 1.653, "def": 1.614, "spi": 46.7, "league": "Bundesliga"}, "Lazio": {"off": 0.928, "def": 0.83, "spi": 46.7, "league": "Serie A"}, "Rodez": {"off": 1.2, "def": 1.134, "spi": 46.6, "league": "Ligue 2"}, "Sociedad B": {"off": 1.3, "def": 1.247, "spi": 46.5, "league": "La Liga 2"}, "Sp Gijon": {"off": 1.22, "def": 1.164, "spi": 46.4, "league": "La Liga 2"}, "Mechelen": {"off": 1.187, "def": 1.127, "spi": 46.4, "league": "Jupiler Pro League"}, "Stevenage": {"off": 0.898, "def": 0.822, "spi": 46.1, "league": "League One"}, "Leganes": {"off": 1.043, "def": 0.982, "spi": 46.1, "league": "La Liga 2"}, "Sheffield United": {"off": 1.272, "def": 1.239, "spi": 46.0, "league": "Championship"}, "Everton": {"off": 1.031, "def": 0.985, "spi": 45.7, "league": "Premier League"}, "Hartlepool": {"off": 1.001, "def": 0.952, "spi": 45.7, "league": "Conference"}, "Fleetwood Town": {"off": 1.134, "def": 1.104, "spi": 45.6, "league": "League Two"}, "Barnsley": {"off": 1.34, "def": 1.335, "spi": 45.5, "league": "League One"}, "Dresden": {"off": 1.507, "def": 1.521, "spi": 45.4, "league": "2. Bundesliga"}, "Go Ahead Eagles": {"off": 1.388, "def": 1.396, "spi": 45.3, "league": "Eredivisie"}, "Nurnberg": {"off": 1.238, "def": 1.238, "spi": 45.2, "league": "2. Bundesliga"}, "Forfar": {"off": 1.371, "def": 1.388, "spi": 45.1, "league": "Scottish League Two"}, "Bologna": {"off": 1.119, "def": 1.111, "spi": 45.1, "league": "Serie A"}, "Albacete": {"off": 1.127, "def": 1.12, "spi": 45.1, "league": "La Liga 2"}, "Estoril": {"off": 1.419, "def": 1.446, "spi": 45.0, "league": "Primeira Liga"}, "Genk": {"off": 1.425, "def": 1.451, "spi": 45.0, "league": "Jupiler Pro League"}, "Guingamp": {"off": 1.299, "def": 1.312, "spi": 45.0, "league": "Ligue 2"}, "Bielefeld": {"off": 1.295, "def": 1.315, "spi": 44.9, "league": "2. Bundesliga"}, "Carrarese": {"off": 1.092, "def": 1.087, "spi": 44.9, "league": "Serie B"}, "Birmingham": {"off": 1.127, "def": 1.127, "spi": 44.9, "league": "Championship"}, "Osasuna": {"off": 0.965, "def": 0.949, "spi": 44.8, "league": "La Liga"}, "Bristol City": {"off": 1.142, "def": 1.153, "spi": 44.7, "league": "Championship"}, "Newcastle": {"off": 1.249, "def": 1.279, "spi": 44.5, "league": "Premier League"}, "Fulham": {"off": 1.22, "def": 1.269, "spi": 44.1, "league": "Premier League"}, "Rizespor": {"off": 1.199, "def": 1.243, "spi": 44.1, "league": "Super Lig"}, "Ayr": {"off": 1.038, "def": 1.062, "spi": 44.1, "league": "Scottish Championship"}, "Solihull": {"off": 1.433, "def": 1.511, "spi": 43.9, "league": "Conference"}, "Sudtirol": {"off": 0.872, "def": 0.879, "spi": 43.9, "league": "Serie B"}, "Raith Rvs": {"off": 0.947, "def": 0.966, "spi": 43.9, "league": "Scottish Championship"}, "Stranraer": {"off": 1.263, "def": 1.331, "spi": 43.8, "league": "Scottish League Two"}, "Antwerp": {"off": 0.935, "def": 0.962, "spi": 43.7, "league": "Jupiler Pro League"}, "Juve Stabia": {"off": 0.976, "def": 1.016, "spi": 43.5, "league": "Serie B"}, "Pau FC": {"off": 1.403, "def": 1.503, "spi": 43.4, "league": "Ligue 2"}, "Elgin": {"off": 1.443, "def": 1.549, "spi": 43.4, "league": "Scottish League Two"}, "Preston": {"off": 1.06, "def": 1.122, "spi": 43.3, "league": "Championship"}, "Bournemouth": {"off": 1.291, "def": 1.388, "spi": 43.2, "league": "Premier League"}, "Aldershot": {"off": 1.554, "def": 1.687, "spi": 43.1, "league": "Conference"}, "Sassuolo": {"off": 1.107, "def": 1.186, "spi": 43.1, "league": "Serie A"}, "Cordoba": {"off": 1.201, "def": 1.306, "spi": 42.8, "league": "La Liga 2"}, "Lorient": {"off": 1.148, "def": 1.256, "spi": 42.6, "league": "Ligue 1"}, "Leicester": {"off": 1.225, "def": 1.343, "spi": 42.6, "league": "Championship"}, "QPR": {"off": 1.291, "def": 1.417, "spi": 42.6, "league": "Championship"}, "Samsunspor": {"off": 1.005, "def": 1.093, "spi": 42.5, "league": "Super Lig"}, "Charleroi": {"off": 1.166, "def": 1.278, "spi": 42.5, "league": "Jupiler Pro League"}, "Freiburg": {"off": 1.27, "def": 1.396, "spi": 42.5, "league": "Bundesliga"}, "Falkirk": {"off": 0.993, "def": 1.079, "spi": 42.5, "league": "Scottish Premiership"}, "Leyton Orient": {"off": 1.235, "def": 1.361, "spi": 42.5, "league": "League One"}, "Westerlo": {"off": 1.101, "def": 1.213, "spi": 42.3, "league": "Jupiler Pro League"}, "Sunderland": {"off": 0.904, "def": 0.989, "spi": 42.2, "league": "Premier League"}, "Swansea": {"off": 1.026, "def": 1.134, "spi": 42.1, "league": "Championship"}, "Crystal Palace": {"off": 0.949, "def": 1.045, "spi": 42.1, "league": "Premier League"}, "Empoli": {"off": 1.111, "def": 1.237, "spi": 42.0, "league": "Serie B"}, "Accrington": {"off": 0.914, "def": 1.012, "spi": 41.9, "league": "League Two"}, "AFC Wimbledon": {"off": 1.086, "def": 1.224, "spi": 41.7, "league": "League One"}, "Andorra": {"off": 1.066, "def": 1.201, "spi": 41.7, "league": "La Liga 2"}, "Elche": {"off": 1.072, "def": 1.218, "spi": 41.5, "league": "La Liga"}, "Cesena": {"off": 1.06, "def": 1.208, "spi": 41.4, "league": "Serie B"}, "Brest": {"off": 1.036, "def": 1.181, "spi": 41.4, "league": "Ligue 1"}, "Boston Utd": {"off": 1.194, "def": 1.365, "spi": 41.3, "league": "Conference"}, "Telstar": {"off": 1.179, "def": 1.355, "spi": 41.2, "league": "Eredivisie"}, "Vallecano": {"off": 0.807, "def": 0.917, "spi": 41.1, "league": "La Liga"}, "Dumbarton": {"off": 1.395, "def": 1.611, "spi": 41.1, "league": "Scottish League Two"}, "Cove Rangers": {"off": 0.987, "def": 1.141, "spi": 40.9, "league": "Scottish League One"}, "Atromitos": {"off": 0.814, "def": 0.942, "spi": 40.7, "league": "Super League Greece"}, "For Sittard": {"off": 1.336, "def": 1.564, "spi": 40.7, "league": "Eredivisie"}, "Konyaspor": {"off": 1.109, "def": 1.299, "spi": 40.7, "league": "Super Lig"}, "Clermont": {"off": 1.013, "def": 1.186, "spi": 40.6, "league": "Ligue 2"}, "Getafe": {"off": 0.709, "def": 0.819, "spi": 40.5, "league": "La Liga"}, "Holstein Kiel": {"off": 1.162, "def": 1.372, "spi": 40.4, "league": "2. Bundesliga"}, "Udinese": {"off": 1.062, "def": 1.255, "spi": 40.4, "league": "Serie A"}, "Wigan": {"off": 0.916, "def": 1.078, "spi": 40.4, "league": "League One"}, "Cercle Brugge": {"off": 1.207, "def": 1.434, "spi": 40.3, "league": "Jupiler Pro League"}, "Genoa": {"off": 1.082, "def": 1.281, "spi": 40.3, "league": "Serie A"}, "Exeter": {"off": 0.924, "def": 1.096, "spi": 40.2, "league": "League One"}, "FC Koln": {"off": 1.254, "def": 1.489, "spi": 40.2, "league": "Bundesliga"}, "Burton": {"off": 0.967, "def": 1.158, "spi": 40.0, "league": "League One"}, "Gaziantep": {"off": 1.27, "def": 1.525, "spi": 39.9, "league": "Super Lig"}, "Wealdstone": {"off": 1.236, "def": 1.489, "spi": 39.8, "league": "Conference"}, "Dundee United": {"off": 1.069, "def": 1.293, "spi": 39.8, "league": "Scottish Premiership"}, "RAAL La Louviere": {"off": 0.912, "def": 1.11, "spi": 39.6, "league": "Jupiler Pro League"}, "Waregem": {"off": 1.176, "def": 1.431, "spi": 39.6, "league": "Jupiler Pro League"}, "Mainz": {"off": 1.066, "def": 1.296, "spi": 39.6, "league": "Bundesliga"}, "Charlton": {"off": 0.848, "def": 1.034, "spi": 39.5, "league": "Championship"}, "Leeds": {"off": 1.098, "def": 1.342, "spi": 39.5, "league": "Premier League"}, "Fiorentina": {"off": 1.064, "def": 1.301, "spi": 39.4, "league": "Serie A"}, "Tottenham": {"off": 1.132, "def": 1.385, "spi": 39.4, "league": "Premier League"}, "Espanol": {"off": 1.028, "def": 1.262, "spi": 39.4, "league": "La Liga"}, "Altrincham": {"off": 1.069, "def": 1.316, "spi": 39.3, "league": "Conference"}, "Nacional": {"off": 0.916, "def": 1.134, "spi": 39.2, "league": "Primeira Liga"}, "Moreirense": {"off": 0.964, "def": 1.193, "spi": 39.2, "league": "Primeira Liga"}, "Hamburg": {"off": 1.006, "def": 1.246, "spi": 39.1, "league": "Bundesliga"}, "Morton": {"off": 0.912, "def": 1.138, "spi": 39.0, "league": "Scottish Championship"}, "Gillingham": {"off": 1.082, "def": 1.345, "spi": 39.0, "league": "League Two"}, "Tamworth": {"off": 1.196, "def": 1.489, "spi": 38.9, "league": "Conference"}, "Valladolid": {"off": 1.034, "def": 1.293, "spi": 38.9, "league": "La Liga 2"}, "Cadiz": {"off": 0.896, "def": 1.128, "spi": 38.8, "league": "La Liga 2"}, "Peterhead": {"off": 1.298, "def": 1.62, "spi": 38.7, "league": "Scottish League One"}, "Valencia": {"off": 0.911, "def": 1.153, "spi": 38.6, "league": "La Liga"}, "Karlsruhe": {"off": 1.401, "def": 1.751, "spi": 38.5, "league": "2. Bundesliga"}, "Mallorca": {"off": 0.976, "def": 1.237, "spi": 38.5, "league": "La Liga"}, "Boulogne": {"off": 1.012, "def": 1.289, "spi": 38.4, "league": "Ligue 2"}, "Grenoble": {"off": 0.866, "def": 1.109, "spi": 38.4, "league": "Ligue 2"}, "Standard": {"off": 0.818, "def": 1.045, "spi": 38.4, "league": "Jupiler Pro League"}, "Ceuta": {"off": 1.139, "def": 1.443, "spi": 38.4, "league": "La Liga 2"}, "Pescara": {"off": 1.155, "def": 1.468, "spi": 38.3, "league": "Serie B"}, "Ath Bilbao": {"off": 0.885, "def": 1.134, "spi": 38.3, "league": "La Liga"}, "Annan Athletic": {"off": 1.303, "def": 1.647, "spi": 38.3, "league": "Scottish League Two"}, "Queens Park": {"off": 0.969, "def": 1.24, "spi": 38.3, "league": "Scottish Championship"}, "West Brom": {"off": 0.943, "def": 1.213, "spi": 38.2, "league": "Championship"}, "Padova": {"off": 0.855, "def": 1.108, "spi": 38.1, "league": "Serie B"}, "M'gladbach": {"off": 1.091, "def": 1.401, "spi": 38.1, "league": "Bundesliga"}, "Sutton": {"off": 1.204, "def": 1.538, "spi": 38.1, "league": "Conference"}, "Union Berlin": {"off": 1.046, "def": 1.348, "spi": 38.0, "league": "Bundesliga"}, "Magdeburg": {"off": 1.303, "def": 1.663, "spi": 38.0, "league": "2. Bundesliga"}, "Montrose": {"off": 1.285, "def": 1.643, "spi": 38.0, "league": "Scottish League One"}, "Genclerbirligi": {"off": 0.947, "def": 1.233, "spi": 37.9, "league": "Super Lig"}, "Paris FC": {"off": 1.007, "def": 1.307, "spi": 37.9, "league": "Ligue 1"}, "Sparta Rotterdam": {"off": 1.067, "def": 1.383, "spi": 37.8, "league": "Eredivisie"}, "Kifisia": {"off": 1.032, "def": 1.341, "spi": 37.8, "league": "Super League Greece"}, "Sevilla": {"off": 1.059, "def": 1.377, "spi": 37.8, "league": "La Liga"}, "Alaves": {"off": 0.854, "def": 1.125, "spi": 37.7, "league": "La Liga"}, "Kocaelispor": {"off": 0.781, "def": 1.034, "spi": 37.6, "league": "Super Lig"}, "OFI Crete": {"off": 1.105, "def": 1.444, "spi": 37.5, "league": "Super League Greece"}, "Oud-Heverlee Leuven": {"off": 0.983, "def": 1.296, "spi": 37.5, "league": "Jupiler Pro League"}, "Mantova": {"off": 0.936, "def": 1.235, "spi": 37.5, "league": "Serie B"}, "Blackpool": {"off": 1.01, "def": 1.337, "spi": 37.4, "league": "League One"}, "Yeovil": {"off": 0.969, "def": 1.282, "spi": 37.4, "league": "Conference"}, "Aris": {"off": 0.621, "def": 0.836, "spi": 37.3, "league": "Super League Greece"}, "Oxford": {"off": 0.86, "def": 1.149, "spi": 37.3, "league": "Championship"}, "Nott'm Forest": {"off": 0.895, "def": 1.205, "spi": 37.1, "league": "Premier League"}, "Sampdoria": {"off": 0.81, "def": 1.094, "spi": 37.1, "league": "Serie B"}, "Blackburn": {"off": 0.838, "def": 1.132, "spi": 37.1, "league": "Championship"}, "Cagliari": {"off": 0.951, "def": 1.287, "spi": 36.8, "league": "Serie A"}, "Levante": {"off": 0.982, "def": 1.332, "spi": 36.7, "league": "La Liga"}, "Zwolle": {"off": 1.21, "def": 1.615, "spi": 36.7, "league": "Eredivisie"}, "Avellino": {"off": 0.969, "def": 1.323, "spi": 36.6, "league": "Serie B"}, "Santa Clara": {"off": 0.71, "def": 0.986, "spi": 36.6, "league": "Primeira Liga"}, "Girona": {"off": 0.887, "def": 1.229, "spi": 36.4, "league": "La Liga"}, "Doncaster": {"off": 0.908, "def": 1.258, "spi": 36.3, "league": "League One"}, "Stirling": {"off": 1.264, "def": 1.711, "spi": 36.2, "league": "Scottish League Two"}, "Eastleigh": {"off": 1.11, "def": 1.524, "spi": 36.1, "league": "Conference"}, "Virtus Entella": {"off": 0.812, "def": 1.147, "spi": 36.0, "league": "Serie B"}, "Guimaraes": {"off": 0.903, "def": 1.266, "spi": 36.0, "league": "Primeira Liga"}, "Augsburg": {"off": 1.084, "def": 1.518, "spi": 35.6, "league": "Bundesliga"}, "Volos NFC": {"off": 0.829, "def": 1.195, "spi": 35.5, "league": "Super League Greece"}, "Aberdeen": {"off": 0.822, "def": 1.186, "spi": 35.5, "league": "Scottish Premiership"}, "Bristol Rvs": {"off": 0.978, "def": 1.391, "spi": 35.4, "league": "League Two"}, "Le Havre": {"off": 0.689, "def": 1.01, "spi": 35.4, "league": "Ligue 1"}, "Portsmouth": {"off": 0.879, "def": 1.288, "spi": 34.9, "league": "Championship"}, "Tranmere": {"off": 1.174, "def": 1.667, "spi": 34.9, "league": "League Two"}, "Spezia": {"off": 0.809, "def": 1.197, "spi": 34.9, "league": "Serie B"}, "Angers": {"off": 0.715, "def": 1.078, "spi": 34.7, "league": "Ligue 1"}, "Torino": {"off": 1.095, "def": 1.586, "spi": 34.6, "league": "Serie A"}, "Auxerre": {"off": 0.679, "def": 1.035, "spi": 34.6, "league": "Ligue 1"}, "Edinburgh City": {"off": 1.349, "def": 1.916, "spi": 34.4, "league": "Scottish League Two"}, "Huesca": {"off": 0.859, "def": 1.286, "spi": 34.4, "league": "La Liga 2"}, "Cheltenham": {"off": 1.082, "def": 1.577, "spi": 34.4, "league": "League Two"}, "Zaragoza": {"off": 0.796, "def": 1.209, "spi": 34.3, "league": "La Liga 2"}, "Amiens": {"off": 1.139, "def": 1.665, "spi": 34.2, "league": "Ligue 2"}, "Volendam": {"off": 0.929, "def": 1.397, "spi": 34.1, "league": "Eredivisie"}, "Ross County": {"off": 0.831, "def": 1.27, "spi": 34.0, "league": "Scottish Championship"}, "Airdrie Utd": {"off": 0.716, "def": 1.116, "spi": 34.0, "league": "Scottish Championship"}, "Estrela": {"off": 0.967, "def": 1.456, "spi": 33.9, "league": "Primeira Liga"}, "Morecambe": {"off": 1.305, "def": 1.892, "spi": 33.9, "league": "Conference"}, "Dundee": {"off": 0.84, "def": 1.289, "spi": 33.9, "league": "Scottish Premiership"}, "Fortuna Dusseldorf": {"off": 0.869, "def": 1.328, "spi": 33.8, "league": "2. Bundesliga"}, "Werder Bremen": {"off": 0.967, "def": 1.46, "spi": 33.8, "league": "Bundesliga"}, "Panetolikos": {"off": 0.765, "def": 1.19, "spi": 33.8, "league": "Super League Greece"}, "Greuther Furth": {"off": 1.353, "def": 1.965, "spi": 33.7, "league": "2. Bundesliga"}, "Excelsior": {"off": 0.887, "def": 1.363, "spi": 33.6, "league": "Eredivisie"}, "Reggiana": {"off": 0.791, "def": 1.236, "spi": 33.6, "league": "Serie B"}, "Braunschweig": {"off": 0.951, "def": 1.459, "spi": 33.4, "league": "2. Bundesliga"}, "Kasimpasa": {"off": 0.78, "def": 1.233, "spi": 33.4, "league": "Super Lig"}, "Rio Ave": {"off": 0.877, "def": 1.365, "spi": 33.3, "league": "Primeira Liga"}, "Rotherham": {"off": 0.782, "def": 1.245, "spi": 33.2, "league": "League One"}, "West Ham": {"off": 1.036, "def": 1.582, "spi": 33.2, "league": "Premier League"}, "Preu\u00dfen M\u00fcnster": {"off": 1.025, "def": 1.577, "spi": 33.0, "league": "2. Bundesliga"}, "Crawley Town": {"off": 0.877, "def": 1.385, "spi": 32.9, "league": "League Two"}, "Arouca": {"off": 1.095, "def": 1.685, "spi": 32.8, "league": "Primeira Liga"}, "Cultural Leonesa": {"off": 0.849, "def": 1.36, "spi": 32.7, "league": "La Liga 2"}, "Northampton": {"off": 0.722, "def": 1.186, "spi": 32.7, "league": "League One"}, "Nice": {"off": 1.003, "def": 1.575, "spi": 32.5, "league": "Ligue 1"}, "Alverca": {"off": 0.845, "def": 1.372, "spi": 32.4, "league": "Primeira Liga"}, "Cremonese": {"off": 0.78, "def": 1.291, "spi": 32.2, "league": "Serie A"}, "Newport County": {"off": 0.96, "def": 1.541, "spi": 32.1, "league": "League Two"}, "Nancy": {"off": 0.823, "def": 1.353, "spi": 32.1, "league": "Ligue 2"}, "Wolfsburg": {"off": 1.155, "def": 1.8, "spi": 32.1, "league": "Bundesliga"}, "Mirandes": {"off": 0.874, "def": 1.426, "spi": 32.1, "league": "La Liga 2"}, "Port Vale": {"off": 0.674, "def": 1.151, "spi": 32.0, "league": "League One"}, "Shrewsbury": {"off": 0.898, "def": 1.469, "spi": 31.9, "league": "League Two"}, "Antalyaspor": {"off": 0.854, "def": 1.418, "spi": 31.7, "league": "Super Lig"}, "Bari": {"off": 0.769, "def": 1.301, "spi": 31.7, "league": "Serie B"}, "NAC Breda": {"off": 0.887, "def": 1.469, "spi": 31.6, "league": "Eredivisie"}, "St Pauli": {"off": 0.792, "def": 1.342, "spi": 31.5, "league": "Bundesliga"}, "Larisa": {"off": 0.703, "def": 1.215, "spi": 31.5, "league": "Super League Greece"}, "Laval": {"off": 0.811, "def": 1.371, "spi": 31.5, "league": "Ligue 2"}, "Lecce": {"off": 0.657, "def": 1.157, "spi": 31.4, "league": "Serie A"}, "Brackley Town": {"off": 0.834, "def": 1.415, "spi": 31.2, "league": "Conference"}, "Kilmarnock": {"off": 0.956, "def": 1.588, "spi": 31.2, "league": "Scottish Premiership"}, "Eyupspor": {"off": 0.687, "def": 1.218, "spi": 31.0, "league": "Super Lig"}, "St Mirren": {"off": 0.673, "def": 1.216, "spi": 30.7, "league": "Scottish Premiership"}, "Truro": {"off": 0.879, "def": 1.521, "spi": 30.5, "league": "Conference"}, "Parma": {"off": 0.621, "def": 1.147, "spi": 30.5, "league": "Serie A"}, "Asteras Tripolis": {"off": 0.706, "def": 1.278, "spi": 30.4, "league": "Super League Greece"}, "Karagumruk": {"off": 0.853, "def": 1.501, "spi": 30.2, "league": "Super Lig"}, "Casa Pia": {"off": 0.833, "def": 1.483, "spi": 30.0, "league": "Primeira Liga"}, "Barrow": {"off": 0.87, "def": 1.549, "spi": 29.7, "league": "League Two"}, "Bastia": {"off": 0.523, "def": 1.046, "spi": 29.6, "league": "Ligue 2"}, "Nantes": {"off": 0.766, "def": 1.436, "spi": 29.1, "league": "Ligue 1"}, "Burnley": {"off": 0.947, "def": 1.705, "spi": 28.9, "league": "Premier League"}, "East Fife": {"off": 0.858, "def": 1.587, "spi": 28.8, "league": "Scottish League One"}, "Braintree Town": {"off": 0.69, "def": 1.347, "spi": 28.7, "league": "Conference"}, "Livingston": {"off": 0.858, "def": 1.605, "spi": 28.5, "league": "Scottish Premiership"}, "Harrogate": {"off": 0.689, "def": 1.354, "spi": 28.5, "league": "League Two"}, "Gateshead": {"off": 1.045, "def": 1.894, "spi": 28.1, "league": "Conference"}, "Tondela": {"off": 0.589, "def": 1.26, "spi": 27.5, "league": "Primeira Liga"}, "Dender": {"off": 0.746, "def": 1.517, "spi": 27.2, "league": "Jupiler Pro League"}, "Wolves": {"off": 0.706, "def": 1.461, "spi": 27.1, "league": "Premier League"}, "Kayserispor": {"off": 0.759, "def": 1.553, "spi": 26.9, "league": "Super Lig"}, "Oviedo": {"off": 0.578, "def": 1.3, "spi": 26.4, "league": "La Liga"}, "Pisa": {"off": 0.72, "def": 1.533, "spi": 26.2, "league": "Serie A"}, "Heracles": {"off": 1.045, "def": 2.046, "spi": 25.8, "league": "Eredivisie"}, "Kelty Hearts": {"off": 0.764, "def": 1.645, "spi": 25.5, "league": "Scottish League One"}, "Metz": {"off": 0.835, "def": 1.753, "spi": 25.5, "league": "Ligue 1"}, "Heidenheim": {"off": 0.896, "def": 1.875, "spi": 25.0, "league": "Bundesliga"}, "Verona": {"off": 0.668, "def": 1.599, "spi": 23.9, "league": "Serie A"}, "Panserraikos": {"off": 0.53, "def": 1.693, "spi": 19.1, "league": "Super League Greece"}, "Sheffield Weds": {"off": 0.57, "def": 1.778, "spi": 18.9, "league": "Championship"}, "AVS": {"off": 0.543, "def": 1.776, "spi": 18.3, "league": "Primeira Liga"}};
+const HOME_ADV = {"Jupiler Pro League": 0.1211665803213539, "League One": 0.2979792272766673, "Scottish Championship": 0.1948160945827617, "2. Bundesliga": 0.1625890267649929, "Scottish League Two": -0.0028399075367169, "League Two": 0.0978602883738532, "Scottish League One": 0.1566769192518555, "Scottish Premiership": 0.296636493965659, "Super Lig": 0.0789660547608612, "Championship": 0.151021597254167, "Primeira Liga": 0.2157435531064648, "Eredivisie": 0.2506465881128911, "Ligue 2": 0.0627388563125489, "Conference": 0.156289813461928, "La Liga": 0.3236803142318545, "Ligue 1": 0.2950860140021625, "La Liga 2": 0.174513356165233, "Premier League": 0.1979541295574512, "Serie B": 0.2998524691113639, "Bundesliga": 0.2041449893807746, "Serie A": 0.109748856729766, "Super League Greece": 0.2299498515874503};
 
-/* ── SECURITY ─────────────────────────────────────────────────── */
-(function() {
-  // Kill all popup / new-tab attempts from this page context
-  window.open = () => null;
-  try { Object.defineProperty(window, 'opener', { get: () => null, set: () => {}, configurable: false }); } catch(e) {}
+// ── TABS ────────────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
 
-  // Intercept blur — if page loses focus unexpectedly, reclaim it
-  let lb = 0;
-  window.addEventListener('blur', () => {
-    const n = Date.now();
-    if (n - lb < 800) requestAnimationFrame(() => window.focus());
-    lb = n;
-  });
+// ── RANKINGS ────────────────────────────────────────────────────────────────
+const leagues = [...new Set(SPI_DATA.map(d => d.League))].sort();
+const leagueFilter = document.getElementById('league-filter');
+leagues.forEach(l => { const o = document.createElement('option'); o.value = l; o.textContent = l; leagueFilter.appendChild(o); });
 
-  // Block external link clicks anywhere on the page
-  document.addEventListener('click', e => {
-    const a = e.target.closest('a');
-    if (a?.href?.startsWith('http') && !a.href.includes(window.location.hostname)) {
-      e.preventDefault(); e.stopPropagation();
+// Populate team dropdowns in predictor
+const allTeams = SPI_DATA.map(d => d.Team).sort();
+['home-team','away-team'].forEach(id => {
+  const sel = document.getElementById(id);
+  allTeams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
+});
+document.getElementById('away-team').value = SPI_DATA[1]?.Team || allTeams[1];
+
+function getSpiColor(spi) {
+  if (spi >= 75) return '#00e5ff';
+  if (spi >= 60) return '#22c55e';
+  if (spi >= 45) return '#eab308';
+  return '#ef4444';
+}
+
+function renderTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const lf = document.getElementById('league-filter').value;
+  const sc = document.getElementById('sort-col').value;
+  
+  let data = SPI_DATA.filter(d =>
+    (!q || d.Team.toLowerCase().includes(q)) &&
+    (!lf || d.League === lf)
+  );
+  
+  if (sc === 'off') data.sort((a,b) => b.off - a.off);
+  else if (sc === 'def') data.sort((a,b) => a.def - b.def);
+  else data.sort((a,b) => b.spi - a.spi);
+
+  const tbody = document.getElementById('rankings-body');
+  tbody.innerHTML = data.slice(0, 200).map((d, i) => {
+    const rClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    const bar = Math.round(d.spi);
+    const color = getSpiColor(d.spi);
+    return `<tr class="fade-in">
+      <td><span class="rank-num ${rClass}">${i+1}</span></td>
+      <td><span class="team-name">${d.Team}</span></td>
+      <td><span class="league-tag">${d.League}</span></td>
+      <td class="num">
+        <div class="spi-bar-wrap">
+          <div class="spi-bar" style="width:${bar*1.2}px;background:linear-gradient(90deg,${color},${color}88)"></div>
+          <span class="spi-val" style="color:${color}">${d.spi}</span>
+        </div>
+      </td>
+      <td class="num"><span class="off-pill">${d.off.toFixed(2)}</span></td>
+      <td class="num"><span class="def-pill">${d.def.toFixed(2)}</span></td>
+      <td class="num">${d.W}</td>
+      <td class="num">${d.D}</td>
+      <td class="num">${d.L}</td>
+      <td class="num">${d.GF}</td>
+      <td class="num">${d.GA}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Stat cards
+const top = SPI_DATA[0];
+const bestOff = [...SPI_DATA].sort((a,b) => b.off - a.off)[0];
+const bestDef = [...SPI_DATA].sort((a,b) => a.def - b.def)[0];
+document.getElementById('stat-top').textContent = top.Team;
+document.getElementById('stat-top-spi').textContent = `SPI ${top.spi}`;
+document.getElementById('stat-off').textContent = bestOff.Team;
+document.getElementById('stat-off-val').textContent = `OFF ${bestOff.off}`;
+document.getElementById('stat-def').textContent = bestDef.Team;
+document.getElementById('stat-def-val').textContent = `DEF ${bestDef.def}`;
+
+renderTable();
+
+// ── PREDICTOR ────────────────────────────────────────────────────────────────
+let venueMode = 'home';
+function setVenue(mode) {
+  venueMode = mode;
+  document.querySelectorAll('.venue-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function updateTeamInfo(id, teamName) {
+  const t = TEAM_LOOKUP[teamName];
+  if (!t) return;
+  document.getElementById(id).innerHTML =
+    `${teamName} &nbsp;|&nbsp; <span style="color:var(--accent)">${t.league}</span><br>SPI <b style="color:var(--text)">${t.spi}</b> &nbsp; OFF <span style="color:var(--green)">${t.off}</span> &nbsp; DEF <span style="color:var(--red)">${t.def}</span>`;
+}
+document.getElementById('home-team').addEventListener('change', e => updateTeamInfo('home-spi-info', e.target.value));
+document.getElementById('away-team').addEventListener('change', e => updateTeamInfo('away-spi-info', e.target.value));
+updateTeamInfo('home-spi-info', document.getElementById('home-team').value);
+updateTeamInfo('away-spi-info', document.getElementById('away-team').value);
+
+function poissonPMF(k, lambda) {
+  if (lambda <= 0) return k === 0 ? 1 : 0;
+  let logP = k * Math.log(lambda) - lambda;
+  for (let i = 2; i <= k; i++) logP -= Math.log(i);
+  return Math.exp(logP);
+}
+
+function predictMatch(t1, t2, homeAdv) {
+  const maxG = 8; const di = 1.09;
+  const lam1 = t1.off * Math.exp(homeAdv) / t2.def;  // home expected goals (scaled)
+  const lam2 = t2.off / t1.def;                       // away expected goals
+
+  const lam1c = Math.max(lam1, 0.05);
+  const lam2c = Math.max(lam2, 0.05);
+
+  const grid = [];
+  let total = 0;
+  for (let i = 0; i <= maxG; i++) {
+    grid[i] = [];
+    for (let j = 0; j <= maxG; j++) {
+      let v = poissonPMF(i, lam1c) * poissonPMF(j, lam2c);
+      if (i === j) v *= di;
+      grid[i][j] = v;
+      total += v;
     }
-  }, true);
-
-  document.addEventListener('contextmenu', e => { if (e.target.tagName === 'IFRAME') e.preventDefault(); });
-
-  // Remove any rogue iframes or injected links by ad scripts
-  const obs = new MutationObserver(ml => ml.forEach(m => m.addedNodes.forEach(n => {
-    if (n.tagName === 'IFRAME' && n.id !== 'player') n.remove();
-    if (n.tagName === 'A') { n.removeAttribute('target'); n.removeAttribute('href'); }
-  })));
-  document.body && obs.observe(document.body, { childList: true, subtree: true });
-})();
-
-/* ── CONFIG ───────────────────────────────────────────────────── */
-const CFG = {
-  KEY_LAST:      'stream_last_ch',
-  KEY_FOLDER:    'stream_ch_folder_',
-  BASE_URL:      'https://dlstreams.top',
-  DEBOUNCE:      260,
-  LOAD_TIMEOUT:  10000,
-  RECONNECT_GAP: 1500
-};
-
-/* ── DATA ─────────────────────────────────────────────────────── */
-const CHANNELS = [
-  { name: "Sport TV 1", id: 49,  cat: "Sport TV" },
-  { name: "Sport TV 2", id: 74,  cat: "Sport TV" },
-  { name: "Sport TV 3", id: 454, cat: "Sport TV" },
-  { name: "Sport TV 4", id: 289, cat: "Sport TV" },
-  { name: "Sport TV 5", id: 290, cat: "Sport TV" },
-  { name: "Sport TV 6", id: 291, cat: "Sport TV" },
-  { name: "DAZN 1",     id: 455, cat: "DAZN"     },
-  { name: "DAZN 2",     id: 456, cat: "DAZN"     },
-  { name: "DAZN 3",     id: 457, cat: "DAZN"     },
-  { name: "DAZN 4",     id: 458, cat: "DAZN"     },
-  { name: "DAZN 5",     id: 459, cat: "DAZN"     },
-  { name: "Sporting TV", id: 716, cat: "Clubs"   },
-  { name: "BTV",        id: 380, cat: "Clubs"    },
-  { name: "RTP 1",      id: 719, cat: "General TV" },
-  { name: "RTP 2",      id: 720, cat: "General TV" },
-  { name: "RTP 3",      id: 721, cat: "General TV" },
-  { name: "SIC",        id: 722, cat: "General TV" },
-  { name: "TVI",        id: 723, cat: "General TV" },
-  { name: "TVI Reality",id: 724, cat: "General TV" },
-  { name: "Canal 11",   id: 540, cat: "General TV" },
-  { name: "CMTV",       id: 790, cat: "General TV" }
-];
-
-const FOLDERS = ["player","stream","watch","cast","casting","plus"];
-
-/* ── ELEMENTS ─────────────────────────────────────────────────── */
-const E = {
-  topbar:      document.getElementById('topbar'),
-  railWrap:    document.getElementById('rail-wrap'),
-  rail:        document.getElementById('rail'),
-  search:      document.getElementById('search-box'),
-  nowName:     document.getElementById('now-playing-name'),
-  player:      document.getElementById('player'),
-  loading:     document.getElementById('loading'),
-  errorOv:     document.getElementById('error-overlay'),
-  errorDetail: document.getElementById('error-detail'),
-  fsBtn:       document.getElementById('fullscreen-btn'),
-  fsIcon:      document.getElementById('fs-icon'),
-  refreshBtn:  document.getElementById('refresh-btn'),
-  logoutBtn:   document.getElementById('logout-btn'),
-  stage:       document.getElementById('stage'),
-  floatExit:   document.getElementById('float-exit-fs'),
-  toastStack:  document.getElementById('toast-stack'),
-  kbHint:      document.getElementById('kb-hint')
-};
-
-/* ── STATE ─────────────────────────────────────────────────────── */
-const S = {
-  activeId:      null,
-  activeIdx:     0,
-  activeBtn:     null,
-  visible:       [...CHANNELS],
-  loadTimer:     null,
-  isMobileFS:    false,
-  headerHidden:  false,
-  lastTap:       0,
-  reconnectN:    0,
-  reconnectT:    null
-};
-
-/* ── STORAGE ──────────────────────────────────────────────────── */
-const store = {
-  get: (k, d = null) => { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch { return d; } },
-  set: (k, v)        => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
-};
-
-/* ── UTILS ────────────────────────────────────────────────────── */
-function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
-function isMobile()       { return 'ontouchstart' in window || navigator.maxTouchPoints > 0; }
-function streamUrl(id, folder) { return `${CFG.BASE_URL}/${folder}/stream-${id}.php`; }
-
-function getHeaderHeight() {
-  if (S.headerHidden) return 0;
-  return E.topbar.offsetHeight + E.railWrap.offsetHeight;
-}
-
-function syncPadding() {
-  if (!S.isMobileFS) E.stage.style.paddingTop = getHeaderHeight() + 'px';
-}
-
-/* ── TOAST ────────────────────────────────────────────────────── */
-function toast(msg, duration = 2200) {
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  el.setAttribute('role','status');
-  E.toastStack.appendChild(el);
-  requestAnimationFrame(() => { requestAnimationFrame(() => { el.classList.add('show'); }); });
-  setTimeout(() => {
-    el.classList.remove('show');
-    el.addEventListener('transitionend', () => el.remove(), { once: true });
-  }, duration);
-}
-
-/* ── OVERLAYS ─────────────────────────────────────────────────── */
-const overlay = {
-  showLoading() {
-    E.loading.classList.add('show');
-    E.errorOv.classList.remove('show');
-    clearTimeout(S.loadTimer);
-    S.loadTimer = setTimeout(() => this.hideLoading(), CFG.LOAD_TIMEOUT);
-  },
-  hideLoading() { E.loading.classList.remove('show'); clearTimeout(S.loadTimer); },
-  showError(detail = 'Try another channel or source') {
-    E.loading.classList.remove('show');
-    E.errorDetail.textContent = detail;
-    E.errorOv.classList.add('show');
   }
-};
-
-/* ── RECONNECT ────────────────────────────────────────────────── */
-const reconnect = {
-  reset() { S.reconnectN = 0; clearTimeout(S.reconnectT); },
-  attempt() {
-    if (!S.activeId) return;
-    if (S.reconnectN >= FOLDERS.length) {
-      overlay.showError('All sources failed — try another channel');
-      return;
+  let pHome = 0, pDraw = 0, pAway = 0;
+  for (let i = 0; i <= maxG; i++)
+    for (let j = 0; j <= maxG; j++) {
+      const v = grid[i][j] / total;
+      if (i > j) pHome += v;
+      else if (i === j) pDraw += v;
+      else pAway += v;
     }
-    const nextFolder = FOLDERS[S.reconnectN];
-    S.reconnectN++;
-    toast(`Trying source: ${nextFolder} (${S.reconnectN}/${FOLDERS.length})`);
-    S.reconnectT = setTimeout(() => {
-      overlay.showLoading();
-      E.player.src = streamUrl(S.activeId, nextFolder);
-      const wrap = E.rail.querySelector(`[data-ch-id="${S.activeId}"]`);
-      if (wrap) { const sel = wrap.querySelector('.src-sel'); if (sel) sel.value = nextFolder; }
-    }, CFG.RECONNECT_GAP);
-  }
-};
-
-/* ── PLAYER ───────────────────────────────────────────────────── */
-const player = {
-  play(ch, wrapper) {
-    overlay.showLoading();
-    reconnect.reset();
-
-    if (S.activeBtn) S.activeBtn.classList.remove('active');
-    const btn = wrapper.querySelector('.ch-btn');
-    S.activeBtn = btn;
-    btn.classList.add('active');
-    S.activeId  = ch.id;
-    S.activeIdx = S.visible.findIndex(c => c.id === ch.id);
-    E.nowName.textContent = ch.name;
-
-    const sel = wrapper.querySelector('.src-sel');
-    const folder = sel?.value || FOLDERS[0];
-    E.player.src = streamUrl(ch.id, folder);
-
-    store.set(CFG.KEY_LAST, ch.id);
-    toast(ch.name);
-  },
-
-  refresh() {
-    if (!S.activeId) return;
-    const wrap = E.rail.querySelector(`[data-ch-id="${S.activeId}"]`);
-    const folder = wrap?.querySelector('.src-sel')?.value || FOLDERS[0];
-    overlay.showLoading();
-    E.player.src = '';
-    setTimeout(() => { E.player.src = streamUrl(S.activeId, folder); }, 60);
-    toast('Refreshing…');
-  },
-
-  navigate(dir) {
-    if (!S.visible.length) return;
-    const len = S.visible.length;
-    S.activeIdx = ((S.activeIdx + dir) % len + len) % len;
-    const ch = S.visible[S.activeIdx];
-    const w  = E.rail.querySelector(`[data-ch-id="${ch.id}"]`);
-    if (w) { this.play(ch, w); w.querySelector('.ch-btn')?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); }
-  },
-
-  toggleFS() {
-    if (isMobile()) { this._mobileFS(); return; }
-    const fullEl = document.fullscreenElement || document.webkitFullscreenElement;
-    if (!fullEl) {
-      (E.player.requestFullscreen?.() || E.player.webkitRequestFullscreen?.() || Promise.reject())
-        .catch(() => (E.stage.requestFullscreen?.() || E.stage.webkitRequestFullscreen?.())?.catch(() => toast('Fullscreen unavailable')));
-    } else {
-      (document.exitFullscreen?.() || document.webkitExitFullscreen?.());
-    }
-  },
-
-  _mobileFS() {
-    if (!S.isMobileFS) {
-      S.isMobileFS = true;
-      E.stage.style.paddingTop = '0';
-      E.topbar.classList.add('hidden');
-      E.railWrap.classList.add('hidden');
-      E.floatExit.classList.add('show');
-      screen.orientation?.lock?.('landscape').catch(() => {});
-    } else {
-      this._exitMobileFS();
-    }
-  },
-
-  _exitMobileFS() {
-    S.isMobileFS = false;
-    E.topbar.classList.remove('hidden');
-    E.railWrap.classList.remove('hidden');
-    E.floatExit.classList.remove('show');
-    screen.orientation?.unlock?.();
-    setTimeout(() => syncPadding(), 60);
-  }
-};
-
-/* ── HELPERS ──────────────────────────────────────────────────── */
-function groupBy(arr, key) {
-  return arr.reduce((acc, item) => { (acc[item[key]] = acc[item[key]] || []).push(item); return acc; }, {});
+  return { pHome, pDraw, pAway, lam1: lam1c, lam2: lam2c, grid, total, maxG };
 }
 
-function makeWrapper(ch) {
-  const wrap = document.createElement('div');
-  wrap.className = 'ch-pill';
-  wrap.dataset.chId = ch.id;
-  wrap.setAttribute('role', 'listitem');
+function runPredictor() {
+  const h = TEAM_LOOKUP[document.getElementById('home-team').value];
+  const a = TEAM_LOOKUP[document.getElementById('away-team').value];
+  const hName = document.getElementById('home-team').value;
+  const aName = document.getElementById('away-team').value;
+  if (!h || !a) return;
 
+  const ha = venueMode === 'home' ? (HOME_ADV[h.league] || 0.2) : 0;
+  const res = predictMatch(h, a, ha);
+
+  // Score matrix (top 5x5)
+  const matCols = 5;
+  let matHtml = `<div class="score-matrix"><h4>Score Probability Matrix (${hName} rows · ${aName} cols)</h4><div class="matrix-grid" style="grid-template-columns:repeat(${matCols+1},1fr)">`;
+  matHtml += `<div class="matrix-cell header-cell"></div>`;
+  for (let j = 0; j < matCols; j++) matHtml += `<div class="matrix-cell header-cell">${j}</div>`;
+  for (let i = 0; i < matCols; i++) {
+    matHtml += `<div class="matrix-cell header-cell">${i}</div>`;
+    for (let j = 0; j < matCols; j++) {
+      const p = (res.grid[i][j] / res.total * 100);
+      const alpha = Math.min(1, p / 8);
+      const bg = i > j ? `rgba(0,229,255,${alpha})` : i === j ? `rgba(234,179,8,${alpha})` : `rgba(255,107,53,${alpha})`;
+      matHtml += `<div class="matrix-cell" style="background:${bg}">${p.toFixed(1)}%</div>`;
+    }
+  }
+  matHtml += `</div></div>`;
+
+  const venueLabel = venueMode === 'home' ? `(${hName} at home, ha=${(HOME_ADV[h.league]||0.2).toFixed(3)})` : '(neutral venue)';
+  document.getElementById('result-area').innerHTML = `
+    <div class="result-card fade-in">
+      <h3>Prediction: ${hName} vs ${aName} <span style="font-size:12px;color:var(--muted)">${venueLabel}</span></h3>
+      <div class="proj-score">
+        <span class="s1">${res.lam1.toFixed(1)}</span>
+        <span class="sep"> – </span>
+        <span class="s2">${res.lam2.toFixed(1)}</span>
+      </div>
+      <div style="text-align:center;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;margin-bottom:20px">PROJECTED SCORE</div>
+      <div class="prob-row">
+        <div class="prob-box home">
+          <div class="outcome">${hName}</div>
+          <div class="prob-val">${(res.pHome*100).toFixed(0)}%</div>
+        </div>
+        <div class="prob-box draw">
+          <div class="outcome">Draw</div>
+          <div class="prob-val">${(res.pDraw*100).toFixed(0)}%</div>
+        </div>
+        <div class="prob-box away">
+          <div class="outcome">${aName}</div>
+          <div class="prob-val">${(res.pAway*100).toFixed(0)}%</div>
+        </div>
+      </div>
+      ${matHtml}
+    </div>`;
+}
+
+// ── STANDINGS ────────────────────────────────────────────────────────────────
+const standLeagues = Object.keys(STANDINGS).sort();
+const leagueNav = document.getElementById('league-nav');
+standLeagues.forEach((l, i) => {
   const btn = document.createElement('button');
-  btn.className = 'ch-btn';
-  btn.type = 'button';
-  btn.setAttribute('aria-label', ch.name);
-
-  const nameSpan = document.createElement('span');
-  nameSpan.textContent = ch.name;
-  btn.appendChild(nameSpan);
-
-  // Ripple effect
-  btn.addEventListener('pointerdown', e => {
-    const r = document.createElement('div');
-    r.className = 'ripple-el';
-    const rect = btn.getBoundingClientRect();
-    r.style.left = (e.clientX - rect.left) + 'px';
-    r.style.top  = (e.clientY - rect.top)  + 'px';
-    btn.appendChild(r);
-    r.addEventListener('animationend', () => r.remove(), { once: true });
-  });
-
-  btn.addEventListener('click', () => player.play(ch, wrap));
-
-  const sel = document.createElement('select');
-  sel.className = 'src-sel';
-  sel.setAttribute('aria-label', `Source for ${ch.name}`);
-  FOLDERS.forEach(f => {
-    const o = document.createElement('option');
-    o.value = f; o.textContent = f; sel.appendChild(o);
-  });
-  sel.value = store.get(CFG.KEY_FOLDER + ch.id) || FOLDERS[0];
-  sel.addEventListener('change', e => {
-    e.stopPropagation();
-    store.set(CFG.KEY_FOLDER + ch.id, e.target.value);
-    if (S.activeId === ch.id) {
-      reconnect.reset();
-      overlay.showLoading();
-      E.player.src = streamUrl(S.activeId, e.target.value);
-    }
-  });
-
-  wrap.appendChild(btn);
-  wrap.appendChild(sel);
-  return wrap;
-}
-
-function renderRail() {
-  E.rail.innerHTML = '';
-  if (!S.visible.length) {
-    const em = document.createElement('div');
-    em.className = 'empty-state';
-    em.textContent = 'No channels found';
-    E.rail.appendChild(em);
-    setTimeout(syncPadding, 60);
-    return;
-  }
-
-  const groups = groupBy(S.visible, 'cat');
-  let first = true;
-  for (const [cat, chs] of Object.entries(groups)) {
-    if (!first) {
-      const d = document.createElement('div');
-      d.className = 'divider';
-      d.setAttribute('aria-hidden', 'true');
-      E.rail.appendChild(d);
-    }
-    first = false;
-
-    const g = document.createElement('div');
-    g.className = 'cat-group';
-    const lbl = document.createElement('div');
-    lbl.className = 'cat-label';
-    lbl.textContent = cat;
-    lbl.setAttribute('aria-hidden', 'true');
-    g.appendChild(lbl);
-    const row = document.createElement('div');
-    row.className = 'cat-channels';
-    chs.forEach(ch => row.appendChild(makeWrapper(ch)));
-    g.appendChild(row);
-    E.rail.appendChild(g);
-  }
-
-  setTimeout(syncPadding, 60);
-}
-
-function filterChannels(term) {
-  const t = term.toLowerCase().trim();
-  S.visible = t ? CHANNELS.filter(c => c.name.toLowerCase().includes(t) || c.cat.toLowerCase().includes(t)) : [...CHANNELS];
-  renderRail();
-  if (S.activeId) {
-    const w = E.rail.querySelector(`[data-ch-id="${S.activeId}"]`);
-    if (w) { S.activeBtn = w.querySelector('.ch-btn'); S.activeBtn?.classList.add('active'); }
-  }
-}
-
-/* ── GESTURES ─────────────────────────────────────────────────── */
-function initGestures() {
-  let sx = 0, sy = 0;
-  E.stage.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
-  E.stage.addEventListener('touchend', e => {
-    const dx = sx - e.changedTouches[0].clientX;
-    const dy = sy - e.changedTouches[0].clientY;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 70) {
-      player.navigate(dx > 0 ? 1 : -1);
-    }
-    const now = Date.now();
-    if (now - S.lastTap < 260 && now - S.lastTap > 40) {
-      player.toggleFS();
-      e.preventDefault();
-    }
-    S.lastTap = now;
-  }, { passive: false });
-}
-
-/* ── KEYBOARD ─────────────────────────────────────────────────── */
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
-  const actions = {
-    'f': () => player.toggleFS(),
-    'F': () => player.toggleFS(),
-    'r': () => player.refresh(),
-    'R': () => player.refresh(),
-    'ArrowRight': () => player.navigate(1),
-    'ArrowLeft':  () => player.navigate(-1),
-    'Escape': () => { if (S.isMobileFS) player._exitMobileFS(); else document.exitFullscreen?.(); }
+  btn.className = 'league-pill' + (i===0?' active':'');
+  btn.textContent = l;
+  btn.onclick = () => {
+    document.querySelectorAll('.league-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderStandings(l);
   };
-  if (actions[e.key]) { e.preventDefault(); actions[e.key](); }
+  leagueNav.appendChild(btn);
 });
 
-/* ── FULLSCREEN SYNC ──────────────────────────────────────────── */
-['fullscreenchange','webkitfullscreenchange'].forEach(ev => {
-  document.addEventListener(ev, () => {
-    const active = !!(document.fullscreenElement || document.webkitFullscreenElement);
-    E.fsIcon.innerHTML = active
-      ? '<path d="M8 4H4v4M4 4l4 4M12 4h4v4M16 4l-4 4M8 16H4v-4M4 16l4-4M12 16h4v-4M16 16l-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
-      : '<path d="M4 4h4M4 4v4M16 4h-4M16 4v4M4 16h4M4 16v-4M16 16h-4M16 16v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
+function formDot(cls) { return `<span class="form-dot ${cls}"></span>`; }
+
+function renderStandings(league) {
+  const rows = STANDINGS[league];
+  const spiMap = {};
+  SPI_DATA.filter(d => d.League === league).forEach(d => { spiMap[d.Team] = d.spi; });
+
+  let html = `<table><thead><tr>
+    <th style="width:36px">#</th>
+    <th>Team</th>
+    <th class="num">MP</th>
+    <th class="num">W</th>
+    <th class="num">D</th>
+    <th class="num">L</th>
+    <th class="num">GF</th>
+    <th class="num">GA</th>
+    <th class="num">GD</th>
+    <th class="num">Pts</th>
+    <th class="num">SPI</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach((r, i) => {
+    const spi = spiMap[r.Team];
+    const spiStr = spi ? `<span style="color:${getSpiColor(spi)};font-family:'DM Mono',monospace">${spi}</span>` : '—';
+    const rClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    html += `<tr>
+      <td><span class="rank-num ${rClass}">${i+1}</span></td>
+      <td><span class="team-name">${r.Team}</span></td>
+      <td class="num">${r.MP}</td>
+      <td class="num">${r.W}</td>
+      <td class="num">${r.D}</td>
+      <td class="num">${r.L}</td>
+      <td class="num">${r.GF}</td>
+      <td class="num">${r.GA}</td>
+      <td class="num" style="color:${r.GD>=0?'var(--green)':'var(--red)'}">${r.GD>=0?'+':''}${r.GD}</td>
+      <td class="num"><span class="pts-cell" style="color:var(--accent)">${r.Pts}</span></td>
+      <td class="num">${spiStr}</td>
+    </tr>`;
   });
-});
-
-/* ── RAIL TOGGLE (mobile) ─────────────────────────────────────── */
-/* ── INIT ─────────────────────────────────────────────────────── */
-function init() {
-  // Block navigation away while a stream is active
-  window.addEventListener('beforeunload', e => {
-    if (S.activeId) { e.preventDefault(); e.returnValue = ''; }
-  });
-  renderRail();
-  syncPadding();
-
-  // Keyboard hint (desktop only)
-  setTimeout(() => E.kbHint.classList.add('show'), 1200);
-  setTimeout(() => E.kbHint.classList.remove('show'), 6000);
-
-  // Auto-play last or default
-  const lastId = store.get(CFG.KEY_LAST);
-  const def    = (lastId && CHANNELS.find(c => c.id == lastId)) || CHANNELS[0];
-  const defW   = E.rail.querySelector(`[data-ch-id="${def.id}"]`);
-  if (defW) player.play(def, defW);
-
-  // Events
-  E.search.addEventListener('input', debounce(e => filterChannels(e.target.value), CFG.DEBOUNCE));
-  E.refreshBtn.addEventListener('click', () => player.refresh());
-  E.fsBtn.addEventListener('click', () => player.toggleFS());
-  E.logoutBtn.addEventListener('click', () => {
-    if (confirm('Sign out?')) {
-      document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Secure; SameSite=Strict';
-      window.location.href = '/';
-    }
-  });
-  E.floatExit.addEventListener('click', () => player._exitMobileFS());
-
-  E.player.addEventListener('load',  () => { overlay.hideLoading(); reconnect.reset(); });
-  E.player.addEventListener('error', () => reconnect.attempt());
-
-  window.addEventListener('resize', debounce(syncPadding, 100));
-  window.addEventListener('online',  () => toast('🟢 Back online'));
-  window.addEventListener('offline', () => toast('🔴 No connection'));
-
-  document.addEventListener('touchmove', e => {
-    if (e.target.closest('#rail') || e.target.closest('#topbar') || e.target.closest('#rail-wrap')) return;
-    e.preventDefault();
-  }, { passive: false });
-
-  initGestures();
+  html += '</tbody></table>';
+  document.getElementById('standings-table').innerHTML = html;
 }
 
-document.readyState === 'loading'
-  ? document.addEventListener('DOMContentLoaded', init)
-  : init();
+renderStandings(standLeagues[0]);
 </script>
 </body>
 </html>
